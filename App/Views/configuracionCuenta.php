@@ -25,6 +25,7 @@ $usuario = $stmtUsuario->fetch(PDO::FETCH_ASSOC);
 // Obtener la información del paciente desde el controlador
 $informacionPaciente = $informacionPaciente ?? [];
 
+
 // Obtener las nacionalidades
 $queryNacionalidades = "SELECT id, nombre FROM nacionalidades";
 $stmtNacionalidades = $db->prepare($queryNacionalidades);
@@ -73,12 +74,14 @@ echo '</pre>';
                     <!-- Account -->
                     <div class="card-body">
                         <div class="d-flex align-items-start align-items-sm-center gap-4">
-                            <img src="../Public/img/avatars/1.png" alt="user-avatar" class="d-block rounded" height="100" width="100" id="uploadedAvatar" />
+                            <img src="<?php echo $fotoPerfilSrc; ?>" alt="user-avatar" class="d-block rounded"
+                                height="100" width="100" id="uploadedAvatar" />
                             <div class="button-wrapper">
                                 <label for="upload" class="btn btn-primary me-2 mb-4" tabindex="0">
                                     <span class="d-none d-sm-block">Subir nueva foto</span>
                                     <i class="bx bx-upload d-block d-sm-none"></i>
-                                    <input type="file" id="upload" class="account-file-input" hidden accept="image/png, image/jpeg" />
+                                    <input type="file" id="upload" class="account-file-input" hidden
+                                        accept="image/png, image/jpeg" name="foto_perfil" />
                                 </label>
                                 <button type="button" class="btn btn-outline-secondary account-image-reset mb-4">
                                     <i class="bx bx-reset d-block d-sm-none"></i>
@@ -88,25 +91,42 @@ echo '</pre>';
                             </div>
                         </div>
                     </div>
+
+                    <script>
+                        document.getElementById('upload').addEventListener('change', function (event) {
+                            const file = event.target.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = function (e) {
+                                    document.getElementById('uploadedAvatar').src = e.target.result;
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        });
+                    </script>
                     <hr class="my-0" />
                     <div class="card-body">
                         <form id="formAccountSettings" method="POST">
                             <div class="row">
                                 <div class="mb-3 col-md-6">
                                     <label for="firstName" class="form-label">Nombre</label>
-                                    <input class="form-control" type="text" id="firstName" name="firstName" value="<?php echo $_SESSION['nombre'] ?? ''; ?>" readonly />
+                                    <input class="form-control" type="text" id="firstName" name="firstName"
+                                        value="<?php echo $_SESSION['nombre'] ?? ''; ?>" readonly />
                                 </div>
                                 <div class="mb-3 col-md-6">
                                     <label for="lastName" class="form-label">Apellido</label>
-                                    <input class="form-control" type="text" name="lastName" id="lastName" value="<?php echo $_SESSION['apellido'] ?? ''; ?>" readonly />
+                                    <input class="form-control" type="text" name="lastName" id="lastName"
+                                        value="<?php echo $_SESSION['apellido'] ?? ''; ?>" readonly />
                                 </div>
                                 <div class="mb-3 col-md-6">
                                     <label for="email" class="form-label">Correo</label>
-                                    <input class="form-control" type="text" id="email" name="email" value="<?php echo $usuario['email'] ?? ''; ?>" readonly />
+                                    <input class="form-control" type="text" id="email" name="email"
+                                        value="<?php echo $usuario['email'] ?? ''; ?>" readonly />
                                 </div>
                                 <div class="mb-3 col-md-6">
                                     <label for="edad" class="form-label">Edad</label>
-                                    <input type="number" class="form-control" id="edad" name="edad" value="<?php echo $informacionPaciente['edad'] ?? ''; ?>" min="0" />
+                                    <input type="number" class="form-control" id="edad" name="edad"
+                                        value="<?php echo $informacionPaciente['edad'] ?? ''; ?>" min="0" />
                                 </div>
                                 <div class="mb-3 col-md-6">
                                     <label for="sexo" class="form-label">Sexo</label>
@@ -135,7 +155,9 @@ echo '</pre>';
                                     <label class="form-label" for="telefono">Numero de telefono</label>
                                     <div class="input-group input-group-merge">
                                         <span class="input-group-text">PA (+507)</span>
-                                        <input type="text" id="telefono" name="telefono" class="form-control" placeholder="0000-0000" value="<?php echo $informacionPaciente['telefono'] ?? ''; ?>" />
+                                        <input type="text" id="telefono" name="telefono" class="form-control"
+                                            placeholder="0000-0000"
+                                            value="<?php echo $informacionPaciente['telefono'] ?? ''; ?>" />
                                     </div>
                                 </div>
                                 <div class="mb-3 col-md-6">
@@ -151,7 +173,9 @@ echo '</pre>';
                                 </div>
                                 <div class="mb-3 col-md-6">
                                     <label for="direccion" class="form-label">Dirección</label>
-                                    <input type="text" class="form-control" id="direccion" name="direccion" placeholder="Address" value="<?php echo $informacionPaciente['direccion'] ?? ''; ?>" />
+                                    <input type="text" class="form-control" id="direccion" name="direccion"
+                                        placeholder="Address"
+                                        value="<?php echo $informacionPaciente['direccion'] ?? ''; ?>" />
                                 </div>
                                 <div class="mb-3 col-md-6">
                                     <label class="form-label" for="provincia_id">Provincia</label>
@@ -179,13 +203,16 @@ echo '</pre>';
                         <div class="mb-3 col-12 mb-0">
                             <div class="alert alert-warning">
                                 <h6 class="alert-heading fw-bold mb-1">¿Seguro que quieres eliminar tu cuenta?</h6>
-                                <p class="mb-0">Una vez que elimine su cuenta, no hay vuelta atrás. Por favor, esté seguro.</p>
+                                <p class="mb-0">Una vez que elimine su cuenta, no hay vuelta atrás. Por favor, esté
+                                    seguro.</p>
                             </div>
                         </div>
                         <form id="formAccountDeactivation" onsubmit="return false">
                             <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" name="accountActivation" id="accountActivation" />
-                                <label class="form-check-label" for="accountActivation">Confirmo la desactivación de mi cuenta</label>
+                                <input class="form-check-input" type="checkbox" name="accountActivation"
+                                    id="accountActivation" />
+                                <label class="form-check-label" for="accountActivation">Confirmo la desactivación de mi
+                                    cuenta</label>
                             </div>
                             <button type="submit" class="btn btn-danger deactivate-account">Desactivar cuenta</button>
                         </form>
@@ -196,44 +223,44 @@ echo '</pre>';
     </div>
     <!-- / Content -->
 
-<?php
-// Verificar rutas
-$footerPath = __DIR__ . '/Templates/footer.php';
-if (!file_exists($footerPath)) {
-    die('Error: No se encontró el archivo footer.php en la ruta especificada.');
-}
-require $footerPath;
-?>
-
-<script>
-document.getElementById('formAccountSettings').addEventListener('submit', function(event) {
-    event.preventDefault(); // Evitar el envío del formulario
-
-    var formData = new FormData(this);
-
-    fetch('./actualizarInformacionPaciente', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Información del paciente actualizada correctamente.');
-        } else {
-            alert('Error: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error al actualizar la información del paciente.');
-    });
-});
-
-// Validaciones en tiempo real
-document.getElementById('edad').addEventListener('input', function() {
-    if (this.value < 0) {
-        this.value = 0;
-        alert('La edad no puede ser negativa.');
+    <?php
+    // Verificar rutas
+    $footerPath = __DIR__ . '/Templates/footer.php';
+    if (!file_exists($footerPath)) {
+        die('Error: No se encontró el archivo footer.php en la ruta especificada.');
     }
-});
-</script>
+    require $footerPath;
+    ?>
+
+    <script>
+        document.getElementById('formAccountSettings').addEventListener('submit', function (event) {
+            event.preventDefault(); // Evitar el envío del formulario
+
+            var formData = new FormData(this);
+
+            fetch('./actualizarInformacionPaciente', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Información del paciente actualizada correctamente.');
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al actualizar la información del paciente.');
+                });
+        });
+
+        // Validaciones en tiempo real
+        document.getElementById('edad').addEventListener('input', function () {
+            if (this.value < 0) {
+                this.value = 0;
+                alert('La edad no puede ser negativa.');
+            }
+        });
+    </script>

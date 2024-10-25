@@ -137,7 +137,31 @@ class UserController {
                 $this->user->tipo_sangre = $_POST['tipo_sangre'] ?? null;
                 $this->user->nacionalidad_id = $_POST['nacionalidad_id'] ?? null;
                 $this->user->provincia_id = $_POST['provincia_id'] ?? null;
-                $this->user->foto_perfil = $_POST['foto_perfil'] ?? null;
+    
+                // Manejar la subida de la imagen
+                if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
+                    $fileTmpPath = $_FILES['foto_perfil']['tmp_name'];
+                    $fileName = $_FILES['foto_perfil']['name'];
+                    $fileSize = $_FILES['foto_perfil']['size'];
+                    $fileType = $_FILES['foto_perfil']['type'];
+                    $fileNameCmps = explode(".", $fileName);
+                    $fileExtension = strtolower(end($fileNameCmps));
+    
+                    // Verificar si el archivo es una imagen JPG o PNG
+                    $allowedfileExtensions = array('jpg', 'jpeg', 'png');
+                    if (in_array($fileExtension, $allowedfileExtensions)) {
+                        // Leer el contenido del archivo
+                        $fileContent = file_get_contents($fileTmpPath);
+                        // Encriptar el contenido del archivo
+                        $encryptedContent = base64_encode($fileContent);
+                        $this->user->foto_perfil = $encryptedContent;
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Formato de archivo no permitido. Solo se permiten JPG y PNG.']);
+                        return;
+                    }
+                } else {
+                    $this->user->foto_perfil = null;
+                }
     
                 // Actualizar la información del paciente
                 if ($this->user->actualizarInformacionPaciente()) {

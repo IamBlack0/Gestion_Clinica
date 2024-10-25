@@ -161,19 +161,20 @@ class User {
     }
 
     public function actualizarInformacionPaciente() {
-        $query = "INSERT INTO informacion_paciente (paciente_id, edad, sexo, telefono, direccion, tipo_sangre, nacionalidad_id, provincia_id, foto_perfil)
-                  VALUES (:paciente_id, :edad, :sexo, :telefono, :direccion, :tipo_sangre, :nacionalidad_id, :provincia_id, :foto_perfil)
-                  ON DUPLICATE KEY UPDATE
-                  edad = VALUES(edad),
-                  sexo = VALUES(sexo),
-                  telefono = VALUES(telefono),
-                  direccion = VALUES(direccion),
-                  tipo_sangre = VALUES(tipo_sangre),
-                  nacionalidad_id = VALUES(nacionalidad_id),
-                  provincia_id = VALUES(provincia_id),
-                  foto_perfil = VALUES(foto_perfil)";
+        $query = "UPDATE informacion_paciente SET 
+                    edad = :edad, 
+                    sexo = :sexo, 
+                    telefono = :telefono, 
+                    direccion = :direccion, 
+                    tipo_sangre = :tipo_sangre, 
+                    nacionalidad_id = :nacionalidad_id, 
+                    provincia_id = :provincia_id, 
+                    foto_perfil = :foto_perfil 
+                  WHERE paciente_id = :paciente_id";
+    
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':paciente_id', $this->id);
+    
+        // Vincular los parámetros
         $stmt->bindParam(':edad', $this->edad);
         $stmt->bindParam(':sexo', $this->sexo);
         $stmt->bindParam(':telefono', $this->telefono);
@@ -182,14 +183,12 @@ class User {
         $stmt->bindParam(':nacionalidad_id', $this->nacionalidad_id);
         $stmt->bindParam(':provincia_id', $this->provincia_id);
         $stmt->bindParam(':foto_perfil', $this->foto_perfil);
+        $stmt->bindParam(':paciente_id', $this->id);
     
-        try {
-            if ($stmt->execute()) {
-                return true;
-            }
-        } catch (PDOException $e) {
-            echo "Error al actualizar la información del paciente: " . $e->getMessage();
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            return false;
         }
-        return false;
     }
 }
