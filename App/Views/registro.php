@@ -115,6 +115,7 @@ include $headerPath;
                                 </label>
                             </div>
                         </div>
+                        <input type="hidden" name="rol_id" value="1" />
                         <button class="btn btn-primary d-grid w-100">Registrarse</button>
                     </form>
                     <p class="text-center">

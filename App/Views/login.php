@@ -87,9 +87,9 @@ include $headerPath;
 
                     <form id="formAuthentication" class="mb-3" method="POST" action="./login">
                         <div class="mb-3">
-                            <label for="username" class="form-label">correo o usuario</label>
+                            <label for="username" class="form-label">correo</label>
                             <input type="text" class="form-control" id="email" name="email-username"
-                                placeholder="Ingrese su correo o usuario" autofocus />
+                                placeholder="Ingrese su correo" autofocus />
                         </div>
                         <div class="mb-3 form-password-toggle">
                             <div class="d-flex justify-content-between">

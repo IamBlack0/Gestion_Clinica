@@ -37,32 +37,33 @@ class User {
         try {
             // Iniciar una transacción
             $this->conn->beginTransaction();
-
-            // Consulta SQL para insertar un nuevo usuario
-            $queryUsuario = "INSERT INTO " . $this->tableUsuarios . " (email, contraseña) VALUES (:email, :password)";
+    
+            // Consulta SQL para insertar un nuevo usuario con rol
+            $queryUsuario = "INSERT INTO " . $this->tableUsuarios . " (email, contraseña, rol_id) VALUES (:email, :password, :rol_id)";
             $stmtUsuario = $this->conn->prepare($queryUsuario);
-
+    
             // Encriptar la contraseña antes de guardarla
             $this->password = password_hash($this->password, PASSWORD_DEFAULT);
-
+    
             // Enlazar los parámetros
             $stmtUsuario->bindParam(':email', $this->email);
             $stmtUsuario->bindParam(':password', $this->password);
-
+            $stmtUsuario->bindParam(':rol_id', $this->rol); // Enlazar el rol
+    
             // Ejecutar la consulta para insertar el usuario
             if ($stmtUsuario->execute()) {
                 // Obtener el ID del usuario insertado
                 $this->id = $this->conn->lastInsertId();
-
+    
                 // Consulta SQL para insertar un nuevo paciente
                 $queryPaciente = "INSERT INTO " . $this->tablePacientes . " (usuario_id, nombre, apellido) VALUES (:usuario_id, :nombre, :apellido)";
                 $stmtPaciente = $this->conn->prepare($queryPaciente);
-
+    
                 // Enlazar los parámetros
                 $stmtPaciente->bindParam(':usuario_id', $this->id);
                 $stmtPaciente->bindParam(':nombre', $this->nombre);
                 $stmtPaciente->bindParam(':apellido', $this->apellido);
-
+    
                 // Ejecutar la consulta para insertar el paciente
                 if ($stmtPaciente->execute()) {
                     // Confirmar la transacción
@@ -90,22 +91,35 @@ class User {
      */
     public function login() {
         // Consulta SQL para buscar el usuario por correo electrónico
-        $query = "SELECT u.*, p.nombre, p.apellido FROM " . $this->tableUsuarios . " u
-                  JOIN " . $this->tablePacientes . " p ON u.id = p.usuario_id
+        $query = "SELECT u.*, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido, c.nombre AS colaborador_nombre, c.apellido AS colaborador_apellido 
+                  FROM " . $this->tableUsuarios . " u
+                  LEFT JOIN " . $this->tablePacientes . " p ON u.id = p.usuario_id
+                  LEFT JOIN colaboradores c ON u.id = c.usuario_id
                   WHERE u.email = :email";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $this->email); // Enlazar el parámetro del correo electrónico
         $stmt->execute();
-
+    
         // Obtener los resultados
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
+    
         // Verificar si la contraseña proporcionada coincide con la almacenada
         if ($user && password_verify($this->password, $user['contraseña'])) {
             $this->id = $user['id']; // Guardar el ID del usuario
-            $this->nombre = $user['nombre']; // Guardar el nombre del usuario
-            $this->apellido = $user['apellido']; // Guardar el apellido del usuario
             $this->email = $user['email']; // Guardar el correo del usuario
+    
+            // Verificar si es un paciente
+            if (!empty($user['paciente_nombre']) && !empty($user['paciente_apellido'])) {
+                $this->nombre = $user['paciente_nombre']; // Guardar el nombre del paciente
+                $this->apellido = $user['paciente_apellido']; // Guardar el apellido del paciente
+            }
+            // Verificar si es un colaborador
+            elseif (!empty($user['colaborador_nombre']) && !empty($user['colaborador_apellido'])) {
+                $this->nombre = $user['colaborador_nombre']; // Guardar el nombre del colaborador
+                $this->apellido = $user['colaborador_apellido']; // Guardar el apellido del colaborador
+            } else {
+                return false; // No es ni paciente ni colaborador
+            }
             return true;
         }
         return false;

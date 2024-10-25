@@ -106,12 +106,53 @@ ALTER TABLE informacion_paciente
 ADD COLUMN foto_perfil VARCHAR(255) DEFAULT NULL;
 
 
-DELIMITER //
-CREATE TRIGGER before_insert_usuario
-BEFORE INSERT ON usuarios
-FOR EACH ROW
-BEGIN
-    SET NEW.rol_id = (SELECT id FROM roles WHERE nombre = 'paciente');
-END;
-//
-DELIMITER ;
+-- Crear tabla especialidades
+CREATE TABLE especialidades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- Insertar especialidades importantes
+INSERT INTO especialidades (nombre) VALUES
+('Medicina General'),
+('Pediatría'),
+('Cardiología'),
+('Cirugía General'),
+('Neurología');
+
+-- Modificar la tabla colaboradores para referenciar especialidades
+ALTER TABLE colaboradores
+DROP COLUMN especialidad,
+ADD COLUMN especialidad_id INT,
+ADD FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE SET NULL;
+
+
+-- Insertar un usuario para el colaborador médico
+INSERT INTO usuarios (email, contraseña, rol_id) VALUES
+('medico1@clinic.com', 'medico1', (SELECT id FROM roles WHERE nombre = 'medico'));
+
+-- Insertar el colaborador en la tabla colaboradores con la especialidad de Medicina General
+INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, especialidad_id, fecha_contratacion)
+VALUES (
+    (SELECT id FROM usuarios WHERE email = 'medico1@clinic.com'),
+    (SELECT id FROM roles WHERE nombre = 'medico'),
+    'Juan',
+    'Pérez',
+    (SELECT id FROM especialidades WHERE nombre = 'Medicina General'),
+    '2024-10-24'
+);
+
+
+-- Paso 1: Insertar un usuario con rol administrativo en la tabla usuarios
+INSERT INTO usuarios (email, contraseña, rol_id)
+VALUES ('admin1@clinica.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'administrativo'));
+
+-- Paso 2: Insertar el registro del colaborador administrativo en la tabla colaboradores
+INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, fecha_contratacion)
+VALUES (
+    (SELECT id FROM usuarios WHERE email = 'admin1@clinica.com'),
+    (SELECT id FROM roles WHERE nombre = 'administrativo'),
+    'John', -- Nombre del administrativo
+    'Doe', -- Apellido del administrativo
+    '2024-10-24' -- Fecha de contratación
+);

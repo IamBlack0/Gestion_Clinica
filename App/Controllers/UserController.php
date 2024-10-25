@@ -34,7 +34,8 @@ class UserController {
             $this->user->password = $_POST['password'];
             $this->user->nombre = $_POST['nombre'];
             $this->user->apellido = $_POST['apellido'];
-
+            $this->user->rol = $_POST['rol_id']; // Asignar el rol de paciente
+    
             // Registrar al usuario y redirigir a la página de inicio de sesión si tiene éxito
             if ($this->user->registro()) {
                 header('Location: ./login');
