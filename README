@@ -1,0 +1,16 @@
+Modificar el archivo config.php:
+
+Cambiar la URL http://localhost/PROGRAMACION/Gestion_Clinica/ a la ruta correcta de tu servidor local. Por ejemplo, si tu proyecto está en la carpeta Gestion_Clinica dentro de htdocs de XAMPP, la URL debería ser http://localhost/Gestion_Clinica/.
+
+
+Actualizar la imagen del paciente:
+Asegurarse de que exista una funcionalidad en el backend que permita subir y actualizar la imagen del paciente. Esto puede implicar:
+Crear un formulario en el frontend para subir la imagen.
+Implementar una ruta en el backend que maneje la subida de archivos.
+Guardar la ruta de la imagen en la base de datos.
+Permitir que el administrativo edite la información de los pacientes o colaboradores:
+
+Implementar una funcionalidad que permita al administrativo editar la información de los pacientes o colaboradores. Esto puede implicar:
+Crear un formulario de edición en el frontend.
+Implementar una ruta en el backend que maneje la actualización de la información en la base de datos.
+Asegurarse de que los permisos de usuario estén configurados correctamente para que solo los administrativos puedan realizar estas acciones.
