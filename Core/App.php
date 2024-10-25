@@ -52,6 +52,14 @@ class App {
                     header('Location: ./login');
                 }
                 break;
+                case 'actualizarInformacionUsuarios':
+                    // Verificar si el usuario está autenticado y es administrativo antes de mostrar la lista de usuarios
+                    if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrativo') {
+                        $controller->mostrarListaUsuarios(); // Llamar al método para mostrar la lista de usuarios
+                    } else {
+                        header('Location: ./login');
+                    }
+                    break;
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
                 break;

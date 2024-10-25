@@ -182,6 +182,45 @@ class UserController {
         }
     }
 
+
+  /**
+     * Método para mostrar la lista de usuarios.
+     */
+    public function mostrarListaUsuarios() {
+        // Obtener la lista de usuarios
+        $usuarios = $this->user->obtenerTodosLosUsuarios();
+        require_once __DIR__ . '/../Views/actualizarInformacionUsuarios.php';
+    }
+
+    /**
+     * Método para manejar la actualización de la información de cualquier usuario.
+     */
+    public function actualizarInformacionUsuarios() {
+        // Verificar si la solicitud es POST (formulario enviado)
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Asignar los datos del formulario al objeto User
+            $this->user->id = $_POST['id'];
+            $this->user->nombre = $_POST['nombre'];
+            $this->user->apellido = $_POST['apellido'];
+            $this->user->email = $_POST['email'];
+            $this->user->rol = $_POST['rol'];
+
+            // Actualizar la información del usuario y redirigir a la lista de usuarios si tiene éxito
+            if ($this->user->actualizarInformacionUsuarios()) {
+                header('Location: ./actualizarInformacionUsuarios');
+            } else {
+                echo "Error al actualizar la información del usuario.";
+            }
+        } else {
+            // Cargar la vista del formulario de actualización si la solicitud no es POST
+            require_once __DIR__ . '/../Views/actualizarInformacionUsuarios.php';
+        }
+    }
+
+
+
+
+
     /**
      * Método para cerrar sesión.
      */

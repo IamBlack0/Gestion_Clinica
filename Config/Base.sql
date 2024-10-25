@@ -143,11 +143,11 @@ VALUES (
 );
 
 
--- Paso 1: Insertar un usuario con rol administrativo en la tabla usuarios
+-- Insertar un usuario con rol administrativo en la tabla usuarios(la contraseña es: admin1)
 INSERT INTO usuarios (email, contraseña, rol_id)
 VALUES ('admin1@clinica.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'administrativo'));
 
--- Paso 2: Insertar el registro del colaborador administrativo en la tabla colaboradores
+-- Insertar el registro del colaborador administrativo en la tabla colaboradores
 INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, fecha_contratacion)
 VALUES (
     (SELECT id FROM usuarios WHERE email = 'admin1@clinica.com'),

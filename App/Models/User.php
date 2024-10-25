@@ -6,8 +6,10 @@ class User {
     private $conn;
     private $tableUsuarios = 'usuarios'; // Nombre de la tabla de usuarios
     private $tablePacientes = 'pacientes'; // Nombre de la tabla de pacientes
+    private $tableColaboradores = 'colaboradores'; // Nombre de la tabla de colaboradores
     private $tableInformacionPaciente = 'informacion_paciente'; // Nombre de la tabla de información del paciente
 
+    
     public $id;
     public $email; // Propiedad para el correo electrónico
     public $password;
@@ -205,4 +207,42 @@ class User {
             return false;
         }
     }
+ /**
+     * Método para obtener todos los usuarios.
+     */
+    public function obtenerTodosLosUsuarios() {
+        $query = "SELECT u.id, u.email, u.rol_id, 
+                         COALESCE(p.nombre, c.nombre) AS nombre, 
+                         COALESCE(p.apellido, c.apellido) AS apellido, 
+                         r.nombre AS rol
+                  FROM " . $this->tableUsuarios . " u
+                  LEFT JOIN " . $this->tablePacientes . " p ON u.id = p.usuario_id
+                  LEFT JOIN " . $this->tableColaboradores . " c ON u.id = c.usuario_id
+                  LEFT JOIN roles r ON u.rol_id = r.id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Método para actualizar la información de un usuario.
+     */
+    public function actualizarInformacionUsuarios() {
+        $query = "UPDATE " . $this->tableUsuarios . " 
+                  SET nombre = :nombre, apellido = :apellido, email = :email, rol_id = :rol_id 
+                  WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        // Enlazar los parámetros
+        $stmt->bindParam(':id', $this->id);
+        $stmt->bindParam(':nombre', $this->nombre);
+        $stmt->bindParam(':apellido', $this->apellido);
+        $stmt->bindParam(':email', $this->email);
+        $stmt->bindParam(':rol_id', $this->rol);
+
+        // Ejecutar la consulta para actualizar el usuario
+        return $stmt->execute();
+    }
 }
+
+

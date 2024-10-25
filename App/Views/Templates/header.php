@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../config.php';
 if (session_status() == PHP_SESSION_NONE) {
-    session_start(); // Iniciar sesión para acceder a los datos de la sesión
+  session_start(); // Iniciar sesión para acceder a los datos de la sesión
 }
 ?>
 <!DOCTYPE html>
@@ -31,8 +31,10 @@ if (session_status() == PHP_SESSION_NONE) {
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>Public/vendor/fonts/boxicons.css" />
 
   <!-- Core CSS -->
-  <link rel="stylesheet" href="<?php echo BASE_URL; ?>Public/vendor/css/core.css" class="template-customizer-core-css" />
-  <link rel="stylesheet" href="<?php echo BASE_URL; ?>Public/vendor/css/theme-default.css" class="template-customizer-theme-css" />
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>Public/vendor/css/core.css"
+    class="template-customizer-core-css" />
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>Public/vendor/css/theme-default.css"
+    class="template-customizer-theme-css" />
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>Public/css/demo.css" />
 
   <!-- Vendors CSS -->
@@ -126,12 +128,12 @@ if (session_status() == PHP_SESSION_NONE) {
             </a>
           </li>
           <!--FIN DEL MENU DE  PACIENTE -->
-      
+
           <!-- MENU DEL ADMINITRADOR -->
           <li class="menu-header small text-uppercase"><span class="menu-header-text">Admintrador</span></li>
           <!-- Cards -->
           <li class="menu-item">
-            <a href="#" class="menu-link">
+            <a href="./actualizarInformacionUsuarios" class="menu-link">
               <i class="menu-icon tf-icons bx bx-collection"></i>
               <div data-i18n="Basic">Editar Usuarios</div>
             </a>
@@ -192,7 +194,8 @@ if (session_status() == PHP_SESSION_NONE) {
               <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                   <div class="avatar avatar-online">
-                    <img src="<?php echo BASE_URL; ?>Public/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                    <img src="<?php echo BASE_URL; ?>Public/img/avatars/1.png" alt
+                      class="w-px-40 h-auto rounded-circle" />
                   </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -201,11 +204,13 @@ if (session_status() == PHP_SESSION_NONE) {
                       <div class="d-flex">
                         <div class="flex-shrink-0 me-3">
                           <div class="avatar avatar-online">
-                            <img src="<?php echo BASE_URL; ?>Public/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                            <img src="<?php echo BASE_URL; ?>Public/img/avatars/1.png" alt
+                              class="w-px-40 h-auto rounded-circle" />
                           </div>
                         </div>
                         <div class="flex-grow-1">
-                          <span class="fw-semibold d-block"><?php echo $_SESSION['nombre'] . ' ' . $_SESSION['apellido']; ?></span>
+                          <span
+                            class="fw-semibold d-block"><?php echo $_SESSION['nombre'] . ' ' . $_SESSION['apellido']; ?></span>
                           <small class="text-muted"><?php echo $_SESSION['rol']; ?></small>
                         </div>
                       </div>
