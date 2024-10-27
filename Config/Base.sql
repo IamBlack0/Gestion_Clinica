@@ -1,4 +1,3 @@
--- Crear la base de datos
 CREATE DATABASE gestion_clinica;
 
 -- Usar la base de datos
@@ -27,30 +26,7 @@ CREATE TABLE usuarios (
     FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 
--- Crear tabla colaboradores
-CREATE TABLE colaboradores (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    usuario_id INT NOT NULL,
-    rol_id INT NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-    apellido VARCHAR(100) NOT NULL,
-    especialidad VARCHAR(100), -- Solo para médicos, puede ser NULL para otros roles
-    fecha_contratacion DATE,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE CASCADE
-);
-
--- Tabla pacientes
-CREATE TABLE pacientes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    usuario_id INT NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-    apellido VARCHAR(100) NOT NULL,
-    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
-
--- Tabla de provincias
+-- Crear tabla provincias
 CREATE TABLE provincias (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE
@@ -69,20 +45,6 @@ INSERT INTO provincias (nombre) VALUES
 ('Panamá Oeste'),
 ('Veraguas');
 
--- Tabla informacion_paciente con referencia a provincias
-CREATE TABLE informacion_paciente (
-    paciente_id INT NOT NULL PRIMARY KEY,
-    edad INT, -- Puede ser NULL inicialmente
-    sexo ENUM('masculino', 'femenino', 'otro'), -- Puede ser NULL inicialmente
-    telefono VARCHAR(20), -- Puede ser NULL
-    direccion VARCHAR(255), -- Puede ser NULL
-    tipo_sangre ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'), -- Puede ser NULL
-    provincia_id INT, -- Relación con la tabla provincias
-    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
-    FOREIGN KEY (provincia_id) REFERENCES provincias(id) ON DELETE SET NULL
-);
-
-
 -- Crear tabla de nacionalidades
 CREATE TABLE nacionalidades (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -96,15 +58,31 @@ INSERT INTO nacionalidades (nombre) VALUES
 ('Costa Rica'),
 ('Venezuela');
 
--- Modificar la tabla informacion_paciente para incluir la relación con la tabla nacionalidades
-ALTER TABLE informacion_paciente
-ADD COLUMN nacionalidad_id INT,
-ADD FOREIGN KEY (nacionalidad_id) REFERENCES nacionalidades(id) ON DELETE SET NULL;
+-- Crear tabla pacientes
+CREATE TABLE pacientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
 
--- Agregar la columna foto_perfil a la tabla informacion_paciente
-ALTER TABLE informacion_paciente
-ADD COLUMN foto_perfil VARCHAR(255) DEFAULT NULL;
-
+-- Crear tabla informacion_paciente con referencia a provincias y nacionalidades
+CREATE TABLE informacion_paciente (
+    paciente_id INT NOT NULL PRIMARY KEY,
+    edad INT, -- Puede ser NULL inicialmente
+    sexo ENUM('masculino', 'femenino', 'otro'), -- Puede ser NULL inicialmente
+    telefono VARCHAR(20), -- Puede ser NULL
+    direccion VARCHAR(255), -- Puede ser NULL
+    tipo_sangre ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'), -- Puede ser NULL
+    provincia_id INT, -- Relación con la tabla provincias
+    nacionalidad_id INT, -- Relación con la tabla nacionalidades
+    foto_perfil VARCHAR(255) DEFAULT NULL,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
+    FOREIGN KEY (provincia_id) REFERENCES provincias(id) ON DELETE SET NULL,
+    FOREIGN KEY (nacionalidad_id) REFERENCES nacionalidades(id) ON DELETE SET NULL
+);
 
 -- Crear tabla especialidades
 CREATE TABLE especialidades (
@@ -120,12 +98,19 @@ INSERT INTO especialidades (nombre) VALUES
 ('Cirugía General'),
 ('Neurología');
 
--- Modificar la tabla colaboradores para referenciar especialidades
-ALTER TABLE colaboradores
-DROP COLUMN especialidad,
-ADD COLUMN especialidad_id INT,
-ADD FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE SET NULL;
-
+-- Crear tabla colaboradores
+CREATE TABLE colaboradores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    rol_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    especialidad_id INT,
+    fecha_contratacion DATE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE SET NULL
+);
 
 -- Insertar un usuario para el colaborador médico
 INSERT INTO usuarios (email, contraseña, rol_id) VALUES
@@ -142,16 +127,15 @@ VALUES (
     '2024-10-24'
 );
 
-
--- Insertar un usuario con rol administrativo en la tabla usuarios(la contraseña es: admin1)
+-- Insertar un usuario con rol administrativo en la tabla usuarios (la contraseña es: admin1)
 INSERT INTO usuarios (email, contraseña, rol_id)
-VALUES ('admin1@clinica.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'administrativo'));
+VALUES ('admin1@clinica.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'administrador'));
 
 -- Insertar el registro del colaborador administrativo en la tabla colaboradores
 INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, fecha_contratacion)
 VALUES (
     (SELECT id FROM usuarios WHERE email = 'admin1@clinica.com'),
-    (SELECT id FROM roles WHERE nombre = 'administrativo'),
+    (SELECT id FROM roles WHERE nombre = 'administrador'),
     'John', -- Nombre del administrativo
     'Doe', -- Apellido del administrativo
     '2024-10-24' -- Fecha de contratación

@@ -39,7 +39,7 @@ class UserController {
             $this->user->email = $_POST['email'];
             $this->user->password = $_POST['password'];
             $this->user->rol = $_POST['rol_id']; // Asignar el rol de paciente o colaborador
-
+    
             // Registrar al usuario
             if ($this->user->registro()) {
                 // Asignar los datos específicos según el rol
@@ -161,6 +161,22 @@ class UserController {
             // Verificar si el usuario está autenticado
             if (isset($_SESSION['user_id'])) {
                 $this->paciente->id = $_SESSION['user_id'];
+    
+                // Verificar si el paciente existe en la tabla pacientes
+                $queryVerificarPaciente = "SELECT id FROM pacientes WHERE usuario_id = :usuario_id";
+                $stmtVerificarPaciente = $this->db->prepare($queryVerificarPaciente);
+                $stmtVerificarPaciente->bindParam(':usuario_id', $this->paciente->id);
+                $stmtVerificarPaciente->execute();
+    
+                if ($stmtVerificarPaciente->rowCount() == 0) {
+                    echo json_encode(['success' => false, 'message' => 'El paciente no existe en la base de datos.']);
+                    return;
+                }
+    
+                // Obtener el id del paciente
+                $pacienteData = $stmtVerificarPaciente->fetch(PDO::FETCH_ASSOC);
+                $this->paciente->id = $pacienteData['id'];
+    
                 // Asignar los datos del formulario al objeto Paciente
                 $this->paciente->edad = $_POST['edad'] ?? null;
                 $this->paciente->sexo = $_POST['sexo'] ?? null;
@@ -169,7 +185,7 @@ class UserController {
                 $this->paciente->tipo_sangre = $_POST['tipo_sangre'] ?? null;
                 $this->paciente->nacionalidad_id = $_POST['nacionalidad_id'] ?? null;
                 $this->paciente->provincia_id = $_POST['provincia_id'] ?? null;
-
+    
                 // Manejar la subida de la imagen
                 if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
                     $fileTmpPath = $_FILES['foto_perfil']['tmp_name'];
@@ -178,7 +194,7 @@ class UserController {
                     $fileType = $_FILES['foto_perfil']['type'];
                     $fileNameCmps = explode(".", $fileName);
                     $fileExtension = strtolower(end($fileNameCmps));
-
+    
                     // Verificar si el archivo es una imagen JPG o PNG
                     $allowedfileExtensions = array('jpg', 'jpeg', 'png');
                     if (in_array($fileExtension, $allowedfileExtensions)) {
@@ -194,22 +210,22 @@ class UserController {
                 } else {
                     $this->paciente->foto_perfil = null;
                 }
-
+    
                 // Actualizar la información del paciente
-                if ($this->paciente->actualizarInformacionPaciente()) {
-                    echo json_encode(['success' => true]);
-                    return;
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Error al actualizar la información del paciente.']);
-                    return;
+                try {
+                    if ($this->paciente->actualizarInformacionPaciente()) {
+                        echo json_encode(['success' => true]);
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Error al actualizar la información del paciente.']);
+                    }
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
                 }
             } else {
                 echo json_encode(['success' => false, 'message' => 'Usuario no autenticado.']);
-                return;
             }
         } else {
             echo json_encode(['success' => false, 'message' => 'Método de solicitud no permitido.']);
-            return;
         }
     }
 
@@ -278,7 +294,6 @@ class UserController {
             require_once __DIR__ . '/../Views/actualizarInformacionUsuarios.php';
         }
     }
-
 
     public function obtenerUsuarios() {
         $usuarios = $this->user->obtenerTodosLosUsuarios();

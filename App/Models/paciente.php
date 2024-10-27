@@ -1,7 +1,8 @@
 <?php
 require_once 'User.php';
 
-class Paciente extends User {
+class Paciente extends User
+{
     private $tablePacientes = 'pacientes';
     private $tableInformacionPaciente = 'informacion_paciente';
     public $nombre;
@@ -33,14 +34,15 @@ class Paciente extends User {
         }
     }
 
-    public function obtenerInformacionPaciente() {
+    public function obtenerInformacionPaciente()
+    {
         $query = "SELECT edad, sexo, telefono, direccion, tipo_sangre, nacionalidad_id, provincia_id, foto_perfil
                   FROM " . $this->tableInformacionPaciente . "
                   WHERE paciente_id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $this->id);
         $stmt->execute();
-    
+
         if ($stmt->rowCount() == 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $this->edad = $row['edad'];
@@ -57,20 +59,19 @@ class Paciente extends User {
     }
 
     public function actualizarInformacionPaciente() {
-        $query = "UPDATE " . $this->tableInformacionPaciente . " SET 
-                    edad = :edad, 
-                    sexo = :sexo, 
-                    telefono = :telefono, 
-                    direccion = :direccion, 
-                    tipo_sangre = :tipo_sangre, 
-                    nacionalidad_id = :nacionalidad_id, 
-                    provincia_id = :provincia_id, 
-                    foto_perfil = :foto_perfil 
-                  WHERE paciente_id = :paciente_id";
-    
+        $query = "INSERT INTO " . $this->tableInformacionPaciente . " (paciente_id, edad, sexo, telefono, direccion, tipo_sangre, nacionalidad_id, provincia_id, foto_perfil)
+                  VALUES (:paciente_id, :edad, :sexo, :telefono, :direccion, :tipo_sangre, :nacionalidad_id, :provincia_id, :foto_perfil)
+                  ON DUPLICATE KEY UPDATE
+                  edad = VALUES(edad),
+                  sexo = VALUES(sexo),
+                  telefono = VALUES(telefono),
+                  direccion = VALUES(direccion),
+                  tipo_sangre = VALUES(tipo_sangre),
+                  nacionalidad_id = VALUES(nacionalidad_id),
+                  provincia_id = VALUES(provincia_id),
+                  foto_perfil = VALUES(foto_perfil)";
         $stmt = $this->conn->prepare($query);
-    
-        // Vincular los parámetros
+        $stmt->bindParam(':paciente_id', $this->id);
         $stmt->bindParam(':edad', $this->edad);
         $stmt->bindParam(':sexo', $this->sexo);
         $stmt->bindParam(':telefono', $this->telefono);
@@ -79,12 +80,14 @@ class Paciente extends User {
         $stmt->bindParam(':nacionalidad_id', $this->nacionalidad_id);
         $stmt->bindParam(':provincia_id', $this->provincia_id);
         $stmt->bindParam(':foto_perfil', $this->foto_perfil);
-        $stmt->bindParam(':paciente_id', $this->id);
     
-        if ($stmt->execute()) {
-            return true;
-        } else {
-            return false;
+        try {
+            if ($stmt->execute()) {
+                return true;
+            }
+        } catch (PDOException $e) {
+            throw new Exception("Error al actualizar la información del paciente: " . $e->getMessage());
         }
+        return false;
     }
 }
