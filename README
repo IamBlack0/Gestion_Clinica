@@ -14,3 +14,16 @@ Implementar una funcionalidad que permita al administrativo editar la informaci�
 Crear un formulario de edición en el frontend.
 Implementar una ruta en el backend que maneje la actualización de la información en la base de datos.
 Asegurarse de que los permisos de usuario estén configurados correctamente para que solo los administrativos puedan realizar estas acciones.
+
+
+
+NUEVO
+Se actualizaron los roles de usuarios en la base de datos, reemplazando "contador" por "secretaria" y "administrativo" por "administrador". Además, se modificó la lógica de registro en las clases Colaborador y Paciente para insertar los datos correspondientes en las tablas colaboradores y pacientes respectivamente.
+
+Se corrigió un error en el archivo header.php que mostraba "Nombre no disponible" y "Apellido no disponible" en lugar de los nombres y apellidos de los usuarios autenticados. También se corrigió un error en el archivo footer.php que no incluía la biblioteca jQuery necesaria para el funcionamiento de ciertas funcionalidades.
+
+Se agregaron las clases Colaborador y Paciente en los archivos colaborador.php y paciente.php respectivamente, para manejar la lógica específica de cada tipo de usuario.
+
+Se actualizó la clase App en el archivo App.php para agregar la funcionalidad de agregar un usuario y obtener la lista de usuarios.
+
+Se realizaron otros cambios menores y correcciones de errores.

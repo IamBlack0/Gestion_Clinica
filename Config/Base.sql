@@ -14,9 +14,9 @@ CREATE TABLE roles (
 INSERT INTO roles (nombre) VALUES
 ('paciente'),
 ('medico'),
-('contador'),
+('secretaria'),
 ('gestion_inventarios'),
-('administrativo');
+('administrador');
 
 -- Crear tabla usuarios
 CREATE TABLE usuarios (

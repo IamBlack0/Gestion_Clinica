@@ -209,9 +209,16 @@ if (session_status() == PHP_SESSION_NONE) {
                           </div>
                         </div>
                         <div class="flex-grow-1">
-                          <span
-                            class="fw-semibold d-block"><?php echo $_SESSION['nombre'] . ' ' . $_SESSION['apellido']; ?></span>
-                          <small class="text-muted"><?php echo $_SESSION['rol']; ?></small>
+                          <span class="fw-semibold d-block">
+                            <?php
+                            echo isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Nombre no disponible';
+                            echo ' ';
+                            echo isset($_SESSION['apellido']) ? $_SESSION['apellido'] : 'Apellido no disponible';
+                            ?>
+                          </span>
+                          <small class="text-muted">
+                            <?php echo isset($_SESSION['rol']) ? $_SESSION['rol'] : 'Rol no disponible'; ?>
+                          </small>
                         </div>
                       </div>
                     </a>

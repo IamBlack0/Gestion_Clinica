@@ -6,6 +6,8 @@ if (session_status() == PHP_SESSION_NONE) {
 // Incluir los archivos necesarios
 require_once './Config/DataBase.php';    
 require_once __DIR__ . '/../Models/User.php';
+require_once __DIR__ . '/../Models/Paciente.php';
+require_once __DIR__ . '/../Models/Colaborador.php';
 
 /**
  * Clase UserController para manejar las acciones del usuario.
@@ -13,14 +15,18 @@ require_once __DIR__ . '/../Models/User.php';
 class UserController {
     private $db;
     private $user;
+    private $paciente;
+    private $colaborador;
 
     /**
-     * Constructor que inicializa la conexión a la base de datos y el modelo de usuario.
+     * Constructor que inicializa la conexión a la base de datos y los modelos de usuario, paciente y colaborador.
      */
     public function __construct() {
         $database = new Database();
         $this->db = $database->getConnection();
         $this->user = new User($this->db);
+        $this->paciente = new Paciente($this->db);
+        $this->colaborador = new Colaborador($this->db);
     }
 
     /**
@@ -32,15 +38,32 @@ class UserController {
             // Asignar los datos del formulario al objeto User
             $this->user->email = $_POST['email'];
             $this->user->password = $_POST['password'];
-            $this->user->nombre = $_POST['nombre'];
-            $this->user->apellido = $_POST['apellido'];
-            $this->user->rol = $_POST['rol_id']; // Asignar el rol de paciente
-    
-            // Registrar al usuario y redirigir a la página de inicio de sesión si tiene éxito
+            $this->user->rol = $_POST['rol_id']; // Asignar el rol de paciente o colaborador
+
+            // Registrar al usuario
             if ($this->user->registro()) {
-                header('Location: ./login');
+                // Asignar los datos específicos según el rol
+                if ($this->user->rol == 1) { // Rol de paciente
+                    $this->paciente->id = $this->user->id;
+                    $this->paciente->nombre = $_POST['nombre'];
+                    $this->paciente->apellido = $_POST['apellido'];
+                    if ($this->paciente->registro()) {
+                        header('Location: ./login');
+                    } else {
+                        echo "Error en el registro del paciente.";
+                    }
+                } elseif ($this->user->rol == 2) { // Rol de colaborador
+                    $this->colaborador->id = $this->user->id;
+                    $this->colaborador->nombre = $_POST['nombre'];
+                    $this->colaborador->apellido = $_POST['apellido'];
+                    if ($this->colaborador->registro()) {
+                        header('Location: ./login');
+                    } else {
+                        echo "Error en el registro del colaborador.";
+                    }
+                }
             } else {
-                echo "Error en el registro.";
+                echo "Error en el registro del usuario.";
             }
         } else {
             // Cargar la vista del formulario de registro si la solicitud no es POST
@@ -57,16 +80,24 @@ class UserController {
             // Asignar los datos del formulario al objeto User
             $this->user->email = $_POST['email-username'];
             $this->user->password = $_POST['password'];
-
+    
             // Intentar iniciar sesión y redirigir al panel de administración si tiene éxito
             if ($this->user->login()) {
                 // Obtener el rol del usuario
                 if ($this->user->obtenerRol()) {
                     $_SESSION['user_id'] = $this->user->id; // Guardar el ID del usuario en la sesión
-                    $_SESSION['nombre'] = $this->user->nombre; // Guardar el nombre del usuario en la sesión
-                    $_SESSION['apellido'] = $this->user->apellido; // Guardar el apellido del usuario en la sesión
                     $_SESSION['email'] = $this->user->email; // Guardar el correo del usuario en la sesión
                     $_SESSION['rol'] = $this->user->rol; // Guardar el rol del usuario en la sesión
+                    
+                    // Obtener el nombre y apellido del usuario
+                    if ($this->user->obtenerNombreApellido()) {
+                        $_SESSION['nombre'] = $this->user->nombre;
+                        $_SESSION['apellido'] = $this->user->apellido;
+                    } else {
+                        $_SESSION['nombre'] = 'Nombre no disponible';
+                        $_SESSION['apellido'] = 'Apellido no disponible';
+                    }
+    
                     header('Location: ./dashboard'); 
                 } else {
                     $errorMessage = "No se pudo obtener el rol del usuario.";
@@ -88,18 +119,18 @@ class UserController {
     public function obtenerInformacionPaciente() {
         // Verificar si el usuario está autenticado
         if (isset($_SESSION['user_id'])) {
-            $this->user->id = $_SESSION['user_id'];
-            if ($this->user->obtenerInformacionPaciente()) {
+            $this->paciente->id = $_SESSION['user_id'];
+            if ($this->paciente->obtenerInformacionPaciente()) {
                 // Pasar la información del paciente a la vista
                 $informacionPaciente = [
-                    'edad' => $this->user->edad,
-                    'sexo' => $this->user->sexo,
-                    'telefono' => $this->user->telefono,
-                    'direccion' => $this->user->direccion,
-                    'tipo_sangre' => $this->user->tipo_sangre,
-                    'nacionalidad_id' => $this->user->nacionalidad_id,
-                    'provincia_id' => $this->user->provincia_id,
-                    'foto_perfil' => $this->user->foto_perfil
+                    'edad' => $this->paciente->edad,
+                    'sexo' => $this->paciente->sexo,
+                    'telefono' => $this->paciente->telefono,
+                    'direccion' => $this->paciente->direccion,
+                    'tipo_sangre' => $this->paciente->tipo_sangre,
+                    'nacionalidad_id' => $this->paciente->nacionalidad_id,
+                    'provincia_id' => $this->paciente->provincia_id,
+                    'foto_perfil' => $this->paciente->foto_perfil
                 ];
             } else {
                 // Inicializar los campos con valores predeterminados
@@ -129,16 +160,16 @@ class UserController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Verificar si el usuario está autenticado
             if (isset($_SESSION['user_id'])) {
-                $this->user->id = $_SESSION['user_id'];
-                // Asignar los datos del formulario al objeto User
-                $this->user->edad = $_POST['edad'] ?? null;
-                $this->user->sexo = $_POST['sexo'] ?? null;
-                $this->user->telefono = $_POST['telefono'] ?? null;
-                $this->user->direccion = $_POST['direccion'] ?? null;
-                $this->user->tipo_sangre = $_POST['tipo_sangre'] ?? null;
-                $this->user->nacionalidad_id = $_POST['nacionalidad_id'] ?? null;
-                $this->user->provincia_id = $_POST['provincia_id'] ?? null;
-    
+                $this->paciente->id = $_SESSION['user_id'];
+                // Asignar los datos del formulario al objeto Paciente
+                $this->paciente->edad = $_POST['edad'] ?? null;
+                $this->paciente->sexo = $_POST['sexo'] ?? null;
+                $this->paciente->telefono = $_POST['telefono'] ?? null;
+                $this->paciente->direccion = $_POST['direccion'] ?? null;
+                $this->paciente->tipo_sangre = $_POST['tipo_sangre'] ?? null;
+                $this->paciente->nacionalidad_id = $_POST['nacionalidad_id'] ?? null;
+                $this->paciente->provincia_id = $_POST['provincia_id'] ?? null;
+
                 // Manejar la subida de la imagen
                 if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
                     $fileTmpPath = $_FILES['foto_perfil']['tmp_name'];
@@ -147,7 +178,7 @@ class UserController {
                     $fileType = $_FILES['foto_perfil']['type'];
                     $fileNameCmps = explode(".", $fileName);
                     $fileExtension = strtolower(end($fileNameCmps));
-    
+
                     // Verificar si el archivo es una imagen JPG o PNG
                     $allowedfileExtensions = array('jpg', 'jpeg', 'png');
                     if (in_array($fileExtension, $allowedfileExtensions)) {
@@ -155,17 +186,17 @@ class UserController {
                         $fileContent = file_get_contents($fileTmpPath);
                         // Encriptar el contenido del archivo
                         $encryptedContent = base64_encode($fileContent);
-                        $this->user->foto_perfil = $encryptedContent;
+                        $this->paciente->foto_perfil = $encryptedContent;
                     } else {
                         echo json_encode(['success' => false, 'message' => 'Formato de archivo no permitido. Solo se permiten JPG y PNG.']);
                         return;
                     }
                 } else {
-                    $this->user->foto_perfil = null;
+                    $this->paciente->foto_perfil = null;
                 }
-    
+
                 // Actualizar la información del paciente
-                if ($this->user->actualizarInformacionPaciente()) {
+                if ($this->paciente->actualizarInformacionPaciente()) {
                     echo json_encode(['success' => true]);
                     return;
                 } else {
@@ -182,8 +213,7 @@ class UserController {
         }
     }
 
-
-  /**
+    /**
      * Método para mostrar la lista de usuarios.
      */
     public function mostrarListaUsuarios() {
@@ -200,8 +230,6 @@ class UserController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Asignar los datos del formulario al objeto User
             $this->user->id = $_POST['id'];
-            $this->user->nombre = $_POST['nombre'];
-            $this->user->apellido = $_POST['apellido'];
             $this->user->email = $_POST['email'];
             $this->user->rol = $_POST['rol'];
 
@@ -217,9 +245,45 @@ class UserController {
         }
     }
 
+    public function agregarUsuario() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->user->email = $_POST['email'];
+            $this->user->password = $_POST['password'];
+            $this->user->rol = $_POST['tipoUsuario'];
+    
+            if ($this->user->registro()) {
+                if ($this->user->rol == 1) {
+                    $this->paciente->id = $this->user->id;
+                    $this->paciente->nombre = $_POST['nombre'];
+                    $this->paciente->apellido = $_POST['apellido'];
+                    if ($this->paciente->registro()) {
+                        echo json_encode(['success' => true, 'message' => 'Usuario registrado correctamente.']);
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Error en el registro del paciente.']);
+                    }
+                } elseif ($this->user->rol == 2) {
+                    $this->colaborador->id = $this->user->id;
+                    $this->colaborador->nombre = $_POST['nombre'];
+                    $this->colaborador->apellido = $_POST['apellido'];
+                    if ($this->colaborador->registro()) {
+                        echo json_encode(['success' => true, 'message' => 'Usuario registrado correctamente.']);
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Error en el registro del colaborador.']);
+                    }
+                }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Error en el registro del usuario.']);
+            }
+        } else {
+            require_once __DIR__ . '/../Views/actualizarInformacionUsuarios.php';
+        }
+    }
 
 
-
+    public function obtenerUsuarios() {
+        $usuarios = $this->user->obtenerTodosLosUsuarios();
+        echo json_encode($usuarios);
+    }
 
     /**
      * Método para cerrar sesión.
