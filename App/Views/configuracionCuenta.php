@@ -23,7 +23,11 @@ $stmtUsuario->execute();
 $usuario = $stmtUsuario->fetch(PDO::FETCH_ASSOC);
 
 // Obtener la información del paciente desde el controlador
-$informacionPaciente = $informacionPaciente ?? [];
+$queryPaciente = "SELECT * FROM informacion_paciente WHERE paciente_id = (SELECT id FROM pacientes WHERE usuario_id = :user_id)";
+$stmtPaciente = $db->prepare($queryPaciente);
+$stmtPaciente->bindParam(':user_id', $_SESSION['user_id']);
+$stmtPaciente->execute();
+$informacionPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC) ?? [];
 
 // Obtener las nacionalidades
 $queryNacionalidades = "SELECT id, nombre FROM nacionalidades";
@@ -40,15 +44,6 @@ $provincias = $stmtProvincias->fetchAll(PDO::FETCH_ASSOC);
 // Definir la URL de la foto de perfil
 $fotoPerfilSrc = !empty($informacionPaciente['foto_perfil']) ? 'data:image/jpeg;base64,' . $informacionPaciente['foto_perfil'] : '../Public/img/avatars/1.png';
 
-// Depuración: Mostrar la información del paciente y la sesión
-echo '<pre>';
-echo 'Información del Paciente: ';
-print_r($informacionPaciente);
-echo 'Información de la Sesión: ';
-print_r($_SESSION);
-echo 'Información del Usuario: ';
-print_r($usuario);
-echo '</pre>';
 ?>
 
 <!-- Content wrapper -->
