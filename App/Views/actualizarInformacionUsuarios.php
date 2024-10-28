@@ -17,6 +17,29 @@ $stmtRoles = $conn->prepare($queryRoles);
 $stmtRoles->execute();
 $roles = $stmtRoles->fetchAll(PDO::FETCH_ASSOC);
 
+// Obtener el número total de usuarios
+$queryTotalUsuarios = "SELECT COUNT(*) as total FROM usuarios";
+$stmtTotalUsuarios = $conn->prepare($queryTotalUsuarios);
+$stmtTotalUsuarios->execute();
+$totalUsuarios = $stmtTotalUsuarios->fetch(PDO::FETCH_ASSOC)['total'];
+
+// Configuración de la paginación
+$limit = 10;
+$totalPaginas = ceil($totalUsuarios / $limit);
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+// Obtener usuarios con paginación
+$queryUsuarios = "SELECT u.id, u.email, r.nombre AS rol, p.nombre, p.apellido
+                  FROM usuarios u
+                  LEFT JOIN roles r ON u.rol_id = r.id
+                  LEFT JOIN pacientes p ON u.id = p.usuario_id
+                  LIMIT :limit OFFSET :offset";
+$stmtUsuarios = $conn->prepare($queryUsuarios);
+$stmtUsuarios->bindParam(':limit', $limit, PDO::PARAM_INT);
+$stmtUsuarios->bindParam(':offset', $offset, PDO::PARAM_INT);
+$stmtUsuarios->execute();
+$usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!-- Content wrapper -->
@@ -73,56 +96,60 @@ $roles = $stmtRoles->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="button" class="btn btn-primary" onclick="submitAgregarUsuarioForm()">Guardar</button>
+                        <button type="button" class="btn btn-primary"
+                            onclick="submitAgregarUsuarioForm()">Guardar</button>
                     </div>
                 </div>
+
             </div>
+
         </div>
 
+
         <script>
-    function mostrarCamposAdicionales() {
-        const tipoUsuario = document.getElementById('tipoUsuario').value;
-        const camposAdicionales = document.getElementById('camposAdicionales');
-        if (tipoUsuario == 1 || tipoUsuario == 2) { // Asumiendo que los IDs de los roles son 1 y 2
-            camposAdicionales.style.display = 'block';
-        } else {
-            camposAdicionales.style.display = 'none';
-        }
-    }
-
-    function submitAgregarUsuarioForm() {
-        const form = $('#agregarUsuarioForm');
-        if (form[0].checkValidity()) {
-            $.ajax({
-                url: form.attr('action'),
-                type: form.attr('method'),
-                data: form.serialize(),
-                success: function(response) {
-                    const res = JSON.parse(response);
-                    if (res.success) {
-                        alert(res.message);
-                        $('#agregarUsuarioModal').modal('hide');
-                        actualizarTablaUsuarios();
-                    } else {
-                        alert(res.message);
-                    }
+            function mostrarCamposAdicionales() {
+                const tipoUsuario = document.getElementById('tipoUsuario').value;
+                const camposAdicionales = document.getElementById('camposAdicionales');
+                if (tipoUsuario == 1 || tipoUsuario == 2) { // Asumiendo que los IDs de los roles son 1 y 2
+                    camposAdicionales.style.display = 'block';
+                } else {
+                    camposAdicionales.style.display = 'none';
                 }
-            });
-        } else {
-            form[0].reportValidity();
-        }
-    }
+            }
 
-    function actualizarTablaUsuarios() {
-        $.ajax({
-            url: './obtenerUsuarios',
-            type: 'GET',
-            success: function(response) {
-                const usuarios = JSON.parse(response);
-                const tbody = $('.table tbody');
-                tbody.empty();
-                usuarios.forEach(usuario => {
-                    tbody.append(`
+            function submitAgregarUsuarioForm() {
+                const form = $('#agregarUsuarioForm');
+                if (form[0].checkValidity()) {
+                    $.ajax({
+                        url: form.attr('action'),
+                        type: form.attr('method'),
+                        data: form.serialize(),
+                        success: function (response) {
+                            const res = JSON.parse(response);
+                            if (res.success) {
+                                alert(res.message);
+                                $('#agregarUsuarioModal').modal('hide');
+                                actualizarTablaUsuarios();
+                            } else {
+                                alert(res.message);
+                            }
+                        }
+                    });
+                } else {
+                    form[0].reportValidity();
+                }
+            }
+
+            function actualizarTablaUsuarios() {
+                $.ajax({
+                    url: './obtenerUsuariosPaginados',
+                    type: 'GET',
+                    success: function (response) {
+                        const usuarios = JSON.parse(response);
+                        const tbody = $('.table tbody');
+                        tbody.empty();
+                        usuarios.forEach(usuario => {
+                            tbody.append(`
                         <tr>
                             <td>${usuario.id}</td>
                             <td>${usuario.nombre || 'Nombre no disponible'}</td>
@@ -146,11 +173,11 @@ $roles = $stmtRoles->fetchAll(PDO::FETCH_ASSOC);
                             </td>
                         </tr>
                     `);
+                        });
+                    }
                 });
             }
-        });
-    }
-</script>
+        </script>
 
         <!-- Basic Bootstrap Table -->
         <div class="card">
@@ -200,9 +227,50 @@ $roles = $stmtRoles->fetchAll(PDO::FETCH_ASSOC);
                     </tbody>
                 </table>
             </div>
+
+        </div>
+        <div class="card-body">
+            <div class="row justify-content-center">
+                <div class="col-auto">
+                    <div class="demo-inline-spacing">
+                        <!-- Basic Pagination -->
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination">
+                                <li class="page-item first <?php if ($page <= 1) echo 'disabled'; ?>">
+                                    <a class="page-link" href="?page=1">
+                                        <i class="tf-icon bx bx-chevrons-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item prev <?php if ($page <= 1) echo 'disabled'; ?>">
+                                    <a class="page-link" href="?page=<?php echo $page - 1; ?>">
+                                        <i class="tf-icon bx bx-chevron-left"></i>
+                                    </a>
+                                </li>
+                                <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                                    <li class="page-item <?php if ($i == $page) echo 'active'; ?>">
+                                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                    </li>
+                                <?php endfor; ?>
+                                <li class="page-item next <?php if ($page >= $totalPaginas) echo 'disabled'; ?>">
+                                    <a class="page-link" href="?page=<?php echo $page + 1; ?>">
+                                        <i class="tf-icon bx bx-chevron-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item last <?php if ($page >= $totalPaginas) echo 'disabled'; ?>">
+                                    <a class="page-link" href="?page=<?php echo $totalPaginas; ?>">
+                                        <i class="tf-icon bx bx-chevrons-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                        <!--/ Basic Pagination -->
+                    </div>
+                </div>
+            </div>
         </div>
         <!--/ Basic Bootstrap Table -->
     </div>
+
 </div>
 
 <script>

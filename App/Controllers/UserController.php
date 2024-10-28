@@ -307,4 +307,31 @@ class UserController {
         session_destroy(); // Destruir la sesión actual
         header('Location: ./login'); // Redirigir al formulario de inicio de sesión
     }
+
+
+
+    public function obtenerUsuariosPaginados($page = 1, $limit = 10) {
+        $offset = ($page - 1) * $limit;
+        $query = "SELECT u.id, u.email, r.nombre AS rol, p.nombre, p.apellido
+                  FROM usuarios u
+                  LEFT JOIN roles r ON u.rol_id = r.id
+                  LEFT JOIN pacientes p ON u.id = p.usuario_id
+                  LIMIT :limit OFFSET :offset";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function contarUsuarios() {
+        $query = "SELECT COUNT(*) as total FROM usuarios";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    }
+
+
+
+    
 }
