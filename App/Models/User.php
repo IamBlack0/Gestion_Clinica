@@ -2,7 +2,8 @@
 /**
  * Clase User para manejar las operaciones CRUD con los usuarios.
  */
-class User {
+class User
+{
     protected $conn;
     protected $tableUsuarios = 'usuarios'; // Nombre de la tabla de usuarios
 
@@ -18,26 +19,28 @@ class User {
     /**
      * Constructor de la clase que recibe la conexión a la base de datos.
      */
-    public function __construct($db) {
+    public function __construct($db)
+    {
         $this->conn = $db;
     }
 
     /**
      * Método para registrar un nuevo usuario.
      */
-    public function registro() {
+    public function registro()
+    {
         // Consulta SQL para insertar un nuevo usuario con rol
         $queryUsuario = "INSERT INTO " . $this->tableUsuarios . " (email, contraseña, rol_id) VALUES (:email, :password, :rol_id)";
         $stmtUsuario = $this->conn->prepare($queryUsuario);
-    
+
         // Encriptar la contraseña antes de guardarla
         $this->password = password_hash($this->password, PASSWORD_DEFAULT);
-    
+
         // Enlazar los parámetros
         $stmtUsuario->bindParam(':email', $this->email);
         $stmtUsuario->bindParam(':password', $this->password);
         $stmtUsuario->bindParam(':rol_id', $this->rol); // Enlazar el rol
-    
+
         // Ejecutar la consulta para insertar el usuario
         if ($stmtUsuario->execute()) {
             // Obtener el ID del usuario insertado
@@ -51,16 +54,17 @@ class User {
     /**
      * Método para iniciar sesión.
      */
-    public function login() {
+    public function login()
+    {
         // Consulta SQL para buscar el usuario por correo electrónico
         $query = "SELECT * FROM " . $this->tableUsuarios . " WHERE email = :email";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $this->email); // Enlazar el parámetro del correo electrónico
         $stmt->execute();
-    
+
         // Obtener los resultados
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
         // Verificar si la contraseña proporcionada coincide con la almacenada
         if ($user && password_verify($this->password, $user['contraseña'])) {
             $this->id = $user['id']; // Guardar el ID del usuario
@@ -74,7 +78,8 @@ class User {
     /**
      * Método para obtener el rol del usuario.
      */
-    public function obtenerRol() {
+    public function obtenerRol()
+    {
         // Consulta SQL para obtener el rol del usuario
         $query = "SELECT r.nombre AS rol FROM " . $this->tableUsuarios . " u
                   JOIN roles r ON u.rol_id = r.id
@@ -97,7 +102,8 @@ class User {
     /**
      * Método para obtener el nombre y apellido del usuario.
      */
-    public function obtenerNombreApellido() {
+    public function obtenerNombreApellido()
+    {
         // Consulta SQL para obtener el nombre y apellido del usuario
         $query = "SELECT COALESCE(p.nombre, c.nombre) AS nombre, 
                          COALESCE(p.apellido, c.apellido) AS apellido
@@ -124,7 +130,8 @@ class User {
     /**
      * Método para obtener todos los usuarios.
      */
-    public function obtenerTodosLosUsuarios() {
+    public function obtenerTodosLosUsuarios()
+    {
         $query = "SELECT u.id, u.email, u.rol_id, 
                          COALESCE(p.nombre, c.nombre) AS nombre, 
                          COALESCE(p.apellido, c.apellido) AS apellido, 
@@ -141,7 +148,8 @@ class User {
     /**
      * Método para actualizar la información de un usuario.
      */
-    public function actualizarInformacionUsuarios() {
+    public function actualizarInformacionUsuarios()
+    {
         $query = "UPDATE " . $this->tableUsuarios . " 
                   SET email = :email, rol_id = :rol_id 
                   WHERE id = :id";
@@ -159,14 +167,24 @@ class User {
     /**
      * Método para obtener todos los productos.
      */
-    public function obtenerTodosLosProductos() {
-        $query = "SELECT p.producto_id, p.nombre, p.codigo_sku, c.nombre AS categoria_nombre, p.descripcion, p.unidad_medida
+    public function obtenerTodosLosProductos()
+    {
+        $query = "SELECT p.producto_id, 
+                         p.nombre, 
+                         p.codigo_sku, 
+                         c.nombre AS categoria_nombre, 
+                         p.descripcion, 
+                         p.unidad_medida, 
+                         COALESCE(ca.cantidad, 0) AS cantidad, 
+                         COALESCE(pp.precio, 0) AS precio  
                   FROM productos p
-                  LEFT JOIN categorias c ON p.categoria_id = c.categoria_id";
+                 LEFT JOIN categorias c ON p.categoria_id = c.categoria_id
+                  LEFT JOIN cantidad ca ON p.producto_id = ca.producto_id
+                  LEFT JOIN productos_proveedores pp ON p.producto_id = pp.producto_id";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }    
+    }
 
 
 }

@@ -7,15 +7,15 @@ if (!$headerPath) {
 require $headerPath;
 
 // Conexión a la base de datos
-require_once __DIR__ . '/../../Config/DataBase.php'; // Corregir la ruta aquí
+require_once './Config/DataBase.php';
 $db = new DataBase();
 $conn = $db->getConnection();
 
 // Obtener productos de la base de datos
-$queryProductos = "SELECT * FROM productos";
-$stmtProductos = $conn->prepare($queryProductos);
-$stmtProductos->execute();
-$productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
+$queryCategorias = "SELECT categoria_id, nombre FROM categorias";
+$stmtCategorias = $conn->prepare($queryCategorias);
+$stmtCategorias->execute();
+$categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 <!-- Content wrapper -->
@@ -45,9 +45,10 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
                                 <select class="form-select" id="tipoProducto" name="tipoProducto" required
                                     onchange="mostrarCamposAdicionales()">
                                     <option value="" selected disabled>Seleccione el tipo de Producto</option>
-                                    <!-- <?php foreach ($categorias as $categoria): ?>
-                                        <option value="<?php echo $categoria['id']; ?>"><?php echo $categoria['nombre']; ?></option>
-                                    <?php endforeach; ?> -->
+                                    <?php foreach ($categorias as $categoria): ?>
+                                        <option value="<?php echo $categoria['categoria_id']; ?>">
+                                            <?php echo $categoria['nombre']; ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div id="camposAdicionales" style="display: none;">
@@ -61,11 +62,13 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                                 <div class="mb-3">
                                     <label for="cantidad" class="form-label">Cantidad</label>
-                                    <input type="number" class="form-control" id="cantidad" name="cantidad" min="0" required>
+                                    <input type="number" class="form-control" id="cantidad" name="cantidad" min="0"
+                                        required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="precio" class="form-label">Precio</label>
-                                    <input type="number" class="form-control" id="precio" name="precio" min="0.01" required>
+                                    <input type="number" class="form-control" id="precio" name="precio" min="0.01"
+                                        required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="fecha" class="form-label">Fecha de Expiracion</label>
@@ -76,57 +79,57 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="button" class="btn btn-primary" onclick="submitAgregarProductoForm()">Guardar</button>
+                        <button type="button" class="btn btn-primary"
+                            onclick="submitAgregarProductoForm()">Guardar</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <script>
-    function mostrarCamposAdicionales() {
-        const tipoProducto = document.getElementById('tipoProducto').value;
-        const camposAdicionales = document.getElementById('camposAdicionales');
-        if (tipoProducto == 1 || tipoProducto == 2) { // Asumiendo que los IDs de los roles son 1 y 2
-            camposAdicionales.style.display = 'block';
-        } else {
-            camposAdicionales.style.display = 'none';
-        }
-    }
-
-    function submitAgregarProductoForm() {
-        const form = $('#agregarProductoForm');
-        if (form[0].checkValidity()) {
-            $.ajax({
-                url: form.attr('action'),
-                type: form.attr('method'),
-                data: form.serialize(),
-                success: function(response) {
-                    const res = JSON.parse(response);
-                    if (res.success) {
-                        alert(res.message);
-                        $('#agregarProductoModal').modal('hide');
-                        actualizarTablaProducto();
-                    } else {
-                        alert(res.message);
-                    }
+            function mostrarCamposAdicionales() {
+                const tipoProducto = document.getElementById('tipoProducto').value;
+                const camposAdicionales = document.getElementById('camposAdicionales');
+                if (tipoProducto == 1 || tipoProducto == 2) { // Asumiendo que los IDs de los roles son 1 y 2
+                    camposAdicionales.style.display = 'block';
+                } else {
+                    camposAdicionales.style.display = 'none';
                 }
-            });
-        } else {
-            form[0].reportValidity();
-        }
-    }
+            }
 
-    function actualizarTablaProducto() {
-        $.ajax({
-            url: './obtenerInventarios',
-            type: 'GET',
-            success: function(response) {
-                console.log(response);
-                const productos = JSON.parse(response);
-                const tbody = $('.table tbody');
-                tbody.empty();
-                productos.forEach(producto => {
-                    tbody.append(`
+            function submitAgregarProductoForm() {
+                const form = $('#agregarProductoForm');
+                if (form[0].checkValidity()) {
+                    $.ajax({
+                        url: form.attr('action'),
+                        type: form.attr('method'),
+                        data: form.serialize(),
+                        success: function (response) {
+                            const res = JSON.parse(response);
+                            if (res.success) {
+                                alert(res.message);
+                                $('#agregarProductoModal').modal('hide');
+                                actualizarTablaProducto();
+                            } else {
+                                alert(res.message);
+                            }
+                        }
+                    });
+                } else {
+                    form[0].reportValidity();
+                }
+            }
+
+            function actualizarTablaProducto() {
+                $.ajax({
+                    url: './obtenerInventarios',
+                    type: 'GET',
+                    success: function (response) {
+                        const productos = JSON.parse(response);
+                        const tbody = $('.table tbody');
+                        tbody.empty();
+                        productos.forEach(producto => {
+                            tbody.append(`
                         <tr>
                             <td>${producto.producto_id}</td>
                             <td>${producto.nombre || 'Nombre no disponible'}</td>
@@ -151,11 +154,11 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
                             </td>
                         </tr>
                     `);
+                        });
+                    }
                 });
             }
-        });
-    }
-</script>
+        </script>
 
         <!-- Basic Bootstrap Table -->
         <div class="card">
@@ -168,6 +171,8 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
                             <th>Nombre</th>
                             <th>Codigo/SKU</th>
                             <th>Categoria</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
                             <th>Descripcion</th>
                             <th>Medida</th>
                         </tr>
@@ -176,11 +181,20 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
                         <?php foreach ($productos as $producto): ?>
                             <tr>
                                 <td><?php echo $producto['producto_id']; ?></td>
-                                <td><?php echo isset($producto['nombre']) ? $producto['nombre'] : 'Nombre no disponible'; ?></td>
-                                <td><?php echo isset($producto['codigo_sku']) ? $producto['codigo_sku'] : 'Código no disponible'; ?></td>
-                                <td><?php echo isset($producto['categoria_nombre']) ? $producto['categoria_nombre'] : 'Categoría no disponible'; ?></td>
-                                <td><?php echo isset($producto['descripcion']) ? $producto['descripcion'] : 'Descripción no disponible'; ?></td>
-                                <td><?php echo isset($producto['unidad_medida']) ? $producto['unidad_medida'] : 'Unidad/Medida no disponible'; ?></td>
+                                <td><?php echo isset($producto['nombre']) ? $producto['nombre'] : 'Nombre no disponible'; ?>
+                                </td>
+                                <td><?php echo isset($producto['codigo_sku']) ? $producto['codigo_sku'] : 'Código no disponible'; ?>
+                                </td>
+                                <td><?php echo isset($producto['categoria_nombre']) ? $producto['categoria_nombre'] : 'Categoría no disponible'; ?>
+                                </td>
+                                <td><?php echo isset($producto['cantidad']) ? $producto['cantidad'] : 'Cantidad no disponible'; ?>
+                                </td>
+                                <td><?php echo isset($producto['precio']) ? '$' . number_format($producto['precio'], 2) : 'Precio no disponible'; ?>
+                                </td>
+                                <td><?php echo isset($producto['descripcion']) ? $producto['descripcion'] : 'Descripción no disponible'; ?>
+                                </td>
+                                <td><?php echo isset($producto['unidad_medida']) ? $producto['unidad_medida'] : 'Unidad/Medida no disponible'; ?>
+                                </td>
                                 <td>
                                     <div class="dropdown">
                                         <button type="button" class="btn p-0 dropdown-toggle hide-arrow"

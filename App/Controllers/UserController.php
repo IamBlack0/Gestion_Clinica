@@ -341,8 +341,8 @@ class UserController {
     }
 
     public function obtenerInventarios(){
-        $producto = $this->user->obtenerTodosLosProductos();
-        echo json_encode($producto);
+        $productos = $this->user->obtenerTodosLosProductos();
+        echo json_encode($productos);
     }
 
     
