@@ -30,10 +30,11 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
 // Obtener usuarios con paginación
-$queryUsuarios = "SELECT u.id, u.email, r.nombre AS rol, p.nombre, p.apellido
+$queryUsuarios = "SELECT u.id, u.email, r.nombre AS rol, COALESCE(p.nombre, c.nombre) AS nombre, COALESCE(p.apellido, c.apellido) AS apellido
                   FROM usuarios u
                   LEFT JOIN roles r ON u.rol_id = r.id
                   LEFT JOIN pacientes p ON u.id = p.usuario_id
+                  LEFT JOIN colaboradores c ON u.id = c.usuario_id
                   LIMIT :limit OFFSET :offset";
 $stmtUsuarios = $conn->prepare($queryUsuarios);
 $stmtUsuarios->bindParam(':limit', $limit, PDO::PARAM_INT);
@@ -198,12 +199,10 @@ $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
                         <?php foreach ($usuarios as $usuario): ?>
                             <tr>
                                 <td><?php echo $usuario['id']; ?></td>
-                                <td><?php echo isset($usuario['nombre']) ? $usuario['nombre'] : 'Nombre no disponible'; ?>
-                                </td>
-                                <td><?php echo isset($usuario['apellido']) ? $usuario['apellido'] : 'Apellido no disponible'; ?>
-                                </td>
+                                <td><?php echo $usuario['nombre']; ?></td>
+                                <td><?php echo $usuario['apellido']; ?></td>
                                 <td><?php echo $usuario['email']; ?></td>
-                                <td><?php echo isset($usuario['rol']) ? $usuario['rol'] : 'Rol no disponible'; ?></td>
+                                <td><?php echo $usuario['rol']; ?></td>
                                 <td>
                                     <div class="dropdown">
                                         <button type="button" class="btn p-0 dropdown-toggle hide-arrow"
