@@ -6,6 +6,8 @@ class User {
     protected $conn;
     protected $tableUsuarios = 'usuarios'; // Nombre de la tabla de usuarios
 
+    protected $tableProductos = 'productos'; // Nombre de la tabla de productos
+
     public $id;
     public $email; // Propiedad para el correo electrónico
     public $password;
@@ -153,4 +155,18 @@ class User {
         // Ejecutar la consulta para actualizar el usuario
         return $stmt->execute();
     }
+
+    /**
+     * Método para obtener todos los productos.
+     */
+    public function obtenerTodosLosProductos() {
+        $query = "SELECT p.producto_id, p.nombre, p.codigo_sku, c.nombre AS categoria_nombre, p.descripcion, p.unidad_medida
+                  FROM productos p
+                  LEFT JOIN categorias c ON p.categoria_id = c.categoria_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }    
+
+
 }

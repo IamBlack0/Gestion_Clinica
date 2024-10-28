@@ -112,7 +112,7 @@ if (session_status() == PHP_SESSION_NONE) {
           <li class="menu-item">
             <a href="#" class="menu-link">
               <i class="menu-icon tf-icons bx bx-dock-top"></i>
-              <div data-i18n="Account Settings">Agrendar citas</div>
+              <div data-i18n="Account Settings">Agendar citas</div>
             </a>
           </li>
           <li class="menu-item">
@@ -148,7 +148,7 @@ if (session_status() == PHP_SESSION_NONE) {
 
           <!-- Extended components -->
           <li class="menu-item">
-            <a href="#" class="menu-link ">
+            <a href="./gestionInventario" class="menu-link ">
               <i class="menu-icon tf-icons bx bx-copy"></i>
               <div data-i18n="Extended UI">Inventario</div>
             </a>

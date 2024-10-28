@@ -62,12 +62,31 @@ class App
                     header('Location: ./login');
                 }
                 break;
+            case 'mostrarListaProductos':
+                // Verificar si el usuario está autenticado y es administrador antes de mostrar la lista de productos
+                if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
+                    $controller->mostrarListaProductos(); // Llamar al método para mostrar la lista de productos
+                } else {
+                    header('Location: ./login');
+                }
+                break;
             case 'agregarUsuario':
                 $controller->agregarUsuario(); // Llamar al método para agregar un usuario
                 break;
-                case 'obtenerUsuarios':
-                    $controller->obtenerUsuarios();
-                    break;
+            case 'obtenerUsuarios':
+                $controller->obtenerUsuarios();
+                break;
+            case 'obtenerIventarios':
+                $controller->obtenerInventarios();
+                break;
+            case 'gestionInventario':
+                // Verificar si el usuario está autenticado antes de mostrar el panel de inventario
+                if (isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../App/Views/gestionInventario.php';
+                } else {
+                    header('Location: ./login');
+                }
+                break;
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
                 break;

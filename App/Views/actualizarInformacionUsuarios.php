@@ -25,7 +25,7 @@ $totalUsuarios = $stmtTotalUsuarios->fetch(PDO::FETCH_ASSOC)['total'];
 // Configuración de la paginación
 $limit = 10;
 $totalPaginas = ceil($totalUsuarios / $limit);
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
 // Obtener usuarios con paginación
@@ -40,6 +40,18 @@ $stmtUsuarios->bindParam(':limit', $limit, PDO::PARAM_INT);
 $stmtUsuarios->bindParam(':offset', $offset, PDO::PARAM_INT);
 $stmtUsuarios->execute();
 $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
+
+// Obtener las nacionalidades
+$queryNacionalidades = "SELECT id, nombre FROM nacionalidades";
+$stmtNacionalidades = $conn->prepare($queryNacionalidades);
+$stmtNacionalidades->execute();
+$nacionalidades = $stmtNacionalidades->fetchAll(PDO::FETCH_ASSOC);
+
+// Obtener las provincias
+$queryProvincias = "SELECT id, nombre FROM provincias";
+$stmtProvincias = $conn->prepare($queryProvincias);
+$stmtProvincias->execute();
+$provincias = $stmtProvincias->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!-- Content wrapper -->
@@ -133,12 +145,10 @@ $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
                                             <i class="bx bx-dots-vertical-rounded"></i>
                                         </button>
                                         <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="javascript:void(0);"
-                                                onclick="editarUsuario(<?php echo $usuario['id']; ?>)">
+                                            <a class="dropdown-item" href="javascript:void(0);" >
                                                 <i class="bx bx-edit-alt me-2"></i> Editar
                                             </a>
-                                            <a class="dropdown-item" href="javascript:void(0);"
-                                                onclick="eliminarUsuario(<?php echo $usuario['id']; ?>)">
+                                            <a class="dropdown-item" href="">
                                                 <i class="bx bx-trash me-2"></i> Eliminar
                                             </a>
                                         </div>
@@ -157,27 +167,32 @@ $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
                         <!-- Basic Pagination -->
                         <nav aria-label="Page navigation">
                             <ul class="pagination">
-                                <li class="page-item first <?php if ($page <= 1) echo 'disabled'; ?>">
+                                <li class="page-item first <?php if ($page <= 1)
+                                    echo 'disabled'; ?>">
                                     <a class="page-link" href="?page=1">
                                         <i class="tf-icon bx bx-chevrons-left"></i>
                                     </a>
                                 </li>
-                                <li class="page-item prev <?php if ($page <= 1) echo 'disabled'; ?>">
+                                <li class="page-item prev <?php if ($page <= 1)
+                                    echo 'disabled'; ?>">
                                     <a class="page-link" href="?page=<?php echo $page - 1; ?>">
                                         <i class="tf-icon bx bx-chevron-left"></i>
                                     </a>
                                 </li>
                                 <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-                                    <li class="page-item <?php if ($i == $page) echo 'active'; ?>">
+                                    <li class="page-item <?php if ($i == $page)
+                                        echo 'active'; ?>">
                                         <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
                                     </li>
                                 <?php endfor; ?>
-                                <li class="page-item next <?php if ($page >= $totalPaginas) echo 'disabled'; ?>">
+                                <li class="page-item next <?php if ($page >= $totalPaginas)
+                                    echo 'disabled'; ?>">
                                     <a class="page-link" href="?page=<?php echo $page + 1; ?>">
                                         <i class="tf-icon bx bx-chevron-right"></i>
                                     </a>
                                 </li>
-                                <li class="page-item last <?php if ($page >= $totalPaginas) echo 'disabled'; ?>">
+                                <li class="page-item last <?php if ($page >= $totalPaginas)
+                                    echo 'disabled'; ?>">
                                     <a class="page-link" href="?page=<?php echo $totalPaginas; ?>">
                                         <i class="tf-icon bx bx-chevrons-right"></i>
                                     </a>
@@ -192,6 +207,7 @@ $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
         <!--/ Basic Bootstrap Table -->
     </div>
 </div>
+
 
 
 

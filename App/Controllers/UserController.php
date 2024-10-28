@@ -331,7 +331,19 @@ class UserController {
         return $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     }
 
+ /**
+     * Método para mostrar la lista de productos.
+     */
+    public function mostrarListaProductos() {
+        // Obtener la lista de productos
+        $productos = $this->user->obtenerTodosLosProductos();
+        require_once __DIR__ . '/../Views/gestionInventario.php';
+    }
 
+    public function obtenerInventarios(){
+        $producto = $this->user->obtenerTodosLosProductos();
+        echo json_encode($producto);
+    }
 
     
 }

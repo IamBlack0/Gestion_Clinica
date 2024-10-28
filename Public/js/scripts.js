@@ -48,8 +48,12 @@ function submitAgregarUsuarioForm() {
                 const res = JSON.parse(response);
                 if (res.success) {
                     alert(res.message);
-                    $('#agregarUsuarioModal').modal('hide');
-                    actualizarTablaUsuarios();
+                    if (res.message === "Usuario registrado correctamente.") {
+                        window.location.reload(); // Recargar la página
+                    } else {
+                        $('#agregarUsuarioModal').modal('hide');
+                        actualizarTablaUsuarios(); // Recargar la tabla de usuarios
+                    }
                 } else {
                     alert(res.message);
                 }
