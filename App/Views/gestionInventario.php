@@ -7,15 +7,15 @@ if (!$headerPath) {
 require $headerPath;
 
 // Conexión a la base de datos
-require_once 'C:/xampp/htdocs/Gestion_Clinica/Config/DataBase.php';
+require_once './Config/DataBase.php';
 $db = new DataBase();
 $conn = $db->getConnection();
 
 // Obtener productos de la base de datos
-$queryProductos = "SELECT * FROM productos";
-$stmtProductos = $conn->prepare($queryProductos);
-$stmtProductos->execute();
-$productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
+$queryCategorias = "SELECT categoria_id, nombre FROM categorias";
+$stmtCategorias = $conn->prepare($queryCategorias);
+$stmtCategorias->execute();
+$categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 <!-- Content wrapper -->
@@ -45,9 +45,9 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
                                 <select class="form-select" id="tipoProducto" name="tipoProducto" required
                                     onchange="mostrarCamposAdicionales()">
                                     <option value="" selected disabled>Seleccione el tipo de Producto</option>
-                                    <!-- <?php foreach ($categorias as $categoria): ?>
-                                        <option value="<?php echo $categoria['id']; ?>"><?php echo $categoria['nombre']; ?></option>
-                                    <?php endforeach; ?> -->
+                                    <?php foreach ($categorias as $categoria): ?>
+                                        <option value="<?php echo $categoria['categoria_id']; ?>"><?php echo $categoria['nombre']; ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div id="camposAdicionales" style="display: none;">
@@ -121,7 +121,6 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
             url: './obtenerInventarios',
             type: 'GET',
             success: function(response) {
-                console.log(response);
                 const productos = JSON.parse(response);
                 const tbody = $('.table tbody');
                 tbody.empty();
@@ -168,6 +167,8 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
                             <th>Nombre</th>
                             <th>Codigo/SKU</th>
                             <th>Categoria</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
                             <th>Descripcion</th>
                             <th>Medida</th>
                         </tr>
@@ -175,12 +176,14 @@ $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
                     <tbody class="table-border-bottom-0">
                         <?php foreach ($productos as $producto): ?>
                             <tr>
-                                <td><?php echo $producto['producto_id']; ?></td>
-                                <td><?php echo isset($producto['nombre']) ? $producto['nombre'] : 'Nombre no disponible'; ?></td>
-                                <td><?php echo isset($producto['codigo_sku']) ? $producto['codigo_sku'] : 'Código no disponible'; ?></td>
-                                <td><?php echo isset($producto['categoria_nombre']) ? $producto['categoria_nombre'] : 'Categoría no disponible'; ?></td>
-                                <td><?php echo isset($producto['descripcion']) ? $producto['descripcion'] : 'Descripción no disponible'; ?></td>
-                                <td><?php echo isset($producto['unidad_medida']) ? $producto['unidad_medida'] : 'Unidad/Medida no disponible'; ?></td>
+                            <td><?php echo $producto['producto_id']; ?></td>
+                            <td><?php echo isset($producto['nombre']) ? $producto['nombre'] : 'Nombre no disponible'; ?></td>
+                            <td><?php echo isset($producto['codigo_sku']) ? $producto['codigo_sku'] : 'Código no disponible'; ?></td>
+                            <td><?php echo isset($producto['categoria_nombre']) ? $producto['categoria_nombre'] : 'Categoría no disponible'; ?></td>
+                            <td><?php echo isset($producto['cantidad']) ? $producto['cantidad'] : 'Cantidad no disponible'; ?></td>
+                            <td><?php echo isset($producto['precio']) ? '$' . number_format($producto['precio'], 2) : 'Precio no disponible'; ?></td>
+                            <td><?php echo isset($producto['descripcion']) ? $producto['descripcion'] : 'Descripción no disponible'; ?></td>
+                            <td><?php echo isset($producto['unidad_medida']) ? $producto['unidad_medida'] : 'Unidad/Medida no disponible'; ?></td>
                                 <td>
                                     <div class="dropdown">
                                         <button type="button" class="btn p-0 dropdown-toggle hide-arrow"

@@ -141,13 +141,22 @@ class User {
      * Método para obtener todos los productos.
      */
     public function obtenerTodosLosProductos() {
-        $query = "SELECT p.producto_id, p.nombre, p.codigo_sku, c.nombre AS categoria_nombre, p.descripcion, p.unidad_medida
+        $query = "SELECT p.producto_id, 
+                         p.nombre, 
+                         p.codigo_sku, 
+                         c.nombre AS categoria_nombre, 
+                         p.descripcion, 
+                         p.unidad_medida, 
+                         COALESCE(ca.cantidad, 0) AS cantidad,  -- Usamos COALESCE para mostrar 0 si no hay stock
+                         COALESCE(pp.precio, 0) AS precio       -- Usamos COALESCE para mostrar 0 si no hay precio
                   FROM productos p
-                  LEFT JOIN categorias c ON p.categoria_id = c.categoria_id";
+                  LEFT JOIN categorias c ON p.categoria_id = c.categoria_id
+                  LEFT JOIN cantidad ca ON p.producto_id = ca.producto_id
+                  LEFT JOIN productos_proveedores pp ON p.producto_id = pp.producto_id"; // Agregamos el JOIN con productos_proveedores
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }    
+    }
 
     /**
      * Método para actualizar la información de un usuario.
