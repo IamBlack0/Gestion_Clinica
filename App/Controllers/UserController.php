@@ -239,6 +239,15 @@ class UserController {
     }
 
     /**
+     * Método para mostrar la lista de productos.
+     */
+    public function mostrarListaProductos() {
+        // Obtener la lista de productos
+        $productos = $this->user->obtenerTodosLosProductos();
+        require_once __DIR__ . '/../Views/gestionInventario.php';
+    }
+
+    /**
      * Método para manejar la actualización de la información de cualquier usuario.
      */
     public function actualizarInformacionUsuarios() {
@@ -298,6 +307,11 @@ class UserController {
     public function obtenerUsuarios() {
         $usuarios = $this->user->obtenerTodosLosUsuarios();
         echo json_encode($usuarios);
+    }
+
+    public function obtenerInventarios(){
+        $producto = $this->user->obtenerTodosLosProductos();
+        echo json_encode($producto);
     }
 
     /**
