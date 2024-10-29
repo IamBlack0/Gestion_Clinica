@@ -150,8 +150,7 @@ CREATE TABLE proveedores (
     proveedor_id INT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
     contacto VARCHAR(100),
-    telefono VARCHAR(15),
-    direccion TEXT
+    telefono VARCHAR(15)
 );
 
 CREATE TABLE productos (
@@ -159,8 +158,8 @@ CREATE TABLE productos (
     nombre VARCHAR(100) NOT NULL,
     codigo_sku VARCHAR(50) UNIQUE NOT NULL,
     categoria_id INT,
-    descripcion TEXT,
     unidad_medida VARCHAR(50),
+    fecha_expiracion DATE NOT NULL,
     CONSTRAINT fk_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(categoria_id)
 );
 
@@ -187,46 +186,32 @@ CREATE TABLE productos_proveedores (
     proveedor_id INT,
     precio DECIMAL(10, 2),
     PRIMARY KEY (producto_id, proveedor_id),
-    fecha_actualizacion DATE DEFAULT CURRENT_DATE,
     CONSTRAINT fk_producto FOREIGN KEY (producto_id) REFERENCES productos(producto_id),
     CONSTRAINT fk_proveedor FOREIGN KEY (proveedor_id) REFERENCES proveedores(proveedor_id)
-);
-
-CREATE TABLE lotes (
-    lote_id INT PRIMARY KEY AUTO_INCREMENT,
-    producto_id INT NOT NULL,
-    fecha_expiracion DATE,
-    cantidad INT CHECK (cantidad >= 0),
-    CONSTRAINT fk_producto_lote FOREIGN KEY (producto_id) REFERENCES productos(producto_id)
 );
 
 INSERT INTO categorias (nombre) VALUES ('Analgésicos');
 INSERT INTO categorias (nombre) VALUES ('Antibióticos');
 
-INSERT INTO proveedores (nombre, contacto, telefono, direccion) 
-VALUES ('Proveedor A', 'Juan Pérez', '123456789', 'Calle 50, Panama');
-INSERT INTO proveedores (nombre, contacto, telefono, direccion) 
-VALUES ('Proveedor B', 'Ana Gómez', '987654321', 'Avenida B, Panama');
+INSERT INTO proveedores (nombre, contacto, telefono) 
+VALUES ('MEDICEL S.A', 'Juan Pérez', '123456789');
+INSERT INTO proveedores (nombre, contacto, telefono) 
+VALUES ('AGENCIAS MOTTA, S. A', 'Ana Gómez', '987654321');
 
-INSERT INTO productos (nombre, codigo_sku, categoria_id, descripcion, unidad_medida) 
-VALUES ('Ibuprofeno 400mg', 'IBU400', 1, 'Analgésico para dolor leve a moderado', 'Tableta');
-INSERT INTO productos (nombre, codigo_sku, categoria_id, descripcion, unidad_medida) 
-VALUES ('Amoxicilina 500mg', 'AMOX500', 2, 'Antibiótico de amplio espectro', 'Cápsula');
+INSERT INTO productos (nombre, codigo_sku, categoria_id, unidad_medida, fecha_expiracion) 
+VALUES ('Ibuprofeno 400mg', 'IBU400', 1, 'Tableta', '2030-10-22');
+INSERT INTO productos (nombre, codigo_sku, categoria_id, unidad_medida, fecha_expiracion) 
+VALUES ('Amoxicilina 500mg', 'AMOX500', 2, 'Cápsula', '2030-10-22');
 
 INSERT INTO cantidad (producto_id, cantidad, ubicacion) 
 VALUES (1, 100, 'Almacén central');
 INSERT INTO cantidad (producto_id, cantidad, ubicacion) 
 VALUES (2, 50, 'Almacén central');
 
-INSERT INTO productos_proveedores (producto_id, proveedor_id, precio, fecha_actualizacion)
-VALUES (1, 1, 0.50, '2024-10-01');
-INSERT INTO productos_proveedores (producto_id, proveedor_id, precio, fecha_actualizacion)
-VALUES (2, 2, 0.75, '2024-10-01');
-
-INSERT INTO lotes (producto_id, fecha_expiracion, cantidad) 
-VALUES (1, '2025-12-31', 100);
-INSERT INTO lotes (producto_id, fecha_expiracion, cantidad) 
-VALUES (2, '2024-11-30', 50);
+INSERT INTO productos_proveedores (producto_id, proveedor_id, precio)
+VALUES (1, 1, 0.50);
+INSERT INTO productos_proveedores (producto_id, proveedor_id, precio)
+VALUES (2, 2, 0.75);
 
 INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad, descripcion)
 VALUES (1, '2024-10-20', 'entrada', 100, 'Ingreso inicial de stock para Ibuprofeno 400mg');

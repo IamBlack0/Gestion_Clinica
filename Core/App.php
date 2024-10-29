@@ -82,6 +82,9 @@ class App
                     header('Location: ./login');
                 }
                 break;
+            case 'agregarProducto':
+                $controller->agregarProducto(); // Llamar al método para agregar un producto
+                break;
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
                 break;

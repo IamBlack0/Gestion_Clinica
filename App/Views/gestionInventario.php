@@ -17,6 +17,15 @@ $stmtCategorias = $conn->prepare($queryCategorias);
 $stmtCategorias->execute();
 $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
 
+// Obtener proveedores de la base de datos
+$queryProveedores = "SELECT proveedor_id, nombre FROM proveedores"; // Asegúrate de que esta tabla existe
+$stmtProveedores = $conn->prepare($queryProveedores);
+$stmtProveedores->execute();
+$proveedores = $stmtProveedores->fetchAll(PDO::FETCH_ASSOC);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 ?>
 <!-- Content wrapper -->
 <div class="content-wrapper">
@@ -39,7 +48,7 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="agregarProductoForm" action="./agregarUsuario" method="POST">
+                        <form id="agregarProductoForm" action="./agregarProducto" method="POST">
                             <div class="mb-3">
                                 <label for="tipoProducto" class="form-label">Tipo de Producto</label>
                                 <select class="form-select" id="tipoProducto" name="tipoProducto" required
@@ -47,7 +56,8 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
                                     <option value="" selected disabled>Seleccione el tipo de Producto</option>
                                     <?php foreach ($categorias as $categoria): ?>
                                         <option value="<?php echo $categoria['categoria_id']; ?>">
-                                            <?php echo $categoria['nombre']; ?></option>
+                                            <?php echo $categoria['nombre']; ?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -61,14 +71,63 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
                                     <input type="text" class="form-control" id="codigo" name="codigo" required>
                                 </div>
                                 <div class="mb-3">
+                                    <label for="desc" class="form-label">Descripcion</label>
+                                    <input type="text" class="form-control" id="desc" name="desc" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="forma" class="form-label">Forma</label>
+                                    <select class="form-select" id="forma" name="forma" required>
+                                        <option value="">Seleccione una forma</option>
+                                        <option value="Tableta">Tableta</option>
+                                        <option value="Capsula">Cápsula</option>
+                                        <option value="Jarabe">Jarabe</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
                                     <label for="cantidad" class="form-label">Cantidad</label>
                                     <input type="number" class="form-control" id="cantidad" name="cantidad" min="0"
                                         required>
                                 </div>
                                 <div class="mb-3">
+                                    <label for="proveedor" class="form-label">Proveedor</label>
+                                    <select class="form-select" id="proveedor" name="proveedor_id" required
+                                        onchange="updateProveedorName()">
+                                        <option value="" selected disabled>Seleccione el proveedor</option>
+                                        <?php foreach ($proveedores as $proveedor): ?>
+                                            <option value="<?php echo $proveedor['proveedor_id']; ?>"
+                                                data-nombre="<?php echo $proveedor['nombre']; ?>">
+                                                <?php echo $proveedor['nombre']; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <input type="hidden" name="proveedor_nombre" id="proveedor_nombre">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contacto" class="form-label">Contacto del Proveedor</label>
+                                    <input type="text" class="form-control" id="contacto" name="contacto" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="telefono" class="form-label">Teléfono del Contacto</label>
+                                    <input type="number" class="form-control" id="telefono" name="telefono" required>
+                                </div>
+                                <div class="mb-3">
                                     <label for="precio" class="form-label">Precio</label>
-                                    <input type="number" class="form-control" id="precio" name="precio" min="0.01"
+                                    <input type="number" class="form-control" id="precio" name="precio" step="0.01"
                                         required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="almacen" class="form-label">¿En qué almacén?</label>
+                                    <input type="text" class="form-control" id="almacen" name="almacen" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fecha-registro" class="form-label">Fecha de Registro</label>
+                                    <input type="date" class="form-control" id="fecha-registro" name="fecha-registro"
+                                        required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="movimiento" class="form-label">Movimiento</label>
+                                    <input type="text" class="form-control" id="movimiento" name="movimiento"
+                                        value="Entrada" readonly>
                                 </div>
                                 <div class="mb-3">
                                     <label for="fecha" class="form-label">Fecha de Expiracion</label>
@@ -90,11 +149,20 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
             function mostrarCamposAdicionales() {
                 const tipoProducto = document.getElementById('tipoProducto').value;
                 const camposAdicionales = document.getElementById('camposAdicionales');
-                if (tipoProducto == 1 || tipoProducto == 2) { // Asumiendo que los IDs de los roles son 1 y 2
+                if (tipoProducto) {
                     camposAdicionales.style.display = 'block';
                 } else {
                     camposAdicionales.style.display = 'none';
                 }
+            }
+
+            function updateProveedorName() {
+                const select = document.getElementById('proveedor');
+                const selectedOption = select.options[select.selectedIndex];
+                const proveedorNombreInput = document.getElementById('proveedor_nombre');
+
+                // Asignar el nombre del proveedor al campo oculto
+                proveedorNombreInput.value = selectedOption.getAttribute('data-nombre');
             }
 
             function submitAgregarProductoForm() {
@@ -134,8 +202,9 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
                             <td>${producto.producto_id}</td>
                             <td>${producto.nombre || 'Nombre no disponible'}</td>
                             <td>${producto.codigo_sku || 'Codigo no disponible'}</td>
-                            <td>${producto.categoria_nombre}</td>
-                            <td>${producto.descripcion || 'Descripcion no disponible'}</td>
+                            <td>${producto.categoria_nombre || 'Categoría no disponible'}</td>
+                            <td>${producto.cantidad || 'Cantidad no disponible'}</td>
+                            <td>${producto.precio || 'Precio no disponible'}</td>
                             <td>${producto.unidad_medida || 'Unidad/Medida no disponible'}</td>
                             <td>
                                 <div class="dropdown">
@@ -143,10 +212,10 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
                                         <i class="bx bx-dots-vertical-rounded"></i>
                                     </button>
                                     <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="javascript:void(0);" onclick="editarUsuario(${producto.id})">
+                                        <a class="dropdown-item" href="javascript:void(0);" onclick="editarProducto(${producto.id})">
                                             <i class="bx bx-edit-alt me-2"></i> Editar
                                         </a>
-                                        <a class="dropdown-item" href="javascript:void(0);" onclick="eliminarUsuario(${producto.id})">
+                                        <a class="dropdown-item" href="javascript:void(0);" onclick="eliminarProducto(${producto.id})">
                                             <i class="bx bx-trash me-2"></i> Eliminar
                                         </a>
                                     </div>
@@ -173,7 +242,6 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
                             <th>Categoria</th>
                             <th>Cantidad</th>
                             <th>Precio</th>
-                            <th>Descripcion</th>
                             <th>Medida</th>
                         </tr>
                     </thead>
@@ -191,8 +259,6 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
                                 </td>
                                 <td><?php echo isset($producto['precio']) ? '$' . number_format($producto['precio'], 2) : 'Precio no disponible'; ?>
                                 </td>
-                                <td><?php echo isset($producto['descripcion']) ? $producto['descripcion'] : 'Descripción no disponible'; ?>
-                                </td>
                                 <td><?php echo isset($producto['unidad_medida']) ? $producto['unidad_medida'] : 'Unidad/Medida no disponible'; ?>
                                 </td>
                                 <td>
@@ -202,14 +268,12 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
                                             <i class="bx bx-dots-vertical-rounded"></i>
                                         </button>
                                         <div class="dropdown-menu">
-                                            <!-- <a class="dropdown-item" href="javascript:void(0);"
-                                                onclick="editarProducto(<?php echo $producto['id']; ?>)">
+                                            <a class="dropdown-item">
                                                 <i class="bx bx-edit-alt me-2"></i> Editar
                                             </a>
-                                            <a class="dropdown-item" href="javascript:void(0);"
-                                                onclick="eliminarProducto(<?php echo $producto['id']; ?>)">
+                                            <a class="dropdown-item">
                                                 <i class="bx bx-trash me-2"></i> Eliminar
-                                            </a> -->
+                                            </a>
                                         </div>
                                     </div>
                                 </td>
@@ -222,22 +286,6 @@ $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
         <!--/ Basic Bootstrap Table -->
     </div>
 </div>
-
-<script>
-    function editarProducto(id) {
-        // Redirigir a la página de edición con el ID del producto
-        window.location.href = './editarProducto?id=' + id;
-    }
-
-    function eliminarProducto(id) {
-        // Confirmar la eliminación del usuario
-        if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
-            // Redirigir a la página de eliminación con el ID del producto
-            window.location.href = './eliminarProducto?id=' + id;
-        }
-    }
-</script>
-
 <?php
 // Verificar rutas
 $footerPath = __DIR__ . '/Templates/footer.php';
