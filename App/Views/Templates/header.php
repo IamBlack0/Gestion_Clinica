@@ -110,9 +110,9 @@ if (session_status() == PHP_SESSION_NONE) {
             <span class="menu-header-text">Paciente</span>
           </li>
           <li class="menu-item">
-            <a href="#" class="menu-link">
-              <i class="menu-icon tf-icons bx bx-dock-top"></i>
-              <div data-i18n="Account Settings">Agendar citas</div>
+            <a href="./agendarCita" class="menu-link">
+              <i class="menu-icon tf-icons bx bx-calendar"></i>
+              <div data-i18n="Agendar Citas">Agendar Citas</div>
             </a>
           </li>
           <li class="menu-item">

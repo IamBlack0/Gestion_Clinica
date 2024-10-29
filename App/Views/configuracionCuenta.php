@@ -16,7 +16,7 @@ $database = new Database();
 $db = $database->getConnection();
 
 // Obtener la información del usuario
-$queryUsuario = "SELECT email FROM usuarios WHERE id = :user_id";
+$queryUsuario = "SELECT email, rol_id FROM usuarios WHERE id = :user_id";
 $stmtUsuario = $db->prepare($queryUsuario);
 $stmtUsuario->bindParam(':user_id', $_SESSION['user_id']);
 $stmtUsuario->execute();
@@ -44,6 +44,13 @@ $provincias = $stmtProvincias->fetchAll(PDO::FETCH_ASSOC);
 // Definir la URL de la foto de perfil
 $fotoPerfilSrc = !empty($informacionPaciente['foto_perfil']) ? 'data:image/jpeg;base64,' . $informacionPaciente['foto_perfil'] : '../Public/img/avatars/1.png';
 
+// Verificar si el usuario es administrador
+$queryAdmin = "SELECT id FROM roles WHERE nombre = 'administrador'";
+$stmtAdmin = $db->prepare($queryAdmin);
+$stmtAdmin->execute();
+$adminRole = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
+
+$isAdmin = $usuario['rol_id'] == $adminRole['id'];
 ?>
 
 <!-- Content wrapper -->
@@ -102,6 +109,7 @@ $fotoPerfilSrc = !empty($informacionPaciente['foto_perfil']) ? 'data:image/jpeg;
                                     <label for="email" class="form-label">Correo</label>
                                     <input class="form-control" type="text" id="email" name="email" value="<?php echo $usuario['email'] ?? ''; ?>" readonly />
                                 </div>
+                                <?php if (!$isAdmin): ?>
                                 <div class="mb-3 col-md-6">
                                     <label for="edad" class="form-label">Edad</label>
                                     <input type="number" class="form-control" id="edad" name="edad" value="<?php echo $informacionPaciente['edad'] ?? ''; ?>" min="0" />
@@ -162,6 +170,7 @@ $fotoPerfilSrc = !empty($informacionPaciente['foto_perfil']) ? 'data:image/jpeg;
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
+                                <?php endif; ?>
                             </div>
                             <div class="mt-2">
                                 <button type="submit" class="btn btn-primary me-2">Guardar cambios</button>

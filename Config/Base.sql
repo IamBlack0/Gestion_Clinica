@@ -112,20 +112,7 @@ CREATE TABLE colaboradores (
     FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE SET NULL
 );
 
--- Insertar un usuario para el colaborador médico
-INSERT INTO usuarios (email, contraseña, rol_id) VALUES
-('medico1@clinic.com', 'medico1', (SELECT id FROM roles WHERE nombre = 'medico'));
 
--- Insertar el colaborador en la tabla colaboradores con la especialidad de Medicina General
-INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, especialidad_id, fecha_contratacion)
-VALUES (
-    (SELECT id FROM usuarios WHERE email = 'medico1@clinic.com'),
-    (SELECT id FROM roles WHERE nombre = 'medico'),
-    'Juan',
-    'Pérez',
-    (SELECT id FROM especialidades WHERE nombre = 'Medicina General'),
-    '2024-10-24'
-);
 
 -- Insertar un usuario con rol administrativo en la tabla usuarios (la contraseña es: admin1)
 INSERT INTO usuarios (email, contraseña, rol_id)
@@ -217,3 +204,75 @@ INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimien
 VALUES (1, '2024-10-20', 'entrada', 100, 'Ingreso inicial de stock para Ibuprofeno 400mg');
 INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad, descripcion)
 VALUES (2, '2024-10-21', 'entrada', 50, 'Ingreso inicial de stock para Amoxicilina 500mg');
+
+
+
+-- TABLA PARA AGENDAR CITAS
+CREATE TABLE citas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NOT NULL,
+    especialidad_id INT NOT NULL,
+    medico_id INT NOT NULL,
+    horario ENUM('mañana', 'tarde', 'noche') NOT NULL,
+    razon TEXT NOT NULL,
+    fecha_cita DATE NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+    FOREIGN KEY (especialidad_id) REFERENCES especialidades(id),
+    FOREIGN KEY (medico_id) REFERENCES colaboradores(id)
+);
+
+-- TABLA PARA EL HISTORIAL DE CITAS
+CREATE TABLE historial_citas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NOT NULL,
+    medico_id INT NOT NULL,
+    fecha_cita DATE NOT NULL,
+    estado_pago ENUM('pendiente', 'pagado') NOT NULL DEFAULT 'pendiente',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+    FOREIGN KEY (medico_id) REFERENCES colaboradores(id)
+);
+
+
+DELIMITER //
+
+CREATE TRIGGER after_insert_cita
+AFTER INSERT ON citas
+FOR EACH ROW
+BEGIN
+    INSERT INTO historial_citas (paciente_id, medico_id, fecha_cita, estado_pago, fecha_creacion)
+    VALUES (NEW.paciente_id, NEW.medico_id, NEW.fecha_cita, 'pendiente', CURRENT_TIMESTAMP);
+END;
+
+//
+
+DELIMITER ;
+
+
+
+-- TABLA DE PAGOS
+CREATE TABLE pagos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    historial_cita_id INT NOT NULL,
+    monto DECIMAL(10, 2) NOT NULL,
+    fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    metodo_pago ENUM('tarjeta', 'efectivo') NOT NULL,
+    FOREIGN KEY (historial_cita_id) REFERENCES historial_citas(id) ON DELETE CASCADE
+);
+
+
+-- Insertar usuarios para médicos
+INSERT INTO usuarios (email, contraseña, rol_id) VALUES
+('medico2@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico')),
+('medico3@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico')),
+('medico4@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico')),
+('medico5@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico'));
+
+-- Insertar colaboradores con rol de médico y especialidad específica
+INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, especialidad_id, fecha_contratacion) VALUES
+((SELECT id FROM usuarios WHERE email = 'medico2@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Carlos', 'Ramírez', (SELECT id FROM especialidades WHERE nombre = 'Pediatría'), '2024-10-29'),
+((SELECT id FROM usuarios WHERE email = 'medico3@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Laura', 'González', (SELECT id FROM especialidades WHERE nombre = 'Cardiología'), '2024-10-29'),
+((SELECT id FROM usuarios WHERE email = 'medico4@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Miguel', 'Herrera', (SELECT id FROM especialidades WHERE nombre = 'Cirugía General'), '2024-10-29'),
+((SELECT id FROM usuarios WHERE email = 'medico5@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Ana', 'Martínez', (SELECT id FROM especialidades WHERE nombre = 'Neurología'), '2024-10-29');
+

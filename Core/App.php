@@ -94,6 +94,40 @@ class App
                 $controllerInv->agregarProducto(); // Llamar al método para agregar un producto
                 break;
 
+
+
+            //CASO PARA AGENDAR CITA
+            case 'agendarCita':
+                // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
+                if (isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../App/Views/agendarCita.php';
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
+            case 'obtenerMedicosPorEspecialidad':
+                $especialidadId = $_GET['especialidad_id'];
+                $medicos = $controller->obtenerMedicosPorEspecialidad($especialidadId);
+                echo json_encode(['medicos' => $medicos]);
+                break;
+
+            case 'obtenerMedicosDisponibles':
+                $especialidadId = $_GET['especialidad_id'];
+                $fecha = $_GET['fecha'];
+                $medicosDisponibles = $controller->obtenerMedicosDisponibles($especialidadId, $fecha);
+                echo json_encode($medicosDisponibles);
+                break;
+
+            case 'procesarAgendarCita':
+                // Verificar si el usuario está autenticado antes de procesar la solicitud
+                if (isset($_SESSION['user_id'])) {
+                    $controller->procesarAgendarCita();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
