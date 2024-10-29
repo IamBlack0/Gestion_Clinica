@@ -5,23 +5,26 @@ class Colaborador extends User {
     private $tableColaboradores = 'colaboradores';
     public $nombre;
     public $apellido;
+    public $rol_id;
+    public $especialidad_id;
+    public $fecha_contratacion;
 
     public function registro() {
         try {
             // Iniciar una transacción
             $this->conn->beginTransaction();
     
-            // Lógica para registrar el usuario
-            parent::registro();
-    
             // Consulta SQL para insertar un nuevo colaborador
-            $queryColaborador = "INSERT INTO " . $this->tableColaboradores . " (usuario_id, nombre, apellido) VALUES (:usuario_id, :nombre, :apellido)";
+            $queryColaborador = "INSERT INTO " . $this->tableColaboradores . " (usuario_id, rol_id, nombre, apellido, especialidad_id, fecha_contratacion) VALUES (:usuario_id, :rol_id, :nombre, :apellido, :especialidad_id, :fecha_contratacion)";
             $stmtColaborador = $this->conn->prepare($queryColaborador);
     
             // Enlazar los parámetros
             $stmtColaborador->bindParam(':usuario_id', $this->id);
+            $stmtColaborador->bindParam(':rol_id', $this->rol_id);
             $stmtColaborador->bindParam(':nombre', $this->nombre);
             $stmtColaborador->bindParam(':apellido', $this->apellido);
+            $stmtColaborador->bindParam(':especialidad_id', $this->especialidad_id);
+            $stmtColaborador->bindParam(':fecha_contratacion', $this->fecha_contratacion);
     
             // Ejecutar la consulta para insertar el colaborador
             if ($stmtColaborador->execute()) {

@@ -52,6 +52,14 @@ $queryProvincias = "SELECT id, nombre FROM provincias";
 $stmtProvincias = $conn->prepare($queryProvincias);
 $stmtProvincias->execute();
 $provincias = $stmtProvincias->fetchAll(PDO::FETCH_ASSOC);
+
+
+// Obtener las especialidades
+$queryEspecialidades = "SELECT id, nombre FROM especialidades";
+$stmtEspecialidades = $conn->prepare($queryEspecialidades);
+$stmtEspecialidades->execute();
+$especialidades = $stmtEspecialidades->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!-- Content wrapper -->
@@ -61,55 +69,116 @@ $provincias = $stmtProvincias->fetchAll(PDO::FETCH_ASSOC);
         <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Usuarios /</span> Lista de Usuarios</h4>
         <!-- Button trigger modal -->
         <div class="d-flex justify-content-end mb-4">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#agregarUsuarioModal">
-                <i class="bx bx-plus me-2"></i> Agregar Usuario
-            </button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    <i class="bx bx-plus me-2"></i> Agregar Usuario
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                            data-bs-target="#agregarPacienteModal">Agregar Paciente</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                            data-bs-target="#agregarColaboradorModal">Agregar Colaborador</a></li>
+                </ul>
+            </div>
         </div>
-        <!-- Modal -->
-        <div class="modal fade" id="agregarUsuarioModal" tabindex="-1" aria-labelledby="agregarUsuarioModalLabel"
+
+        <!-- Modal para agregar Paciente -->
+        <div class="modal fade" id="agregarPacienteModal" tabindex="-1" aria-labelledby="agregarPacienteModalLabel"
             aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="agregarUsuarioModalLabel">Agregar Usuario</h5>
+                        <h5 class="modal-title" id="agregarPacienteModalLabel">Agregar Paciente</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="agregarUsuarioForm" action="./agregarUsuario" method="POST">
+                        <form id="agregarPacienteForm" action="./agregarUsuario" method="POST">
                             <div class="mb-3">
-                                <label for="tipoUsuario" class="form-label">Tipo de Usuario</label>
-                                <select class="form-select" id="tipoUsuario" name="tipoUsuario" required
-                                    onchange="mostrarCamposAdicionales()">
-                                    <option value="" selected disabled>Seleccione el tipo de usuario</option>
-                                    <?php foreach ($roles as $rol): ?>
-                                        <option value="<?php echo $rol['id']; ?>"><?php echo $rol['nombre']; ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <label for="nombrePaciente" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="nombrePaciente" name="nombre" required>
                             </div>
-                            <div id="camposAdicionales" style="display: none;">
-                                <div class="mb-3">
-                                    <label for="nombre" class="form-label">Nombre</label>
-                                    <input type="text" class="form-control" id="nombre" name="nombre" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="apellido" class="form-label">Apellido</label>
-                                    <input type="text" class="form-control" id="apellido" name="apellido" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Correo</label>
-                                    <input type="email" class="form-control" id="email" name="email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Contraseña</label>
-                                    <input type="password" class="form-control" id="password" name="password" required>
-                                </div>
+                            <div class="mb-3">
+                                <label for="apellidoPaciente" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="apellidoPaciente" name="apellido" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="emailPaciente" class="form-label">Correo</label>
+                                <input type="email" class="form-control" id="emailPaciente" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="passwordPaciente" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="passwordPaciente" name="password"
+                                    required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                         <button type="button" class="btn btn-primary"
-                            onclick="submitAgregarUsuarioForm()">Guardar</button>
+                            onclick="submitAgregarPacienteForm()">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para agregar Colaborador -->
+        <div class="modal fade" id="agregarColaboradorModal" tabindex="-1"
+            aria-labelledby="agregarColaboradorModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="agregarColaboradorModalLabel">Agregar Colaborador</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="agregarColaboradorForm" action="./agregarColaborador" method="POST">
+                            <div class="mb-3">
+                                <label for="nombreColaborador" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="nombreColaborador" name="nombre" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="apellidoColaborador" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="apellidoColaborador" name="apellido"
+                                    required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="emailColaborador" class="form-label">Correo</label>
+                                <input type="email" class="form-control" id="emailColaborador" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="passwordColaborador" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="passwordColaborador" name="password"
+                                    required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="rolColaborador" class="form-label">Rol</label>
+                                <select class="form-select" id="rolColaborador" name="rol_id"
+                                    onchange="toggleEspecialidad()">
+                                    <option value="" selected disabled>Seleccione el rol</option>
+                                    <?php foreach ($roles as $rol): ?>
+                                        <?php if ($rol['nombre'] != 'paciente'): ?>
+                                            <option value="<?php echo $rol['id']; ?>"><?php echo $rol['nombre']; ?></option>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3" id="especialidadColaboradorDiv" style="display: none;">
+                                <label for="especialidadColaborador" class="form-label">Especialidad</label>
+                                <select class="form-select" id="especialidadColaborador" name="especialidad">
+                                    <option value="" selected disabled>Seleccione la especialidad</option>
+                                    <?php foreach ($especialidades as $especialidad): ?>
+                                        <option value="<?php echo $especialidad['id']; ?>">
+                                            <?php echo $especialidad['nombre']; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary"
+                            onclick="submitAgregarColaboradorForm()">Guardar</button>
                     </div>
                 </div>
             </div>
@@ -145,7 +214,7 @@ $provincias = $stmtProvincias->fetchAll(PDO::FETCH_ASSOC);
                                             <i class="bx bx-dots-vertical-rounded"></i>
                                         </button>
                                         <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="javascript:void(0);" >
+                                            <a class="dropdown-item" href="javascript:void(0);">
                                                 <i class="bx bx-edit-alt me-2"></i> Editar
                                             </a>
                                             <a class="dropdown-item" href="">

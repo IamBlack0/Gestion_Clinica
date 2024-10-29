@@ -106,7 +106,7 @@ CREATE TABLE colaboradores (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     especialidad_id INT,
-    fecha_contratacion DATE,
+    fecha_contratacion DATE DEFAULT CURRENT_DATE,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE CASCADE,
     FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE SET NULL

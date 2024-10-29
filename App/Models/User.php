@@ -24,23 +24,44 @@ class User
         $this->conn = $db;
     }
 
+
+    /**
+     * Método para verificar si un correo electrónico ya existe en la base de datos.
+     */
+    public function emailExiste($email)
+    {
+        $query = "SELECT COUNT(*) as count FROM " . $this->tableUsuarios . " WHERE email = :email";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count'] > 0;
+    }
+
+
+
     /**
      * Método para registrar un nuevo usuario.
      */
+   
     public function registro()
     {
+        if ($this->emailExiste($this->email)) {
+            throw new Exception("El correo electrónico ya está registrado.");
+        }
+    
         // Consulta SQL para insertar un nuevo usuario con rol
         $queryUsuario = "INSERT INTO " . $this->tableUsuarios . " (email, contraseña, rol_id) VALUES (:email, :password, :rol_id)";
         $stmtUsuario = $this->conn->prepare($queryUsuario);
-
+    
         // Encriptar la contraseña antes de guardarla
         $this->password = password_hash($this->password, PASSWORD_DEFAULT);
-
+    
         // Enlazar los parámetros
         $stmtUsuario->bindParam(':email', $this->email);
         $stmtUsuario->bindParam(':password', $this->password);
         $stmtUsuario->bindParam(':rol_id', $this->rol); // Enlazar el rol
-
+    
         // Ejecutar la consulta para insertar el usuario
         if ($stmtUsuario->execute()) {
             // Obtener el ID del usuario insertado

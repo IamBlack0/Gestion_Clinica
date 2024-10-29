@@ -265,27 +265,16 @@ class UserController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->user->email = $_POST['email'];
             $this->user->password = $_POST['password'];
-            $this->user->rol = $_POST['tipoUsuario'];
+            $this->user->rol = 1; // Rol de paciente
     
             if ($this->user->registro()) {
-                if ($this->user->rol == 1) {
-                    $this->paciente->id = $this->user->id;
-                    $this->paciente->nombre = $_POST['nombre'];
-                    $this->paciente->apellido = $_POST['apellido'];
-                    if ($this->paciente->registro()) {
-                        echo json_encode(['success' => true, 'message' => 'Usuario registrado correctamente.']);
-                    } else {
-                        echo json_encode(['success' => false, 'message' => 'Error en el registro del paciente.']);
-                    }
-                } elseif ($this->user->rol == 2) {
-                    $this->colaborador->id = $this->user->id;
-                    $this->colaborador->nombre = $_POST['nombre'];
-                    $this->colaborador->apellido = $_POST['apellido'];
-                    if ($this->colaborador->registro()) {
-                        echo json_encode(['success' => true, 'message' => 'Usuario registrado correctamente.']);
-                    } else {
-                        echo json_encode(['success' => false, 'message' => 'Error en el registro del colaborador.']);
-                    }
+                $this->paciente->id = $this->user->id;
+                $this->paciente->nombre = $_POST['nombre'];
+                $this->paciente->apellido = $_POST['apellido'];
+                if ($this->paciente->registro()) {
+                    echo json_encode(['success' => true, 'message' => 'Paciente registrado correctamente.']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Error en el registro del paciente.']);
                 }
             } else {
                 echo json_encode(['success' => false, 'message' => 'Error en el registro del usuario.']);
@@ -294,6 +283,43 @@ class UserController {
             require_once __DIR__ . '/../Views/actualizarInformacionUsuarios.php';
         }
     }
+
+
+    public function agregarColaborador() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->user->email = $_POST['email'];
+            $this->user->password = $_POST['password'];
+            $this->user->rol = $_POST['rol_id']; // Rol de colaborador
+    
+            if ($this->user->registro()) {
+                $this->colaborador->id = $this->user->id;
+                $this->colaborador->nombre = $_POST['nombre'];
+                $this->colaborador->apellido = $_POST['apellido'];
+                $this->colaborador->rol_id = $_POST['rol_id'];
+                $this->colaborador->fecha_contratacion = date('Y-m-d'); // Asignar la fecha actual como fecha de contratación
+    
+                // Asignar especialidad solo si el rol es "medico"
+                if ($_POST['rol_id'] == 2) { // Asumiendo que el ID del rol de medico es 2
+                    $this->colaborador->especialidad_id = $_POST['especialidad'];
+                } else {
+                    $this->colaborador->especialidad_id = null;
+                }
+    
+                if ($this->colaborador->registro()) {
+                    echo json_encode(['success' => true, 'message' => 'Colaborador registrado correctamente.']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Error en el registro del colaborador.']);
+                }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Error en el registro del usuario.']);
+            }
+        } else {
+            require_once __DIR__ . '/../Views/actualizarInformacionUsuarios.php';
+        }
+    }
+
+
+    
 
     public function obtenerUsuarios() {
         $usuarios = $this->user->obtenerTodosLosUsuarios();

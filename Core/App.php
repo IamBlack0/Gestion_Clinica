@@ -65,6 +65,9 @@ class App
             case 'agregarUsuario':
                 $controller->agregarUsuario(); // Llamar al método para agregar un usuario
                 break;
+            case 'agregarColaborador':
+                $controller->agregarColaborador(); // Llamar al método para agregar un colaborador
+                break;
             case 'obtenerUsuarios':
                 $controller->obtenerUsuarios();
                 break;
