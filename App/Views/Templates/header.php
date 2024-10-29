@@ -112,7 +112,7 @@ if (session_status() == PHP_SESSION_NONE) {
           <li class="menu-item">
             <a href="#" class="menu-link">
               <i class="menu-icon tf-icons bx bx-dock-top"></i>
-              <div data-i18n="Account Settings">Agrendar citas</div>
+              <div data-i18n="Account Settings">Agendar citas</div>
             </a>
           </li>
           <li class="menu-item">
@@ -148,7 +148,7 @@ if (session_status() == PHP_SESSION_NONE) {
 
           <!-- Extended components -->
           <li class="menu-item">
-            <a href="#" class="menu-link ">
+            <a href="./gestionInventario" class="menu-link ">
               <i class="menu-icon tf-icons bx bx-copy"></i>
               <div data-i18n="Extended UI">Inventario</div>
             </a>
@@ -209,9 +209,16 @@ if (session_status() == PHP_SESSION_NONE) {
                           </div>
                         </div>
                         <div class="flex-grow-1">
-                          <span
-                            class="fw-semibold d-block"><?php echo $_SESSION['nombre'] . ' ' . $_SESSION['apellido']; ?></span>
-                          <small class="text-muted"><?php echo $_SESSION['rol']; ?></small>
+                          <span class="fw-semibold d-block">
+                            <?php
+                            echo isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Nombre no disponible';
+                            echo ' ';
+                            echo isset($_SESSION['apellido']) ? $_SESSION['apellido'] : 'Apellido no disponible';
+                            ?>
+                          </span>
+                          <small class="text-muted">
+                            <?php echo isset($_SESSION['rol']) ? $_SESSION['rol'] : 'Rol no disponible'; ?>
+                          </small>
                         </div>
                       </div>
                     </a>

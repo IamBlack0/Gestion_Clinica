@@ -8,8 +8,10 @@ require_once __DIR__ . '/../App/Controllers/UserController.php';
 /**
  * Clase App para manejar las rutas de la aplicación.
  */
-class App {
-    public function __construct() {
+class App
+{
+    public function __construct()
+    {
         // Obtener la URL solicitada
         $url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : null;
         $url = explode('/', $url);
@@ -52,14 +54,37 @@ class App {
                     header('Location: ./login');
                 }
                 break;
-                case 'actualizarInformacionUsuarios':
-                    // Verificar si el usuario está autenticado y es administrativo antes de mostrar la lista de usuarios
-                    if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrativo') {
-                        $controller->mostrarListaUsuarios(); // Llamar al método para mostrar la lista de usuarios
-                    } else {
-                        header('Location: ./login');
-                    }
-                    break;
+            case 'actualizarInformacionUsuarios':
+                // Verificar si el usuario está autenticado y es administrador antes de mostrar la lista de usuarios
+                if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
+                    $controller->mostrarListaUsuarios(); // Llamar al método para mostrar la lista de usuarios
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+            case 'agregarUsuario':
+                $controller->agregarUsuario(); // Llamar al método para agregar un usuario
+                break;
+            case 'agregarColaborador':
+                $controller->agregarColaborador(); // Llamar al método para agregar un colaborador
+                break;
+            case 'obtenerUsuarios':
+                $controller->obtenerUsuarios();
+                break;
+            case 'obtenerIventarios':
+                $controller->obtenerInventarios();
+                break;
+            case 'gestionInventario':
+                // Verificar si el usuario está autenticado y es administrador antes de mostrar la lista de productos
+                if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
+                    $controller->mostrarListaProductos(); // Llamar al método para mostrar la lista de productos
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+            case 'agregarProducto':
+                $controller->agregarProducto(); // Llamar al método para agregar un producto
+                break;
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
                 break;
