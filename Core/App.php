@@ -73,6 +73,9 @@ class App
             case 'agregarUsuario':
                 $controller->agregarUsuario(); // Llamar al método para agregar un usuario
                 break;
+            case 'agregarProducto':
+                $controller->agregarProducto(); // Llamar al método para agregar un producto
+                break;
             case 'obtenerUsuarios':
                 $controller->obtenerUsuarios();
                 break;
