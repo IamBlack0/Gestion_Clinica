@@ -177,20 +177,10 @@ class User {
     }
 
     public function actualizarInformacionPaciente() {
-        $query = "UPDATE informacion_paciente SET 
-                    edad = :edad, 
-                    sexo = :sexo, 
-                    telefono = :telefono, 
-                    direccion = :direccion, 
-                    tipo_sangre = :tipo_sangre, 
-                    nacionalidad_id = :nacionalidad_id, 
-                    provincia_id = :provincia_id, 
-                    foto_perfil = :foto_perfil 
-                  WHERE paciente_id = :paciente_id";
-    
+        $query = "UPDATE usuarios SET edad = :edad, sexo = :sexo, telefono = :telefono, direccion = :direccion,
+                  tipo_sangre = :tipo_sangre, nacionalidad_id = :nacionalidad_id, provincia_id = :provincia_id,
+                  foto_perfil = :foto_perfil WHERE id = :id";
         $stmt = $this->conn->prepare($query);
-    
-        // Vincular los parámetros
         $stmt->bindParam(':edad', $this->edad);
         $stmt->bindParam(':sexo', $this->sexo);
         $stmt->bindParam(':telefono', $this->telefono);
@@ -199,14 +189,11 @@ class User {
         $stmt->bindParam(':nacionalidad_id', $this->nacionalidad_id);
         $stmt->bindParam(':provincia_id', $this->provincia_id);
         $stmt->bindParam(':foto_perfil', $this->foto_perfil);
-        $stmt->bindParam(':paciente_id', $this->id);
+        $stmt->bindParam(':id', $this->id);
     
-        if ($stmt->execute()) {
-            return true;
-        } else {
-            return false;
-        }
+        return $stmt->execute();
     }
+    
  /**
      * Método para obtener todos los usuarios.
      */

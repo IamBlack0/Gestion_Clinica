@@ -124,13 +124,10 @@ class UserController {
      * Método para manejar la actualización de la información del paciente.
      */
     public function actualizarInformacionPaciente() {
-        header('Content-Type: application/json'); // Asegurarse de que la respuesta sea JSON
-        // Verificar si la solicitud es POST (formulario enviado)
+        header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Verificar si el usuario está autenticado
             if (isset($_SESSION['user_id'])) {
                 $this->user->id = $_SESSION['user_id'];
-                // Asignar los datos del formulario al objeto User
                 $this->user->edad = $_POST['edad'] ?? null;
                 $this->user->sexo = $_POST['sexo'] ?? null;
                 $this->user->telefono = $_POST['telefono'] ?? null;
@@ -139,49 +136,25 @@ class UserController {
                 $this->user->nacionalidad_id = $_POST['nacionalidad_id'] ?? null;
                 $this->user->provincia_id = $_POST['provincia_id'] ?? null;
     
-                // Manejar la subida de la imagen
+                // Imagen de perfil
                 if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
                     $fileTmpPath = $_FILES['foto_perfil']['tmp_name'];
-                    $fileName = $_FILES['foto_perfil']['name'];
-                    $fileSize = $_FILES['foto_perfil']['size'];
-                    $fileType = $_FILES['foto_perfil']['type'];
-                    $fileNameCmps = explode(".", $fileName);
-                    $fileExtension = strtolower(end($fileNameCmps));
-    
-                    // Verificar si el archivo es una imagen JPG o PNG
-                    $allowedfileExtensions = array('jpg', 'jpeg', 'png');
-                    if (in_array($fileExtension, $allowedfileExtensions)) {
-                        // Leer el contenido del archivo
-                        $fileContent = file_get_contents($fileTmpPath);
-                        // Encriptar el contenido del archivo
-                        $encryptedContent = base64_encode($fileContent);
-                        $this->user->foto_perfil = $encryptedContent;
-                    } else {
-                        echo json_encode(['success' => false, 'message' => 'Formato de archivo no permitido. Solo se permiten JPG y PNG.']);
-                        return;
-                    }
-                } else {
-                    $this->user->foto_perfil = null;
+                    $fileContent = file_get_contents($fileTmpPath);
+                    $this->user->foto_perfil = base64_encode($fileContent); // Guardar como base64
                 }
     
-                // Actualizar la información del paciente
                 if ($this->user->actualizarInformacionPaciente()) {
-                    echo json_encode(['success' => true]);
-                    return;
+                    echo json_encode(['success' => true, 'message' => 'Información actualizada con éxito.']);
                 } else {
-                    echo json_encode(['success' => false, 'message' => 'Error al actualizar la información del paciente.']);
-                    return;
+                    echo json_encode(['success' => false, 'message' => 'Error al actualizar la información.']);
                 }
             } else {
                 echo json_encode(['success' => false, 'message' => 'Usuario no autenticado.']);
-                return;
             }
         } else {
             echo json_encode(['success' => false, 'message' => 'Método de solicitud no permitido.']);
-            return;
         }
-    }
-
+    }    
 
   /**
      * Método para mostrar la lista de usuarios.
