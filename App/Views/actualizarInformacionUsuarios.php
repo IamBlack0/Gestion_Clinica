@@ -103,6 +103,7 @@ $roles = $stmtRoles->fetchAll(PDO::FETCH_ASSOC);
                         alert(res.message);
                         $('#agregarUsuarioModal').modal('hide');
                         actualizarTablaUsuarios();
+                        actualizarTablaReportes();
                     } else {
                         alert(res.message);
                     }
@@ -175,8 +176,10 @@ $roles = $stmtRoles->fetchAll(PDO::FETCH_ASSOC);
                                 </td>
                                 <td><?php echo isset($usuario['apellido']) ? $usuario['apellido'] : 'Apellido no disponible'; ?>
                                 </td>
-                                <td><?php echo $usuario['email']; ?></td>
-                                <td><?php echo isset($usuario['rol']) ? $usuario['rol'] : 'Rol no disponible'; ?></td>
+                                <td><?php echo $usuario['email']; ?>
+                                </td>
+                                <td><?php echo isset($usuario['rol']) ? $usuario['rol'] : 'Rol no disponible'; ?>
+                                </td>
                                 <td>
                                     <div class="dropdown">
                                         <button type="button" class="btn p-0 dropdown-toggle hide-arrow"

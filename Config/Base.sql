@@ -112,6 +112,17 @@ CREATE TABLE colaboradores (
     FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE SET NULL
 );
 
+-- Crear tabla reportes
+CREATE TABLE reportes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    colaborador_id INT NOT NULL,
+    accion VARCHAR(400) NOT NULL,
+    id_rol INT NOT NULL,
+    fecha DATE NOT NULL,
+    FOREIGN KEY (colaborador_id) REFERENCES colaboradores(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_rol) REFERENCES colaboradores(rol_id) ON DELETE CASCADE
+);
+
 -- Insertar un usuario para el colaborador médico
 INSERT INTO usuarios (email, contraseña, rol_id) VALUES
 ('medico1@clinic.com', 'medico1', (SELECT id FROM roles WHERE nombre = 'medico'));

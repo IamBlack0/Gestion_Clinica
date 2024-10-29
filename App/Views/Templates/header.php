@@ -140,7 +140,7 @@ if (session_status() == PHP_SESSION_NONE) {
           </li>
           <!-- User interface -->
           <li class="menu-item">
-            <a href="#" class="menu-link">
+            <a href="./generacionReportes" class="menu-link">
               <i class="menu-icon tf-icons bx bx-box"></i>
               <div data-i18n="User interface">Reportes</div>
             </a>
