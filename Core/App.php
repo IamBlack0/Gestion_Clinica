@@ -5,6 +5,9 @@ require_once __DIR__ . '/../config.php';
 // Incluir el controlador de usuarios
 require_once __DIR__ . '/../App/Controllers/UserController.php';
 
+// Incluir el controlador de productos
+require_once __DIR__ . '/../App/Controllers/InventarioController.php';
+
 /**
  * Clase App para manejar las rutas de la aplicación.
  */
@@ -17,6 +20,8 @@ class App
         $url = explode('/', $url);
         // Instanciar el controlador de usuarios
         $controller = new UserController();
+        // Instanciar el controlador de inventario
+        $controllerInv = new InventarioController();
         // Si no hay una URL, cargar la página de inicio de sesión por defecto
         if (empty($url[0])) {
             require_once __DIR__ . '/../App/Views/login.php';
@@ -71,20 +76,25 @@ class App
             case 'obtenerUsuarios':
                 $controller->obtenerUsuarios();
                 break;
+
+            //CASOS PARA EL INVENTARIO
             case 'obtenerIventarios':
-                $controller->obtenerInventarios();
+                $controllerInv->obtenerInventarios();
                 break;
             case 'gestionInventario':
                 // Verificar si el usuario está autenticado y es administrador antes de mostrar la lista de productos
                 if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
-                    $controller->mostrarListaProductos(); // Llamar al método para mostrar la lista de productos
+                    $controllerInv->mostrarListaProductos(); // Llamar al método para mostrar la lista de productos
+
                 } else {
                     header('Location: ./login');
                 }
                 break;
             case 'agregarProducto':
-                $controller->agregarProducto(); // Llamar al método para agregar un producto
+                $controllerInv->agregarProducto(); // Llamar al método para agregar un producto
                 break;
+
+            //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
                 break;
