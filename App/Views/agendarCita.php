@@ -57,7 +57,7 @@ $especialidades = $stmtEspecialidades->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div class="mb-3">
                     <label for="especialidad_id" class="form-label">Especialidad</label>
-                    <select class="form-select" id="especialidad_id" name="especialidad_id" required>
+                    <select class="form-select" id="especialidad_id" name="especialidad_id" required disabled>
                         <option value="">Seleccione una especialidad</option>
                         <?php foreach ($especialidades as $especialidad): ?>
                             <option value="<?php echo htmlspecialchars($especialidad['id']); ?>">
@@ -68,25 +68,22 @@ $especialidades = $stmtEspecialidades->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div class="mb-3">
                     <label for="medico_id" class="form-label">Médico</label>
-                    <select class="form-select" id="medico_id" name="medico_id" required>
+                    <select class="form-select" id="medico_id" name="medico_id" required disabled>
                         <option value="">Seleccione un médico</option>
                         <!-- Opciones de médicos se cargarán dinámicamente -->
                     </select>
                 </div>
                 <div class="mb-3">
                     <label for="horario" class="form-label">Horario</label>
-                    <select class="form-select" id="horario" name="horario" required>
+                    <select class="form-select" id="horario" name="horario" required disabled>
                         <option value="">Seleccione un horario</option>
-                        <option value="mañana">Mañana</option>
-                        <option value="tarde">Tarde</option>
-                        <option value="noche">Noche</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <label for="razon" class="form-label">Razón</label>
-                    <textarea class="form-control" id="razon" name="razon" rows="5" maxlength="300" required></textarea>
+                    <textarea class="form-control" id="razon" name="razon" rows="5" maxlength="300" required disabled></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Agendar</button>
+                <button type="submit" class="btn btn-primary" disabled>Agendar</button>
             </form>
         </div>
     </div>
@@ -102,32 +99,26 @@ require $footerPath;
 ?>
 
 <script>
-document.getElementById('especialidad_id').addEventListener('change', function() {
-    const especialidadId = this.value;
-    if (especialidadId) {
-        fetch(`./obtenerMedicosPorEspecialidad?especialidad_id=${especialidadId}`)
-            .then(response => response.json())
-            .then(data => {
-                const medicoSelect = document.getElementById('medico_id');
-                medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
-                data.medicos.forEach(medico => {
-                    const option = document.createElement('option');
-                    option.value = medico.id;
-                    option.textContent = `${medico.nombre} ${medico.apellido}`;
-                    medicoSelect.appendChild(option);
-                });
-            });
+document.getElementById('fecha_cita').addEventListener('change', function() {
+    const fecha = this.value;
+    const especialidadSelect = document.getElementById('especialidad_id');
+    const today = new Date().toISOString().split('T')[0];
+    if (fecha && fecha >= today) {
+        especialidadSelect.disabled = false;
+    } else {
+        especialidadSelect.disabled = true;
+        alert('La fecha de la cita no puede ser menor a la fecha actual.');
     }
 });
 
-document.getElementById('fecha_cita').addEventListener('change', function() {
-    const fecha = this.value;
-    const especialidadId = document.getElementById('especialidad_id').value;
-    if (especialidadId) {
+document.getElementById('especialidad_id').addEventListener('change', function() {
+    const especialidadId = this.value;
+    const fecha = document.getElementById('fecha_cita').value;
+    const medicoSelect = document.getElementById('medico_id');
+    if (especialidadId && fecha) {
         fetch(`./obtenerMedicosDisponibles?especialidad_id=${especialidadId}&fecha=${fecha}`)
             .then(response => response.json())
             .then(data => {
-                const medicoSelect = document.getElementById('medico_id');
                 medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
                 data.medicos.forEach(medico => {
                     const option = document.createElement('option');
@@ -135,7 +126,46 @@ document.getElementById('fecha_cita').addEventListener('change', function() {
                     option.textContent = `${medico.nombre} ${medico.apellido}`;
                     medicoSelect.appendChild(option);
                 });
+                medicoSelect.disabled = false;
             });
+    } else {
+        medicoSelect.disabled = true;
+    }
+});
+
+document.getElementById('medico_id').addEventListener('change', function() {
+    const medicoId = this.value;
+    const fecha = document.getElementById('fecha_cita').value;
+    const especialidadId = document.getElementById('especialidad_id').value;
+    const horarioSelect = document.getElementById('horario');
+    if (medicoId) {
+        fetch(`./obtenerHorariosDisponibles?medico_id=${medicoId}&fecha=${fecha}&especialidad_id=${especialidadId}`)
+            .then(response => response.json())
+            .then(data => {
+                horarioSelect.innerHTML = '<option value="">Seleccione un horario</option>';
+                data.horarios.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario;
+                    option.textContent = horario.charAt(0).toUpperCase() + horario.slice(1);
+                    horarioSelect.appendChild(option);
+                });
+                horarioSelect.disabled = false;
+            });
+    } else {
+        horarioSelect.disabled = true;
+    }
+});
+
+document.getElementById('horario').addEventListener('change', function() {
+    const horario = this.value;
+    const razonTextarea = document.getElementById('razon');
+    const submitButton = document.querySelector('button[type="submit"]');
+    if (horario) {
+        razonTextarea.disabled = false;
+        submitButton.disabled = false;
+    } else {
+        razonTextarea.disabled = true;
+        submitButton.disabled = true;
     }
 });
 </script>

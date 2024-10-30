@@ -230,9 +230,11 @@ CREATE TABLE historial_citas (
     fecha_cita DATE NOT NULL,
     estado_pago ENUM('pendiente', 'pagado') NOT NULL DEFAULT 'pendiente',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado_cita ENUM('aceptada', 'rechazada', 'pendiente') DEFAULT 'pendiente' NOT NULL,
     FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
     FOREIGN KEY (medico_id) REFERENCES colaboradores(id)
 );
+
 
 
 DELIMITER //
@@ -241,13 +243,14 @@ CREATE TRIGGER after_insert_cita
 AFTER INSERT ON citas
 FOR EACH ROW
 BEGIN
-    INSERT INTO historial_citas (paciente_id, medico_id, fecha_cita, estado_pago, fecha_creacion)
-    VALUES (NEW.paciente_id, NEW.medico_id, NEW.fecha_cita, 'pendiente', CURRENT_TIMESTAMP);
+    INSERT INTO historial_citas (paciente_id, medico_id, fecha_cita, estado_pago, estado_cita, fecha_creacion)
+    VALUES (NEW.paciente_id, NEW.medico_id, NEW.fecha_cita, 'pendiente', 'pendiente', CURRENT_TIMESTAMP);
 END;
 
 //
 
 DELIMITER ;
+
 
 
 

@@ -8,6 +8,9 @@ require_once __DIR__ . '/../App/Controllers/UserController.php';
 // Incluir el controlador de productos
 require_once __DIR__ . '/../App/Controllers/InventarioController.php';
 
+// Incluir el controlador de citas
+require_once __DIR__ . '/../App/Controllers/CitasController.php';
+
 /**
  * Clase App para manejar las rutas de la aplicación.
  */
@@ -22,6 +25,9 @@ class App
         $controller = new UserController();
         // Instanciar el controlador de inventario
         $controllerInv = new InventarioController();
+        // Instanciar el controlador de citas
+        $citasController = new CitasController();
+
         // Si no hay una URL, cargar la página de inicio de sesión por defecto
         if (empty($url[0])) {
             require_once __DIR__ . '/../App/Views/login.php';
@@ -106,23 +112,41 @@ class App
                 }
                 break;
 
+
+
             case 'obtenerMedicosPorEspecialidad':
                 $especialidadId = $_GET['especialidad_id'];
-                $medicos = $controller->obtenerMedicosPorEspecialidad($especialidadId);
+                $medicos = $citasController->obtenerMedicosPorEspecialidad($especialidadId);
                 echo json_encode(['medicos' => $medicos]);
                 break;
 
             case 'obtenerMedicosDisponibles':
                 $especialidadId = $_GET['especialidad_id'];
                 $fecha = $_GET['fecha'];
-                $medicosDisponibles = $controller->obtenerMedicosDisponibles($especialidadId, $fecha);
+                $medicosDisponibles = $citasController->obtenerMedicosDisponibles($especialidadId, $fecha);
                 echo json_encode($medicosDisponibles);
                 break;
 
             case 'procesarAgendarCita':
                 // Verificar si el usuario está autenticado antes de procesar la solicitud
                 if (isset($_SESSION['user_id'])) {
-                    $controller->procesarAgendarCita();
+                    $citasController->procesarAgendarCita();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+            case 'obtenerHorariosDisponibles':
+                $medicoId = $_GET['medico_id'];
+                $fecha = $_GET['fecha'];
+                $especialidadId = $_GET['especialidad_id'];
+                $horariosDisponibles = $citasController->obtenerHorariosDisponibles($medicoId, $fecha, $especialidadId);
+                echo json_encode(['horarios' => $horariosDisponibles]);
+                break;
+
+            case 'verCitas':
+                if (isset($_SESSION['user_id'])) {
+                    $citas = $citasController->obtenerHistorialCitas();
+                    require_once __DIR__ . '/../App/Views/verCitas.php';
                 } else {
                     header('Location: ./login');
                 }
