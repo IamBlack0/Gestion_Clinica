@@ -152,6 +152,40 @@ class App
                 }
                 break;
 
+            // PARA AGENDAR CITAS DESDE EL MEDICO
+            case 'agendarCitaMedico':
+                // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
+                if (isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../App/Views/agendarCitaMedico.php';
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
+            case 'calendarioCitasMedico':
+                // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
+                if (isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../App/Views/calendarioCitasMedico.php';
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+            case 'aceptarCita':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $citaId = $_GET['cita_id'];
+                    $success = $citasController->aceptarCita($citaId);
+                    echo json_encode(['success' => $success]);
+                }
+                break;
+            case 'procesarAgendarCitaMedico':
+                // Verificar si el usuario está autenticado antes de procesar la solicitud
+                if (isset($_SESSION['user_id'])) {
+                    $citasController->procesarAgendarCitaMedico();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión

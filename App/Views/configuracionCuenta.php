@@ -51,6 +51,14 @@ $stmtAdmin->execute();
 $adminRole = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
 
 $isAdmin = $usuario['rol_id'] == $adminRole['id'];
+
+// Verificar si el usuario es médico
+$queryMedico = "SELECT id FROM roles WHERE nombre = 'medico'";
+$stmtMedico = $db->prepare($queryMedico);
+$stmtMedico->execute();
+$medicoRole = $stmtMedico->fetch(PDO::FETCH_ASSOC);
+
+$isMedico = $usuario['rol_id'] == $medicoRole['id'];
 ?>
 
 <!-- Content wrapper -->
@@ -109,7 +117,7 @@ $isAdmin = $usuario['rol_id'] == $adminRole['id'];
                                     <label for="email" class="form-label">Correo</label>
                                     <input class="form-control" type="text" id="email" name="email" value="<?php echo $usuario['email'] ?? ''; ?>" readonly />
                                 </div>
-                                <?php if (!$isAdmin): ?>
+                                <?php if (!$isAdmin && !$isMedico): ?>
                                 <div class="mb-3 col-md-6">
                                     <label for="edad" class="form-label">Edad</label>
                                     <input type="number" class="form-control" id="edad" name="edad" value="<?php echo $informacionPaciente['edad'] ?? ''; ?>" min="0" />

@@ -120,19 +120,64 @@ class CitasController
     }
 
 
-    
+
     public function obtenerHistorialCitas()
     {
         $query = "SELECT hc.id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido, 
-                         c.nombre AS medico_nombre, c.apellido AS medico_apellido, 
-                         hc.fecha_cita, hc.estado_pago, hc.estado_cita
-                  FROM historial_citas hc
-                  JOIN pacientes p ON hc.paciente_id = p.id
-                  JOIN colaboradores c ON hc.medico_id = c.id
-                  WHERE p.usuario_id = :user_id";
+                     c.nombre AS medico_nombre, c.apellido AS medico_apellido, 
+                     hc.fecha_cita, hc.estado_pago, hc.estado_cita
+              FROM historial_citas hc
+              JOIN pacientes p ON hc.paciente_id = p.id
+              JOIN colaboradores c ON hc.medico_id = c.id
+              WHERE p.usuario_id = :user_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function aceptarCita($citaId)
+    {
+        $query = "UPDATE historial_citas SET estado_cita = 'aceptada' WHERE id = :citaId";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':citaId', $citaId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+   
+    public function procesarAgendarCitaMedico()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Obtener los datos del formulario
+            $paciente_id = $_POST['paciente_id'];
+            $especialidad_id = $_POST['especialidad_id'];
+            $medico_id = $_POST['medico_id'];
+            $horario = $_POST['horario'];
+            $razon = $_POST['razon'];
+            $fecha_cita = $_POST['fecha_cita'];
+    
+            // Insertar la cita en la base de datos
+            $query = "INSERT INTO citas (paciente_id, especialidad_id, medico_id, horario, razon, fecha_cita)
+                      VALUES (:paciente_id, :especialidad_id, :medico_id, :horario, :razon, :fecha_cita)";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
+            $stmt->bindParam(':especialidad_id', $especialidad_id, PDO::PARAM_INT);
+            $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
+            $stmt->bindParam(':horario', $horario, PDO::PARAM_STR);
+            $stmt->bindParam(':razon', $razon, PDO::PARAM_STR);
+            $stmt->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
+    
+            if ($stmt->execute()) {
+                // Redirigir a la página de inicio con un mensaje de éxito
+                header('Location: ./dashboard?mensaje=suceso');
+                exit();
+            } else {
+                // Mostrar un mensaje de error
+                echo "Error al agendar la cita.";
+            }
+        } else {
+            // Redirigir al formulario de agendar cita si la solicitud no es POST
+            header('Location: ./agendarCitaMedico');
+            exit();
+        }
     }
 }
