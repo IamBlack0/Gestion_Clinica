@@ -203,6 +203,14 @@ class App
                 }
                 break;
 
+                case 'verHistorialMedico':
+                    if (isset($_SESSION['user_id'])) {
+                        $historialMedicoController->verHistorialMedico();
+                    } else {
+                        header('Location: ./login');
+                    }
+                    break;
+
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión

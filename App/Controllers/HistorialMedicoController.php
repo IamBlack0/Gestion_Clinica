@@ -149,4 +149,47 @@ class HistorialMedicoController
             exit();
         }
     }
+
+    public function verHistorialMedico()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $paciente_id = $_SESSION['user_id'];
+    
+            $queryUsuario = "SELECT email FROM usuarios WHERE id = :user_id";
+            $stmtUsuario = $this->db->prepare($queryUsuario);
+            $stmtUsuario->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+            $stmtUsuario->execute();
+            $usuario = $stmtUsuario->fetch(PDO::FETCH_ASSOC);
+    
+            $queryPaciente = "SELECT * FROM pacientes WHERE usuario_id = :user_id";
+            $stmtPaciente = $this->db->prepare($queryPaciente);
+            $stmtPaciente->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+            $stmtPaciente->execute();
+            $paciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
+    
+            $queryInformacionPaciente = "SELECT ip.*, p.nombre AS provincia_nombre, n.nombre AS nacionalidad_nombre
+                                         FROM informacion_paciente ip
+                                         LEFT JOIN provincias p ON ip.provincia_id = p.id
+                                         LEFT JOIN nacionalidades n ON ip.nacionalidad_id = n.id
+                                         WHERE ip.paciente_id = :paciente_id";
+            $stmtInformacionPaciente = $this->db->prepare($queryInformacionPaciente);
+            $stmtInformacionPaciente->bindParam(':paciente_id', $paciente['id'], PDO::PARAM_INT);
+            $stmtInformacionPaciente->execute();
+            $informacion_paciente = $stmtInformacionPaciente->fetch(PDO::FETCH_ASSOC);
+    
+            $queryHistorialMedico = "SELECT * FROM historial_medico WHERE paciente_id = :paciente_id";
+            $stmtHistorialMedico = $this->db->prepare($queryHistorialMedico);
+            $stmtHistorialMedico->bindParam(':paciente_id', $paciente['id'], PDO::PARAM_INT);
+            $stmtHistorialMedico->execute();
+            $historial_medico = $stmtHistorialMedico->fetchAll(PDO::FETCH_ASSOC);
+    
+            require_once __DIR__ . '/../Views/verHistorialMedico.php';
+        } else {
+            header('Location: ./dashboard');
+            exit();
+        }
+    }
+
+
+
 }
