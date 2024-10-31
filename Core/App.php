@@ -73,6 +73,14 @@ class App
                     header('Location: ./login');
                 }
                 break;
+            case 'gestionInventario':
+                // Verificar si el usuario está autenticado y es administrador antes de mostrar la lista de productos
+                if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
+                    $controllerInv->mostrarListaProductos(); // Llamar al método para mostrar la lista de productos
+                } else {
+                    header('Location: ./login');
+                }
+                break;
             case 'agregarUsuario':
                 $controller->agregarUsuario(); // Llamar al método para agregar un usuario
                 break;
