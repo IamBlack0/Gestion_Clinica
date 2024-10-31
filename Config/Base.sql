@@ -279,3 +279,23 @@ INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, especialidad_id
 ((SELECT id FROM usuarios WHERE email = 'medico4@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Miguel', 'Herrera', (SELECT id FROM especialidades WHERE nombre = 'Cirugía General'), '2024-10-29'),
 ((SELECT id FROM usuarios WHERE email = 'medico5@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Ana', 'Martínez', (SELECT id FROM especialidades WHERE nombre = 'Neurología'), '2024-10-29');
 
+CREATE TABLE historial_medico (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NOT NULL,
+    peso DECIMAL(5, 2),
+    altura DECIMAL(4, 2),
+    presion_arterial VARCHAR(20),
+    frecuencia_cardiaca INT,
+    temperatura DECIMAL(4, 1),
+    alergias TEXT,
+    medicamentos TEXT,
+    cirugias TEXT,
+    habitos TEXT,
+    antecedentes_familiares TEXT,
+    motivo_consulta TEXT,
+    diagnostico TEXT,
+    tratamiento TEXT,
+    enfermedades_preexistentes TEXT,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
+);

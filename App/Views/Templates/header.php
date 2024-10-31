@@ -182,6 +182,12 @@ $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
                                 <div data-i18n="Agendar Citas">Agendar Citas para pacientes</div>
                             </a>
                         </li>
+                        <li class="menu-item">
+                            <a href="./verCitasMedico" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-calendar"></i>
+                                <div data-i18n="Agendar Citas">Ver citas</div>
+                            </a>
+                        </li>
                     <?php endif; ?>
                     <!--FIN DEL MENU DEL MEDICO -->
         </ul>

@@ -10,6 +10,8 @@ require_once __DIR__ . '/../App/Controllers/InventarioController.php';
 
 // Incluir el controlador de citas
 require_once __DIR__ . '/../App/Controllers/CitasController.php';
+// Incluir el controlador de historial médico
+require_once __DIR__ . '/../App/Controllers/HistorialMedicoController.php';
 
 /**
  * Clase App para manejar las rutas de la aplicación.
@@ -27,6 +29,8 @@ class App
         $controllerInv = new InventarioController();
         // Instanciar el controlador de citas
         $citasController = new CitasController();
+        // Instanciar el controlador de historial médico
+        $historialMedicoController = new HistorialMedicoController();
 
         // Si no hay una URL, cargar la página de inicio de sesión por defecto
         if (empty($url[0])) {
@@ -111,22 +115,17 @@ class App
                     header('Location: ./login');
                 }
                 break;
-
-
-
             case 'obtenerMedicosPorEspecialidad':
                 $especialidadId = $_GET['especialidad_id'];
                 $medicos = $citasController->obtenerMedicosPorEspecialidad($especialidadId);
                 echo json_encode(['medicos' => $medicos]);
                 break;
-
             case 'obtenerMedicosDisponibles':
                 $especialidadId = $_GET['especialidad_id'];
                 $fecha = $_GET['fecha'];
                 $medicosDisponibles = $citasController->obtenerMedicosDisponibles($especialidadId, $fecha);
                 echo json_encode($medicosDisponibles);
                 break;
-
             case 'procesarAgendarCita':
                 // Verificar si el usuario está autenticado antes de procesar la solicitud
                 if (isset($_SESSION['user_id'])) {
@@ -142,7 +141,6 @@ class App
                 $horariosDisponibles = $citasController->obtenerHorariosDisponibles($medicoId, $fecha, $especialidadId);
                 echo json_encode(['horarios' => $horariosDisponibles]);
                 break;
-
             case 'verCitas':
                 if (isset($_SESSION['user_id'])) {
                     $citas = $citasController->obtenerHistorialCitas();
@@ -161,7 +159,6 @@ class App
                     header('Location: ./login');
                 }
                 break;
-
             case 'calendarioCitasMedico':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
                 if (isset($_SESSION['user_id'])) {
@@ -181,6 +178,26 @@ class App
                 // Verificar si el usuario está autenticado antes de procesar la solicitud
                 if (isset($_SESSION['user_id'])) {
                     $citasController->procesarAgendarCitaMedico();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
+
+
+
+            //CASO PARA VER CITAS DEL MEDICO
+            case 'verCitasMedico':
+                if (isset($_SESSION['user_id'])) {
+                    $historialMedicoController->verCitasMedico();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
+            case 'procesarHistorialMedico':
+                if (isset($_SESSION['user_id'])) {
+                    $historialMedicoController->procesarHistorialMedico();
                 } else {
                     header('Location: ./login');
                 }
