@@ -53,5 +53,7 @@ require_once __DIR__ . '/../../../config.php';
 
 <!-- Place this tag in your head or just before your close body tag. -->
 <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </body>
 </html>

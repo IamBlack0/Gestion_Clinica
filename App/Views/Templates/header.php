@@ -1,8 +1,11 @@
 <?php
 require_once __DIR__ . '/../../../config.php';
 if (session_status() == PHP_SESSION_NONE) {
-  session_start(); // Iniciar sesión para acceder a los datos de la sesión
+    session_start(); // Iniciar sesión para acceder a los datos de la sesión
 }
+
+// Obtener el rol del usuario desde la sesión
+$rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
 ?>
 <!DOCTYPE html>
 <html lang="es" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-Public-path="../Public/"
@@ -97,69 +100,96 @@ if (session_status() == PHP_SESSION_NONE) {
 
         <ul class="menu-inner py-1">
           <!-- Dashboard -->
-          <!-- MENU DE  PACIENTE -->
           <li class="menu-item active">
             <a href="./dashboard" class="menu-link">
               <i class="menu-icon tf-icons bx bx-home-circle"></i>
               <div data-i18n="Analytics">Inicio</div>
             </a>
           </li>
+          
+   <!--INICIO DEL MENU DEL PACIENTE -->
+   <?php if ($rol === 'paciente'): ?>
+                        <li class="menu-header small text-uppercase">
+                            <span class="menu-header-text">Paciente</span>
+                        </li>
+                        <li class="menu-item">
+                            <a href="./agendarCita" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-calendar"></i>
+                                <div data-i18n="Agendar Citas">Agendar Citas</div>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="./verCitas" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-lock-open-alt"></i>
+                                <div data-i18n="Authentications">Ver citas</div>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="./verHistorialMedico" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-cube-alt"></i>
+                                <div data-i18n="Misc">Historial medico</div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    <!--FIN DEL MENU DEL PACIENTE -->
 
-          <!-- Layouts -->
-          <li class="menu-header small text-uppercase">
-            <span class="menu-header-text">Paciente</span>
-          </li>
-          <li class="menu-item">
-            <a href="#" class="menu-link">
-              <i class="menu-icon tf-icons bx bx-dock-top"></i>
-              <div data-i18n="Account Settings">Agrendar citas</div>
-            </a>
-          </li>
-          <li class="menu-item">
-            <a href="#" class="menu-link">
-              <i class="menu-icon tf-icons bx bx-lock-open-alt"></i>
-              <div data-i18n="Authentications">Ver citas</div>
-            </a>
-          </li>
-          <li class="menu-item">
-            <a href="#" class="menu-link">
-              <i class="menu-icon tf-icons bx bx-cube-alt"></i>
-              <div data-i18n="Misc">Historial medico</div>
-            </a>
-          </li>
-          <!--FIN DEL MENU DE  PACIENTE -->
+                    <!--INICIO DEL MENU DEL ADMINISTRADOR -->
+                    <?php if ($rol === 'administrador'): ?>
+                        <li class="menu-header small text-uppercase">
+                            <span class="menu-header-text">Administrador</span>
+                        </li>
+                        <li class="menu-item">
+                            <a href="./actualizarInformacionUsuarios" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-collection"></i>
+                                <div data-i18n="Basic">Editar Usuarios</div>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-box"></i>
+                                <div data-i18n="User interface">Reportes</div>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="./gestionInventario" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-copy"></i>
+                                <div data-i18n="Extended UI">Inventario</div>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-crown"></i>
+                                <div data-i18n="Boxicons">Auditorias</div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    <!--FIN DEL MENU DEL ADMINISTRADOR -->
 
-          <!-- MENU DEL ADMINITRADOR -->
-          <li class="menu-header small text-uppercase"><span class="menu-header-text">Admintrador</span></li>
-          <!-- Cards -->
-          <li class="menu-item">
-            <a href="./actualizarInformacionUsuarios" class="menu-link">
-              <i class="menu-icon tf-icons bx bx-collection"></i>
-              <div data-i18n="Basic">Editar Usuarios</div>
-            </a>
-          </li>
-          <!-- User interface -->
-          <li class="menu-item">
-            <a href="#" class="menu-link">
-              <i class="menu-icon tf-icons bx bx-box"></i>
-              <div data-i18n="User interface">Reportes</div>
-            </a>
-          </li>
-
-          <!-- Extended components -->
-          <li class="menu-item">
-            <a href="#" class="menu-link ">
-              <i class="menu-icon tf-icons bx bx-copy"></i>
-              <div data-i18n="Extended UI">Inventario</div>
-            </a>
-          </li>
-
-          <li class="menu-item">
-            <a href="#" class="menu-link">
-              <i class="menu-icon tf-icons bx bx-crown"></i>
-              <div data-i18n="Boxicons">Auditorias</div>
-            </a>
-          </li>
+                    <!--INICIO DEL MENU DEL MEDICO -->
+                    <?php if ($rol === 'medico'): ?>
+                        <li class="menu-header small text-uppercase">
+                            <span class="menu-header-text">Medico</span>
+                        </li>
+                        <li class="menu-item">
+                            <a href="./calendarioCitasMedico" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-calendar"></i>
+                                <div data-i18n="Agendar Citas">Calendario de citas</div>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="./agendarCitaMedico" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-calendar"></i>
+                                <div data-i18n="Agendar Citas">Agendar Citas para pacientes</div>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="./verCitasMedico" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-calendar"></i>
+                                <div data-i18n="Agendar Citas">Ver citas</div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    <!--FIN DEL MENU DEL MEDICO -->
         </ul>
       </aside>
       <!-- / Menu -->
@@ -209,9 +239,16 @@ if (session_status() == PHP_SESSION_NONE) {
                           </div>
                         </div>
                         <div class="flex-grow-1">
-                          <span
-                            class="fw-semibold d-block"><?php echo $_SESSION['nombre'] . ' ' . $_SESSION['apellido']; ?></span>
-                          <small class="text-muted"><?php echo $_SESSION['rol']; ?></small>
+                          <span class="fw-semibold d-block">
+                            <?php
+                            echo isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Nombre no disponible';
+                            echo ' ';
+                            echo isset($_SESSION['apellido']) ? $_SESSION['apellido'] : 'Apellido no disponible';
+                            ?>
+                          </span>
+                          <small class="text-muted">
+                            <?php echo isset($_SESSION['rol']) ? $_SESSION['rol'] : 'Rol no disponible'; ?>
+                          </small>
                         </div>
                       </div>
                     </a>
