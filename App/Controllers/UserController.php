@@ -154,6 +154,7 @@ class UserController {
     }
 
     public function actualizarInformacionPaciente() {
+<<<<<<< HEAD
     header('Content-Type: application/json');
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -169,6 +170,34 @@ class UserController {
             if ($stmtVerificarPaciente->rowCount() == 0) {
                 echo json_encode(['success' => false, 'message' => 'El paciente no existe en la base de datos.']);
                 return;
+=======
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (isset($_SESSION['user_id'])) {
+                $this->user->id = $_SESSION['user_id'];
+                $this->user->edad = $_POST['edad'] ?? null;
+                $this->user->sexo = $_POST['sexo'] ?? null;
+                $this->user->telefono = $_POST['telefono'] ?? null;
+                $this->user->direccion = $_POST['direccion'] ?? null;
+                $this->user->tipo_sangre = $_POST['tipo_sangre'] ?? null;
+                $this->user->nacionalidad_id = $_POST['nacionalidad_id'] ?? null;
+                $this->user->provincia_id = $_POST['provincia_id'] ?? null;
+    
+                // Imagen de perfil
+                if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
+                    $fileTmpPath = $_FILES['foto_perfil']['tmp_name'];
+                    $fileContent = file_get_contents($fileTmpPath);
+                    $this->user->foto_perfil = base64_encode($fileContent); // Guardar como base64
+                }
+    
+                if ($this->user->actualizarInformacionPaciente()) {
+                    echo json_encode(['success' => true, 'message' => 'Información actualizada con éxito.']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Error al actualizar la información.']);
+                }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Usuario no autenticado.']);
+>>>>>>> 00a40f9b6a38b1e7bab73ecfe424a70a58503538
             }
 
             // Obtener el id del paciente
@@ -204,6 +233,7 @@ class UserController {
                 echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
             }
         } else {
+<<<<<<< HEAD
             echo json_encode(['success' => false, 'message' => 'Usuario no autenticado.']);
         }
     } else {
@@ -211,6 +241,11 @@ class UserController {
     }
 }
 
+=======
+            echo json_encode(['success' => false, 'message' => 'Método de solicitud no permitido.']);
+        }
+    }    
+>>>>>>> 00a40f9b6a38b1e7bab73ecfe424a70a58503538
 
     /**
      * Método para mostrar la lista de usuarios.

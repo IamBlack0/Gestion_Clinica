@@ -170,7 +170,29 @@ class User
         return false;
     }
 
+<<<<<<< HEAD
     /**
+=======
+    public function actualizarInformacionPaciente() {
+        $query = "UPDATE usuarios SET edad = :edad, sexo = :sexo, telefono = :telefono, direccion = :direccion,
+                  tipo_sangre = :tipo_sangre, nacionalidad_id = :nacionalidad_id, provincia_id = :provincia_id,
+                  foto_perfil = :foto_perfil WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':edad', $this->edad);
+        $stmt->bindParam(':sexo', $this->sexo);
+        $stmt->bindParam(':telefono', $this->telefono);
+        $stmt->bindParam(':direccion', $this->direccion);
+        $stmt->bindParam(':tipo_sangre', $this->tipo_sangre);
+        $stmt->bindParam(':nacionalidad_id', $this->nacionalidad_id);
+        $stmt->bindParam(':provincia_id', $this->provincia_id);
+        $stmt->bindParam(':foto_perfil', $this->foto_perfil);
+        $stmt->bindParam(':id', $this->id);
+    
+        return $stmt->execute();
+    }
+    
+ /**
+>>>>>>> 00a40f9b6a38b1e7bab73ecfe424a70a58503538
      * Método para obtener todos los usuarios.
      */
     public function obtenerTodosLosUsuarios()
