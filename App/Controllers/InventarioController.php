@@ -60,11 +60,13 @@ class InventarioController {
 
     public function obtenerProductoId() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            error_log(print_r($_POST, true));
             $this->producto->producto_id = $_POST['producto_id'];
 
             $producto = $this->producto->getProductoById();
             if ($producto) {
-                echo json_encode(['success' => true, 'message' => 'Producto ID obtenido correctamente']);
+                var_dump($producto);
+                echo json_encode(['success' => true, 'producto' => $producto]);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Error obteniendo Producto ID']);
             }
@@ -72,5 +74,6 @@ class InventarioController {
             require_once __DIR__ . '/../Views/gestionInventario.php';
         }
     }
+
 }
 ?>

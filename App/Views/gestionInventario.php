@@ -131,11 +131,11 @@ $proveedores = $stmtProveedores->fetchAll(PDO::FETCH_ASSOC);
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="confirmacionModalLabel">Registro de Medicamento</h5>
+                        <h5 class="modal-title" id="confirmacionModalLabel">Registro de Producto</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body" id="mensajeConfirmacion">
-                        <!-- Aquí se mostrará el mensaje de éxito -->
+                        <!-- Aquí se mostrará el mensaje de éxito o error -->
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
@@ -201,34 +201,66 @@ $proveedores = $stmtProveedores->fetchAll(PDO::FETCH_ASSOC);
                 });
             });
             
-            // Funcion para traer los datos de una fila de la tabla
-            $(document).on('click', function() {
-                var productoId = $(this).data('id'); // Obtener el producto_id del botón
+            // Evento al hacer clic en el botón de editar
+            $(document).ready(function() {
+                // Evento al hacer clic en el botón de editar
+                $('.btn-editar-producto').on('click', function() {
+                    console.log('boton de editar clicked');
+                    
+                    // Obtiene el ID del producto
+                    const productoId = $(this).data('id');
 
-                $.ajax({
-                    url: './getProductoById',
-                    type: 'POST',
-                    data: { producto_id: productoId },
-                    success: function(response) {
-                        console.log(response);                        if (data.success) {
-                            // Llenar el modal con los datos recibidos
-                            $('#editarProducto #producto_id').val(productoId);
-                            $('#editarProducto #nombre').val(data.producto.nombre);
-                            $('#editarProducto #codigo_sku').val(data.producto.codigo_sku);
-                            $('#editarProducto #categoria_nombre').val(data.producto.categoria_nombre);
-                            $('#editarProducto #cantidad').val(data.producto.cantidad);
-                            $('#editarProducto #precio').val(data.producto.precio);
-                            $('#editarProducto #unidad_medida').val(data.producto.unidad_medida);
-                            
-                            // Mostrar el modal
-                            $('#editarProducto').modal('show');
-                        } else {
-                            alert(data.message); // Mostrar mensaje de error si no se obtienen datos
-                        }
-                    }
+                    // Llama a la función para obtener los datos del producto
+                    obtenerDatosProducto(productoId);
                 });
+
+                // Función para obtener los datos del producto por ID
+                function obtenerDatosProducto(productoId) {
+                    $.ajax({
+                        url: './getProductoById', // Cambia esto por la ruta a tu script PHP
+                        type: 'POST', // Cambia a POST
+                        data: { producto_id: productoId }, // Envía el ID del producto al servidor
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                const producto = response.producto; // Obtiene el producto de la respuesta
+                                // Rellena los campos del modal con los datos del producto
+                                llenarCamposModal(producto);
+                            } else {
+                                console.error(response.message);
+                                // Aquí puedes mostrar un mensaje al usuario si no se obtienen los datos
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.error('Error al obtener los datos:', textStatus, errorThrown);
+                            // Manejar errores aquí, como mostrar un mensaje al usuario
+                        }
+                    });
+                }
+
+                // Función para llenar los campos del modal
+                function llenarCamposModal(producto) {
+                    $('#producto_id').val(producto.producto_id);
+                    $('#nombre').val(producto.nombre);
+                    $('#codigo_sku').val(producto.codigo_sku);
+                    $('#categoria_nombre').val(producto.categoria_nombre);
+                    $('#cantidad').val(producto.cantidad);
+                    $('#precio').val(producto.precio);
+                    $('#unidad_medida').val(producto.unidad_medida);
+                }
             });
-            
+
+            // Función para llenar los campos del modal
+            function llenarCamposModal(producto) {
+                $('#producto_id').val(producto.producto_id);
+                $('#nombre').val(producto.nombre);
+                $('#codigo_sku').val(producto.codigo_sku);
+                $('#categoria_nombre').val(producto.categoria_nombre);
+                $('#cantidad').val(producto.cantidad);
+                $('#precio').val(producto.precio);
+                $('#unidad_medida').val(producto.unidad_medida);
+            }
+
             function mostrarCamposAdicionales() {
                 const tipoProducto = document.getElementById('tipoProducto').value;
                 const camposAdicionales = document.getElementById('camposAdicionales');
@@ -280,10 +312,6 @@ $proveedores = $stmtProveedores->fetchAll(PDO::FETCH_ASSOC);
                 }
             }
 
-            function submitEditarProductoForm() {
-
-            }
-
             function actualizarTablaProducto() {
                 $.ajax({
                     url: './obtenerInventarios', 
@@ -305,20 +333,10 @@ $proveedores = $stmtProveedores->fetchAll(PDO::FETCH_ASSOC);
                                     <td>${producto.precio || 'Precio no disponible'}</td>
                                     <td>${producto.unidad_medida || 'Unidad/Medida no disponible'}</td>
                                     <td>
-                                        <div class="dropdown">
-                                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                                <i class="bx bx-dots-vertical-rounded"></i>
-                                            </button>
-                                            <div class="dropdown-menu">
-                                                <a class="dropdown-item"">
-                                                    <i class="bx bx-edit-alt me-2"></i> Editar
-                                                </a>
-                                                <a class="dropdown-item">
-                                                    <i class="bx bx-trash me-2"></i> Eliminar
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </td>
+                                    <button type="button" class="btn p-0 btn-editar-producto text-decoration-underline" data-bs-toggle="modal" data-bs-target="#editarProducto">
+                                        Editar
+                                    </button>
+                                </td>
                                 </tr>
                             `);
                         });
@@ -351,32 +369,16 @@ $proveedores = $stmtProveedores->fetchAll(PDO::FETCH_ASSOC);
                         <?php foreach ($productos as $producto): ?>
                             <tr>
                                 <td><?php echo $producto['producto_id']; ?></td>
-                                <td><?php echo isset($producto['nombre']) ? $producto['nombre'] : 'Nombre no disponible'; ?>
-                                </td>
-                                <td><?php echo isset($producto['codigo_sku']) ? $producto['codigo_sku'] : 'Código no disponible'; ?>
-                                </td>
-                                <td><?php echo isset($producto['categoria_nombre']) ? $producto['categoria_nombre'] : 'Categoría no disponible'; ?>
-                                </td>
-                                <td><?php echo isset($producto['cantidad']) ? $producto['cantidad'] : 'Cantidad no disponible'; ?>
-                                </td>
-                                <td><?php echo isset($producto['precio']) ? '$' . number_format($producto['precio'], 2) : 'Precio no disponible'; ?>
-                                </td>
-                                <td><?php echo isset($producto['unidad_medida']) ? $producto['unidad_medida'] : 'Unidad/Medida no disponible'; ?>
-                                </td>
+                                <td><?php echo $producto['nombre'] ?? 'Nombre no disponible'; ?></td>
+                                <td><?php echo $producto['codigo_sku'] ?? 'Código no disponible'; ?></td>
+                                <td><?php echo $producto['categoria_nombre'] ?? 'Categoría no disponible'; ?></td>
+                                <td><?php echo $producto['cantidad'] ?? 'Cantidad no disponible'; ?></td>
+                                <td><?php echo '$' . number_format($producto['precio'], 2) ?? 'Precio no disponible'; ?></td>
+                                <td><?php echo $producto['unidad_medida'] ?? 'Unidad/Medida no disponible'; ?></td>
                                 <td>
-                                    <div class="dropdown">
-                                        <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                            <i class="bx bx-dots-vertical-rounded"></i>
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editarProducto" data-id="<?php echo $producto['producto_id']; ?>">
-                                                <i class="bx bx-edit-alt me-2"></i> Editar
-                                            </a>
-                                            <a class="dropdown-item">
-                                                <i class="bx bx-trash me-2"></i> Eliminar
-                                            </a>
-                                        </div>
-                                    </div>
+                                    <button type="button" class="btn p-0 btn-editar-producto text-decoration-underline" data-bs-toggle="modal" data-bs-target="#editarProducto" data-id="<?php echo $producto['producto_id']; ?>">
+                                        Editar
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

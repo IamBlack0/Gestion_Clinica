@@ -83,8 +83,8 @@ class Inventario {
     
                 if ($stmtProductosProveedores->execute()) {
                     // Insertar el movimiento de inventario
-                    $queryMovimientoInventario = "INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad, descripcion)
-                      VALUES (:producto_id, :fecha_movimiento, :tipo_movimiento, :cantidad, :descripcion)";
+                    $queryMovimientoInventario = "INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad)
+                      VALUES (:producto_id, :fecha_movimiento, :tipo_movimiento, :cantidad)";
                     $stmtMovimientoInventario = $this->conn->prepare($queryMovimientoInventario);
     
                     $stmtMovimientoInventario->bindParam(':producto_id', $this->producto_id);

@@ -120,8 +120,6 @@ class App
                 }
                 break;
 
-
-
             case 'obtenerMedicosPorEspecialidad':
                 $especialidadId = $_GET['especialidad_id'];
                 $medicos = $citasController->obtenerMedicosPorEspecialidad($especialidadId);
