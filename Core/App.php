@@ -84,7 +84,7 @@ class App
                 break;
 
             //CASOS PARA EL INVENTARIO
-            case 'obtenerIventarios':
+            case 'obtenerInventarios':
                 $controllerInv->obtenerInventarios();
                 break;
             case 'gestionInventario':
@@ -99,9 +99,9 @@ class App
             case 'agregarProducto':
                 $controllerInv->agregarProducto(); // Llamar al método para agregar un producto
                 break;
-
-
-
+            case 'getProductoById':
+                $controllerInv->obtenerProductoId();
+                break;
             //CASO PARA AGENDAR CITA
             case 'agendarCita':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
