@@ -18,7 +18,7 @@ $stmtCategorias->execute();
 $categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
 
 // Obtener proveedores de la base de datos
-$queryProveedores = "SELECT proveedor_id, nombre FROM proveedores"; // Asegúrate de que esta tabla existe
+$queryProveedores = "SELECT proveedor_id, nombre FROM proveedores";
 $stmtProveedores = $conn->prepare($queryProveedores);
 $stmtProveedores->execute();
 $proveedores = $stmtProveedores->fetchAll(PDO::FETCH_ASSOC);
@@ -34,7 +34,10 @@ error_reporting(E_ALL);
         <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Inventario /</span> Gestionar Inventario</h4>
         <!-- Button trigger modal -->
         <div class="d-flex justify-content-end mb-4">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#agregarProductoModal">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#agregarSalidaModal">
+                <i class="bx bx-plus me-2"></i> Salida Producto
+            </button>
+            <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#agregarProductoModal">
                 <i class="bx bx-plus me-2"></i> Agregar Producto
             </button>
         </div>
@@ -145,6 +148,54 @@ error_reporting(E_ALL);
             </div>
         </div>
 
+        <!-- Modal para registrar salida de producto -->
+        <div class="modal fade" id="agregarSalidaModal" tabindex="-1" aria-labelledby="agregarSalidaModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="agregarSalidaModalLabel">Registrar Salida de Producto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="agregarSalidaForm" action="./salidaProducto" method="POST">
+                            <div class="mb-3">
+                                <label for="producto_id" class="form-label">Seleccionar Producto</label>
+                                <select class="form-select" id="producto_id" name="producto_id" required>
+                                    <option value="" selected disabled>Seleccione un producto</option>
+                                    <?php foreach ($productos as $producto): ?>
+                                        <option value="<?php echo $producto['producto_id']; ?>">
+                                            <?php echo $producto['nombre']; ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                    <label for="movimiento" class="form-label">Movimiento</label>
+                                    <input type="text" class="form-control" id="movimiento" name="movimiento"
+                                        value="Salida" readonly>
+                                </div>
+                            <div class="mb-3">
+                                <label for="cantidadSalida" class="form-label">Cantidad Salida</label>
+                                <input type="number" class="form-control" id="cantidadSalida" name="cantidadSalida" min="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="fechaSalida" class="form-label">Fecha de Salida</label>
+                                <input type="date" class="form-control" id="fechaSalida" name="fechaSalida" required>
+                            </div>
+                            <div class="mb-3">
+                                    <label for="desc" class="form-label">Descripcion</label>
+                                    <input type="text" class="form-control" id="desc" name="desc" required>
+                                </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" onclick="submitAgregarSalidaForm()">Registrar Salida</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script>
             function mostrarCamposAdicionales() {
                 const tipoProducto = document.getElementById('tipoProducto').value;
@@ -181,6 +232,33 @@ error_reporting(E_ALL);
                             } else {
                                 alert(res.message);
                             }
+                        }
+                    });
+                } else {
+                    form[0].reportValidity();
+                }
+            }
+
+            function submitAgregarSalidaForm() {
+                const form = $('#agregarSalidaForm');
+                if (form[0].checkValidity()) {
+                    $.ajax({
+                        url: form.attr('action'),
+                        type: form.attr('method'),
+                        data: form.serialize(),
+                        dataType: 'json', // Expect JSON response
+                        success: function (response) {
+                            if (response.success) {
+                                alert(response.message);
+                                $('#agregarSalidaForm').modal('hide');
+                                actualizarTablaProducto();
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            console.error('AJAX error:', textStatus, errorThrown);
+                            alert('An error occurred while processing your request. Please try again later.');
                         }
                     });
                 } else {

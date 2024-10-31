@@ -42,7 +42,7 @@ $stmtProvincias->execute();
 $provincias = $stmtProvincias->fetchAll(PDO::FETCH_ASSOC);
 
 // Definir la URL de la foto de perfil
-$fotoPerfilSrc = !empty($informacionPaciente['foto_perfil']) ? 'data:image/jpeg;base64,' . $informacionPaciente['foto_perfil'] : '../Public/img/avatars/1.png';
+$fotoPerfilSrc = !empty($informacionPaciente['foto_perfil']) ? 'data:image/jpeg;base64,' . $informacionPaciente['foto_perfil'] : './Public/img/avatars/1.png';
 
 ?>
 
@@ -70,6 +70,7 @@ $fotoPerfilSrc = !empty($informacionPaciente['foto_perfil']) ? 'data:image/jpeg;
                     <h5 class="card-header">Detalles del Perfil</h5>
                     <!-- Account -->
                     <div class="card-body">
+                        <form id="formAccountSettings" method="POST" enctype="multipart/form-data">
                         <div class="d-flex align-items-start align-items-sm-center gap-4">
                             <img src="<?php echo $fotoPerfilSrc; ?>" alt="user-avatar" class="d-block rounded" height="100" width="100" id="uploadedAvatar" />
                             <div class="button-wrapper">

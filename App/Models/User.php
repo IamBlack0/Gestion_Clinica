@@ -33,7 +33,8 @@ class User
     public $telefono_proveedor;
     public $producto_id;
 
-
+    public $cantidadSalida;
+    public $fechaSalida;
 
 
 
@@ -298,6 +299,68 @@ class User
         }
     }
 
+    public function registrarSalidaProducto() {
+        try {
+            // Iniciar la transacción
+            $this->conn->beginTransaction();
 
+            $this->producto_id = $this->conn->lastInsertId();
+    
+            // Obtener la cantidad actual del producto
+            $query = "SELECT cantidad FROM cantidad WHERE producto_id = :producto_id FOR UPDATE";
+            $stmt = $this->conn->prepare($query);
+            
+            $stmt->bindParam(':producto_id', $this->producto_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if (!$resultado) {
+                throw new Exception("Producto no encontrado.");
+            }
+    
+            $cantidadActual = $resultado['cantidad'];
+    
+            // Validar si hay suficiente cantidad para la salida
+            if ($cantidadActual < $this->cantidadSalida) {
+                throw new Exception("No hay suficiente cantidad en stock.");
+            }
+    
+            // Actualizar la cantidad
+            $nuevaCantidad = $cantidadActual - $this->cantidadSalida;
+            $queryUpdate = "UPDATE cantidad SET cantidad = :nuevaCantidad WHERE producto_id = :producto_id";
+            $stmtUpdate = $this->conn->prepare($queryUpdate);
+            $stmtUpdate->bindParam(':nuevaCantidad', $nuevaCantidad, PDO::PARAM_INT);
+            $stmtUpdate->bindParam(':producto_id', $this->producto_id, PDO::PARAM_INT);
+            
+            if (!$stmtUpdate->execute()) {
+                throw new Exception("Falló la actualización de la cantidad del producto.");
+            }
+    
+            // Insertar el movimiento de inventario
+            $queryMovimientoInventario = "INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad, descripcion)
+                VALUES (:producto_id, :fecha_movimiento, :tipo_movimiento, :cantidad, :descripcion)";
+            $stmtMovimientoInventario = $this->conn->prepare($queryMovimientoInventario);
+    
+            $stmtMovimientoInventario->bindParam(':producto_id', $this->producto_id);
+            $stmtMovimientoInventario->bindParam(':fecha_movimiento', $this->fecha); // Asegurarse de que la fecha esté establecida
+            $stmtMovimientoInventario->bindParam(':tipo_movimiento', $this->movimiento);
+            $stmtMovimientoInventario->bindParam(':cantidad', $this->cantidadSalida);
+            $stmtMovimientoInventario->bindParam(':descripcion', $this->descripcion);
+    
+            if (!$stmtMovimientoInventario->execute()) {
+                throw new Exception("Falló la inserción del movimiento de inventario.");
+            }
+    
+            // Confirmar la transacción
+            $this->conn->commit();
+            return true; // Todo se ejecutó correctamente
+        } catch (Exception $e) {
+            // Hacer rollback en caso de error y mostrar mensaje específico
+            $this->conn->rollBack();
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+            return false;
+        }
+    }
+    
 
 }

@@ -153,81 +153,64 @@ class UserController {
         }
     }
 
-    /**
-     * Método para manejar la actualización de la información del paciente.
-     */
     public function actualizarInformacionPaciente() {
-        header('Content-Type: application/json');
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (isset($_SESSION['user_id'])) {
-                $this->paciente->id = $_SESSION['user_id'];
-    
-                // Verificar si el paciente existe en la tabla pacientes
-                $queryVerificarPaciente = "SELECT id FROM pacientes WHERE usuario_id = :usuario_id";
-                $stmtVerificarPaciente = $this->db->prepare($queryVerificarPaciente);
-                $stmtVerificarPaciente->bindParam(':usuario_id', $this->paciente->id);
-                $stmtVerificarPaciente->execute();
-    
-                if ($stmtVerificarPaciente->rowCount() == 0) {
-                    echo json_encode(['success' => false, 'message' => 'El paciente no existe en la base de datos.']);
-                    return;
-                }
-    
-                // Obtener el id del paciente
-                $pacienteData = $stmtVerificarPaciente->fetch(PDO::FETCH_ASSOC);
-                $this->paciente->id = $pacienteData['id'];
-    
-                // Asignar los datos del formulario al objeto Paciente
-                $this->paciente->edad = $_POST['edad'] ?? null;
-                $this->paciente->sexo = $_POST['sexo'] ?? null;
-                $this->paciente->telefono = $_POST['telefono'] ?? null;
-                $this->paciente->direccion = $_POST['direccion'] ?? null;
-                $this->paciente->tipo_sangre = $_POST['tipo_sangre'] ?? null;
-                $this->paciente->nacionalidad_id = $_POST['nacionalidad_id'] ?? null;
-                $this->paciente->provincia_id = $_POST['provincia_id'] ?? null;
-    
-                // Imagen de perfil
-                if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
-                    $fileTmpPath = $_FILES['foto_perfil']['tmp_name'];
-                    $fileName = $_FILES['foto_perfil']['name'];
-                    $fileSize = $_FILES['foto_perfil']['size'];
-                    $fileType = $_FILES['foto_perfil']['type'];
-                    $fileNameCmps = explode(".", $fileName);
-                    $fileExtension = strtolower(end($fileNameCmps));
-    
-                    // Verificar si el archivo es una imagen JPG o PNG
-                    $allowedfileExtensions = array('jpg', 'jpeg', 'png');
-                    if (in_array($fileExtension, $allowedfileExtensions)) {
-                        // Leer el contenido del archivo
-                        $fileContent = file_get_contents($fileTmpPath);
-                        // Encriptar el contenido del archivo
-                        $encryptedContent = base64_encode($fileContent);
-                        $this->paciente->foto_perfil = $encryptedContent;
-                    } else {
-                        echo json_encode(['success' => false, 'message' => 'Formato de archivo no permitido. Solo se permiten JPG y PNG.']);
-                        return;
-                    }
-                } else {
-                    $this->paciente->foto_perfil = null;
-                }
-    
-                // Actualizar la información del paciente
-                try {
-                    if ($this->paciente->actualizarInformacionPaciente()) {
-                        echo json_encode(['success' => true]);
-                    } else {
-                        echo json_encode(['success' => false, 'message' => 'Error al actualizar la información del paciente.']);
-                    }
-                } catch (Exception $e) {
-                    echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
-                }
+    header('Content-Type: application/json');
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (isset($_SESSION['user_id'])) {
+            $this->paciente->id = $_SESSION['user_id'];
+            
+            // Verificar si el paciente existe en la tabla pacientes
+            $queryVerificarPaciente = "SELECT id FROM pacientes WHERE usuario_id = :usuario_id";
+            $stmtVerificarPaciente = $this->db->prepare($queryVerificarPaciente);
+            $stmtVerificarPaciente->bindParam(':usuario_id', $this->paciente->id);
+            $stmtVerificarPaciente->execute();
+
+            if ($stmtVerificarPaciente->rowCount() == 0) {
+                echo json_encode(['success' => false, 'message' => 'El paciente no existe en la base de datos.']);
+                return;
+            }
+
+            // Obtener el id del paciente
+            $pacienteData = $stmtVerificarPaciente->fetch(PDO::FETCH_ASSOC);
+            $this->paciente->id = $pacienteData['id'];
+
+            // Asignar datos del formulario
+            $this->paciente->edad = $_POST['edad'] ?? null;
+            $this->paciente->sexo = $_POST['sexo'] ?? null;
+            $this->paciente->telefono = $_POST['telefono'] ?? null;
+            $this->paciente->direccion = $_POST['direccion'] ?? null;
+            $this->paciente->tipo_sangre = $_POST['tipo_sangre'] ?? null;
+            $this->paciente->nacionalidad_id = $_POST['nacionalidad_id'] ?? null;
+            $this->paciente->provincia_id = $_POST['provincia_id'] ?? null;
+
+            // Manejo de la imagen de perfil
+            if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
+                // Leer el contenido del archivo y convertirlo en binario
+                $fileData = file_get_contents($_FILES['foto_perfil']['tmp_name']);
+                $this->paciente->foto_perfil = $fileData;  // Guardar binario en el objeto
             } else {
-                echo json_encode(['success' => false, 'message' => 'Usuario no autenticado.']);
+                $this->paciente->foto_perfil = null;
+            }
+
+            // Actualizar la información del paciente
+            try {
+                if ($this->paciente->actualizarInformacionPaciente()) {
+                    echo json_encode(['success' => true]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Error al actualizar la información del paciente.']);
+                }
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
             }
         } else {
-            echo json_encode(['success' => false, 'message' => 'Método de solicitud no permitido.']);
+            echo json_encode(['success' => false, 'message' => 'Usuario no autenticado.']);
         }
-    }    
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Método de solicitud no permitido.']);
+    }
+}
+
 
     /**
      * Método para mostrar la lista de usuarios.
@@ -404,5 +387,27 @@ class UserController {
         }
     }
 
+    public function salidaProducto() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+    
+            var_dump($_POST); // Confirmación de datos de entrada
+            
+            $this->producto->movimiento = $_POST['movimiento'];
+            $this->producto->cantidadSalida = $_POST['cantidadSalida'];
+            $this->producto->fecha = $_POST['fechaSalida']; 
+            $this->producto->descripcion = $_POST['desc'];
+    
+            // Intentar registrar la salida
+            if ($this->producto->registrarSalidaProducto()) {
+                echo json_encode(['success' => true, 'message' => 'Salida de producto registrada correctamente.']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Error en el registro de la salida de producto.']);
+            }
+        } else {
+            require_once __DIR__ . '/../Views/gestionInventario.php';
+        }
+    }
+    
 
 }
