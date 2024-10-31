@@ -7,19 +7,15 @@ class Inventario {
 
     public $nombre_producto;
     public $codigo_sku;
-    public $descripcion;
     public $forma;
     public $cantidad;
     public $precio;
-    public $ubicacion;
     public $fecha;
     public $movimiento;
     public $fechaExpiracion;
     public $categoria_id;
     public $proveedor_id;
     public $proveedor_nombre;
-    public $contacto_proveedor;
-    public $telefono_proveedor;
     public $producto_id;
 
     /**
@@ -50,9 +46,6 @@ class Inventario {
     }
 
     public function registroProducto() {
-        // Asumiendo que el proveedor ya existe, no necesitamos insertar un nuevo proveedor.
-        
-        // Consulta para insertar un nuevo producto
         $queryProductos = "INSERT INTO productos (nombre, codigo_sku, categoria_id, unidad_medida, fecha_expiracion)
           VALUES (:nombre_producto, :codigo_sku, :categoria_id, :forma, :fechaExpiracion)";
         
@@ -71,13 +64,12 @@ class Inventario {
             $this->producto_id = $this->conn->lastInsertId();
             
             // Insertar la cantidad del producto
-            $queryCantidad = "INSERT INTO cantidad (producto_id, cantidad, ubicacion)
-              VALUES (:producto_id, :cantidad, :ubicacion)";
+            $queryCantidad = "INSERT INTO cantidad (producto_id, cantidad)
+              VALUES (:producto_id, :cantidad)";
             $stmtCantidad = $this->conn->prepare($queryCantidad);
     
             $stmtCantidad->bindParam(':producto_id', $this->producto_id);
             $stmtCantidad->bindParam(':cantidad', $this->cantidad);
-            $stmtCantidad->bindParam(':ubicacion', $this->ubicacion);
     
             if ($stmtCantidad->execute()) {
                 // Insertar en productos_proveedores usando el proveedor existente
@@ -91,15 +83,14 @@ class Inventario {
     
                 if ($stmtProductosProveedores->execute()) {
                     // Insertar el movimiento de inventario
-                    $queryMovimientoInventario = "INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad, descripcion)
-                      VALUES (:producto_id, :fecha_movimiento, :tipo_movimiento, :cantidad, :descripcion)";
+                    $queryMovimientoInventario = "INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad)
+                      VALUES (:producto_id, :fecha_movimiento, :tipo_movimiento, :cantidad)";
                     $stmtMovimientoInventario = $this->conn->prepare($queryMovimientoInventario);
     
                     $stmtMovimientoInventario->bindParam(':producto_id', $this->producto_id);
                     $stmtMovimientoInventario->bindParam(':fecha_movimiento', $this->fecha);
                     $stmtMovimientoInventario->bindParam(':tipo_movimiento', $this->movimiento);
                     $stmtMovimientoInventario->bindParam(':cantidad', $this->cantidad);
-                    $stmtMovimientoInventario->bindParam(':descripcion', $this->descripcion);
     
                     if ($stmtMovimientoInventario->execute()) {
                         return true; // Todo se ejecutó correctamente
@@ -117,5 +108,16 @@ class Inventario {
         }
     }
 
-    
+    public function getProductoById() {
+        $queryProductoId = "SELECT * FROM productos WHERE producto_id = :producto_id";
+        $stmtProductoId = $this->conn->prepare($queryProductoId);
+
+        $stmtProductoId->bindParam(':producto_id', $this->producto_id);
+
+        if ($stmtProductoId->execute()) {
+            return $stmtProductoId->fetch(PDO::FETCH_ASSOC);
+        } else {
+            return false;
+        }
+    }
 }

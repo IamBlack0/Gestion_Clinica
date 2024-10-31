@@ -87,8 +87,8 @@ class App
                 $controller->obtenerUsuarios();
                 break;
 
-            //CASOS PARA EL INVENTARIO
-            case 'obtenerIventarios':
+                //CASOS PARA EL INVENTARIO
+            case 'obtenerInventarios':
                 $controllerInv->obtenerInventarios();
                 break;
             case 'gestionInventario':
@@ -103,10 +103,12 @@ class App
             case 'agregarProducto':
                 $controllerInv->agregarProducto(); // Llamar al método para agregar un producto
                 break;
+            case 'getProductoById':
+                $controllerInv->obtenerProductoId();
+                break;
 
 
-
-            //CASO PARA AGENDAR CITA
+                //CASO PARA AGENDAR CITA
             case 'agendarCita':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
                 if (isset($_SESSION['user_id'])) {
@@ -150,7 +152,7 @@ class App
                 }
                 break;
 
-            // PARA AGENDAR CITAS DESDE EL MEDICO
+                // PARA AGENDAR CITAS DESDE EL MEDICO
             case 'agendarCitaMedico':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
                 if (isset($_SESSION['user_id'])) {
@@ -186,7 +188,7 @@ class App
 
 
 
-            //CASO PARA VER CITAS DEL MEDICO
+                //CASO PARA VER CITAS DEL MEDICO
             case 'verCitasMedico':
                 if (isset($_SESSION['user_id'])) {
                     $historialMedicoController->verCitasMedico();
@@ -203,15 +205,15 @@ class App
                 }
                 break;
 
-                case 'verHistorialMedico':
-                    if (isset($_SESSION['user_id'])) {
-                        $historialMedicoController->verHistorialMedico();
-                    } else {
-                        header('Location: ./login');
-                    }
-                    break;
+            case 'verHistorialMedico':
+                if (isset($_SESSION['user_id'])) {
+                    $historialMedicoController->verHistorialMedico();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
 
-            //CASO PARA CERRAR SESION
+                //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
                 break;

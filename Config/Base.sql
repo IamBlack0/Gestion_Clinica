@@ -136,8 +136,6 @@ CREATE TABLE categorias (
 CREATE TABLE proveedores (
     proveedor_id INT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
-    contacto VARCHAR(100),
-    telefono VARCHAR(15)
 );
 
 CREATE TABLE productos (
@@ -180,10 +178,10 @@ CREATE TABLE productos_proveedores (
 INSERT INTO categorias (nombre) VALUES ('Analgésicos');
 INSERT INTO categorias (nombre) VALUES ('Antibióticos');
 
-INSERT INTO proveedores (nombre, contacto, telefono) 
-VALUES ('MEDICEL S.A', 'Juan Pérez', '123456789');
-INSERT INTO proveedores (nombre, contacto, telefono) 
-VALUES ('AGENCIAS MOTTA, S. A', 'Ana Gómez', '987654321');
+INSERT INTO proveedores (nombre) 
+VALUES ('MEDICEL S.A');
+INSERT INTO proveedores (nombre) 
+VALUES ('AGENCIAS MOTTA, S. A');
 
 INSERT INTO productos (nombre, codigo_sku, categoria_id, unidad_medida, fecha_expiracion) 
 VALUES ('Ibuprofeno 400mg', 'IBU400', 1, 'Tableta', '2030-10-22');
@@ -200,10 +198,10 @@ VALUES (1, 1, 0.50);
 INSERT INTO productos_proveedores (producto_id, proveedor_id, precio)
 VALUES (2, 2, 0.75);
 
-INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad, descripcion)
-VALUES (1, '2024-10-20', 'entrada', 100, 'Ingreso inicial de stock para Ibuprofeno 400mg');
-INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad, descripcion)
-VALUES (2, '2024-10-21', 'entrada', 50, 'Ingreso inicial de stock para Amoxicilina 500mg');
+INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad)
+VALUES (1, '2024-10-20', 'entrada', 100);
+INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad)
+VALUES (2, '2024-10-21', 'entrada', 50);
 
 
 
@@ -267,13 +265,16 @@ CREATE TABLE pagos (
 
 -- Insertar usuarios para médicos
 INSERT INTO usuarios (email, contraseña, rol_id) VALUES
+('medico1@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico')),
 ('medico2@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico')),
 ('medico3@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico')),
 ('medico4@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico')),
 ('medico5@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico'));
 
+
 -- Insertar colaboradores con rol de médico y especialidad específica
 INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, especialidad_id, fecha_contratacion) VALUES
+((SELECT id FROM usuarios WHERE email = 'medico1@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Goku', 'Ramírez', (SELECT id FROM especialidades WHERE nombre = 'Medicina General'), '2024-10-29'),
 ((SELECT id FROM usuarios WHERE email = 'medico2@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Carlos', 'Ramírez', (SELECT id FROM especialidades WHERE nombre = 'Pediatría'), '2024-10-29'),
 ((SELECT id FROM usuarios WHERE email = 'medico3@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Laura', 'González', (SELECT id FROM especialidades WHERE nombre = 'Cardiología'), '2024-10-29'),
 ((SELECT id FROM usuarios WHERE email = 'medico4@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Miguel', 'Herrera', (SELECT id FROM especialidades WHERE nombre = 'Cirugía General'), '2024-10-29'),
