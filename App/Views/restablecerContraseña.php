@@ -25,6 +25,17 @@ include $headerPath;
       <div class="card">
         <div class="card-body">
           <!-- Logo -->
+          <?php if (isset($_GET['mensaje'])): ?>
+            <div class="alert alert-success" role="alert">
+              <?php echo htmlspecialchars($_GET['mensaje']); ?>
+            </div>
+          <?php endif; ?>
+
+          <?php if (isset($_GET['error'])): ?>
+            <div class="alert alert-danger" role="alert">
+              <?php echo htmlspecialchars($_GET['error']); ?>
+            </div>
+          <?php endif; ?>
           <div class="app-brand justify-content-center">
             <a href="index.html" class="app-brand-link gap-2">
               <span class="app-brand-logo demo">

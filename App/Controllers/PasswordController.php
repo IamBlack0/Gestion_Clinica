@@ -27,11 +27,17 @@ class PasswordController {
                 $token = $this->userModel->generarTokenRestablecimiento();
                 
                 if($token && $this->enviarEmailRestablecimiento($email, $token)) {
-                    header('Location: ./login?mensaje=Se ha enviado un email con las instrucciones');
+                    // En lugar de usar header, retornamos a la página con un mensaje
+                    echo "<script>
+                        window.location.href = './restablecerContrasena?mensaje=Se ha enviado un enlace a tu correo electrónico';
+                    </script>";
                     exit;
                 }
             }
-            header('Location: ./restablecerContrasena?error=Error al procesar la solicitud');
+            // En caso de error
+            echo "<script>
+                window.location.href = './restablecerContrasena?error=No se pudo procesar la solicitud. Por favor, intenta de nuevo.';
+            </script>";
             exit;
         }
     }
@@ -41,7 +47,7 @@ class PasswordController {
     
         try {
             // Configuración del servidor
-            $mail->SMTPDebug = SMTP::DEBUG_SERVER; // Cambiar a DEBUG_SERVER para ver errores
+            $mail->SMTPDebug = SMTP::DEBUG_OFF;
             $mail->isSMTP();
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
