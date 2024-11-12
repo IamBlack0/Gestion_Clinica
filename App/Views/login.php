@@ -94,7 +94,7 @@ include $headerPath;
                         <div class="mb-3 form-password-toggle">
                             <div class="d-flex justify-content-between">
                                 <label class="form-label" for="password">Contraseña</label>
-                                <a href="#">
+                                <a href="./restablecerContrasena">
                                     <small>¿Olvidaste tu contraseña?</small>
                                 </a>
                             </div>

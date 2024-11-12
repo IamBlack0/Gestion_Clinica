@@ -12,6 +12,10 @@ require_once __DIR__ . '/../App/Controllers/InventarioController.php';
 require_once __DIR__ . '/../App/Controllers/CitasController.php';
 // Incluir el controlador de historial médico
 require_once __DIR__ . '/../App/Controllers/HistorialMedicoController.php';
+// incluir el controlador de contraseñas
+require_once __DIR__ . '/../App/Controllers/PasswordController.php';
+
+require_once __DIR__ . '/../App/Models/User.php';
 
 /**
  * Clase App para manejar las rutas de la aplicación.
@@ -31,6 +35,10 @@ class App
         $citasController = new CitasController();
         // Instanciar el controlador de historial médico
         $historialMedicoController = new HistorialMedicoController();
+        // Instanciar el controlador de contraseñas
+        $passwordController = new PasswordController();
+
+        
 
         // Si no hay una URL, cargar la página de inicio de sesión por defecto
         if (empty($url[0])) {
@@ -213,6 +221,50 @@ class App
                 }
                 break;
 
+            
+            //CASO PARA RESTABLECER CONTRASEÑA
+            case 'restablecerContrasena':
+                // Verificar que el usuario NO esté autenticado
+                if (!isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../App/Views/restablecerContraseña.php';
+                } else {
+                    header('Location: ./dashboard');
+                }
+                break;
+
+                case 'solicitarRestablecimiento':
+                    if (!isset($_SESSION['user_id'])) {
+                        $passwordController = new PasswordController();
+                        $passwordController->solicitarRestablecimiento();
+                    } else {
+                        header('Location: ./dashboard');
+                    }
+                    break;
+                
+                case 'restablecer':
+                    if (isset($_GET['token'])) {
+                        require_once __DIR__ . '/../App/Views/nuevaContrasena.php';
+                    } else {
+                        header('Location: ./login');
+                    }
+                    break;
+
+                    case 'actualizarContrasena':
+                        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                            $token = $_POST['token'];
+                            
+                            if ($_POST['password'] === $_POST['confirm-password']) {
+                                if ($passwordController->actualizarContrasena($_POST['password'], $token)) {
+                                    header('Location: ./login?mensaje=Contraseña actualizada correctamente');
+                                } else {
+                                    header('Location: ./restablecer?token=' . $token . '&error=Error al actualizar la contraseña');
+                                }
+                            } else {
+                                header('Location: ./restablecer?token=' . $token . '&error=Las contraseñas no coinciden');
+                            }
+                            exit();
+                        }
+                        break;
                 //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
@@ -223,3 +275,4 @@ class App
         }
     }
 }
+

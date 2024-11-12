@@ -186,4 +186,30 @@ class User
     }
 
 
+
+    public function generarTokenRestablecimiento() {
+        $token = bin2hex(random_bytes(32)); // Genera un token seguro
+        $query = "UPDATE usuarios SET restablecer = :token WHERE email = :email";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':token', $token);
+        $stmt->bindParam(':email', $this->email);
+        
+        if($stmt->execute()) {
+            return $token;
+        }
+        return false;
+    }
+
+    public function actualizarPassword($nueva_password, $token) {
+        $hashed_password = password_hash($nueva_password, PASSWORD_DEFAULT);
+        $query = "UPDATE usuarios SET contraseña = :password, restablecer = '' 
+                 WHERE restablecer = :token";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':password', $hashed_password);
+        $stmt->bindParam(':token', $token);
+        
+        return $stmt->execute();
+    }
+
 }

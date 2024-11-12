@@ -23,6 +23,7 @@ CREATE TABLE usuarios (
     email VARCHAR(100) UNIQUE NOT NULL,
     contraseña VARCHAR(255) NOT NULL,
     rol_id INT NOT NULL,
+    restablecer varchar(250) NOT NULL,
     FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 
