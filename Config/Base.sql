@@ -136,7 +136,7 @@ CREATE TABLE categorias (
 
 CREATE TABLE proveedores (
     proveedor_id INT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(100) NOT NULL,
+    nombre VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE productos (
