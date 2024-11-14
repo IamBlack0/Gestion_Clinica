@@ -7,7 +7,8 @@ class Paciente extends User
     private $tableInformacionPaciente = 'informacion_paciente';
     public $nombre;
     public $apellido;
-    public $edad;
+    public $cedula;
+    public $fecha_nacimiento;
     public $sexo;
     public $telefono;
     public $direccion;
@@ -36,7 +37,7 @@ class Paciente extends User
 
     public function obtenerInformacionPaciente()
     {
-        $query = "SELECT edad, sexo, telefono, direccion, tipo_sangre, nacionalidad_id, provincia_id, foto_perfil
+        $query = "SELECT cedula, fecha_nacimiento, sexo, telefono, direccion, tipo_sangre, nacionalidad_id, provincia_id, foto_perfil
                   FROM " . $this->tableInformacionPaciente . "
                   WHERE paciente_id = :id";
         $stmt = $this->conn->prepare($query);
@@ -45,7 +46,8 @@ class Paciente extends User
 
         if ($stmt->rowCount() == 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $this->edad = $row['edad'];
+            $this->cedula = $row['cedula']; // Asignar el valor de cedula
+            $this->fecha_nacimiento = $row['fecha_nacimiento']; // Asignar el valor de fecha_nacimiento
             $this->sexo = $row['sexo'];
             $this->telefono = $row['telefono'];
             $this->direccion = $row['direccion'];
@@ -58,11 +60,13 @@ class Paciente extends User
         return false;
     }
 
-    public function actualizarInformacionPaciente() {
-        $query = "INSERT INTO " . $this->tableInformacionPaciente . " (paciente_id, edad, sexo, telefono, direccion, tipo_sangre, nacionalidad_id, provincia_id, foto_perfil)
-                  VALUES (:paciente_id, :edad, :sexo, :telefono, :direccion, :tipo_sangre, :nacionalidad_id, :provincia_id, :foto_perfil)
+    public function actualizarInformacionPaciente()
+    {
+        $query = "INSERT INTO " . $this->tableInformacionPaciente . " (paciente_id, cedula, fecha_nacimiento, sexo, telefono, direccion, tipo_sangre, nacionalidad_id, provincia_id, foto_perfil)
+                  VALUES (:paciente_id, :cedula, :fecha_nacimiento, :sexo, :telefono, :direccion, :tipo_sangre, :nacionalidad_id, :provincia_id, :foto_perfil)
                   ON DUPLICATE KEY UPDATE
-                  edad = VALUES(edad),
+                  cedula = VALUES(cedula),
+                  fecha_nacimiento = VALUES(fecha_nacimiento),
                   sexo = VALUES(sexo),
                   telefono = VALUES(telefono),
                   direccion = VALUES(direccion),
@@ -72,7 +76,8 @@ class Paciente extends User
                   foto_perfil = VALUES(foto_perfil)";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':paciente_id', $this->id);
-        $stmt->bindParam(':edad', $this->edad);
+        $stmt->bindParam(':cedula', $this->cedula); // Enlazar el parámetro cedula
+        $stmt->bindParam(':fecha_nacimiento', $this->fecha_nacimiento); // Enlazar el parámetro fecha_nacimiento
         $stmt->bindParam(':sexo', $this->sexo);
         $stmt->bindParam(':telefono', $this->telefono);
         $stmt->bindParam(':direccion', $this->direccion);
@@ -80,7 +85,7 @@ class Paciente extends User
         $stmt->bindParam(':nacionalidad_id', $this->nacionalidad_id);
         $stmt->bindParam(':provincia_id', $this->provincia_id);
         $stmt->bindParam(':foto_perfil', $this->foto_perfil);
-    
+
         try {
             if ($stmt->execute()) {
                 return true;

@@ -72,7 +72,8 @@ CREATE TABLE pacientes (
 -- Crear tabla informacion_paciente con referencia a provincias y nacionalidades
 CREATE TABLE informacion_paciente (
     paciente_id INT NOT NULL PRIMARY KEY,
-    edad INT, -- Puede ser NULL inicialmente
+    cedula VARCHAR(50) NOT NULL UNIQUE, -- Cédula única y no nula
+    fecha_nacimiento DATE, -- Nuevo campo para almacenar la fecha de nacimiento
     sexo ENUM('masculino', 'femenino', 'otro'), -- Puede ser NULL inicialmente
     telefono VARCHAR(20), -- Puede ser NULL
     direccion VARCHAR(255), -- Puede ser NULL
@@ -84,6 +85,7 @@ CREATE TABLE informacion_paciente (
     FOREIGN KEY (provincia_id) REFERENCES provincias(id) ON DELETE SET NULL,
     FOREIGN KEY (nacionalidad_id) REFERENCES nacionalidades(id) ON DELETE SET NULL
 );
+
 
 -- Crear tabla especialidades
 CREATE TABLE especialidades (

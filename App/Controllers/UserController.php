@@ -129,7 +129,8 @@ class UserController
             if ($this->paciente->obtenerInformacionPaciente()) {
                 // Pasar la información del paciente a la vista
                 $informacionPaciente = [
-                    'edad' => $this->paciente->edad,
+                    'cedula' => $this->paciente->cedula, // Nuevo campo
+                    'fecha_nacimiento' => $this->paciente->fecha_nacimiento, // Nuevo campo
                     'sexo' => $this->paciente->sexo,
                     'telefono' => $this->paciente->telefono,
                     'direccion' => $this->paciente->direccion,
@@ -141,7 +142,8 @@ class UserController
             } else {
                 // Inicializar los campos con valores predeterminados
                 $informacionPaciente = [
-                    'edad' => '',
+                    'cedula' => '', // Nuevo campo
+                    'fecha_nacimiento' => '', // Nuevo campo
                     'sexo' => '',
                     'telefono' => '',
                     'direccion' => '',
@@ -185,7 +187,8 @@ class UserController
                 $this->paciente->id = $pacienteData['id'];
 
                 // Asignar los datos del formulario al objeto Paciente
-                $this->paciente->edad = $_POST['edad'] ?? null;
+                $this->paciente->cedula = $_POST['cedula'] ?? null; // Asignar el valor de cedula
+                $this->paciente->fecha_nacimiento = $_POST['fecha_nacimiento'] ?? null; // Asignar el valor de fecha_nacimiento
                 $this->paciente->sexo = $_POST['sexo'] ?? null;
                 $this->paciente->telefono = $_POST['telefono'] ?? null;
                 $this->paciente->direccion = $_POST['direccion'] ?? null;

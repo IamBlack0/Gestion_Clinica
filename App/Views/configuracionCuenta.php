@@ -86,12 +86,14 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                     <!-- Account -->
                     <div class="card-body">
                         <div class="d-flex align-items-start align-items-sm-center gap-4">
-                            <img src="<?php echo $fotoPerfilSrc; ?>" alt="user-avatar" class="d-block rounded" height="100" width="100" id="uploadedAvatar" />
+                            <img src="<?php echo $fotoPerfilSrc; ?>" alt="user-avatar" class="d-block rounded" height="100"
+                                width="100" id="uploadedAvatar" />
                             <div class="button-wrapper">
                                 <label for="upload" class="btn btn-primary me-2 mb-4" tabindex="0">
                                     <span class="d-none d-sm-block">Subir nueva foto</span>
                                     <i class="bx bx-upload d-block d-sm-none"></i>
-                                    <input type="file" id="upload" class="account-file-input" hidden accept="image/png, image/jpeg" />
+                                    <input type="file" id="upload" class="account-file-input" hidden
+                                        accept="image/png, image/jpeg" />
                                 </label>
                                 <button type="button" class="btn btn-outline-secondary account-image-reset mb-4">
                                     <i class="bx bx-reset d-block d-sm-none"></i>
@@ -107,77 +109,90 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                             <div class="row">
                                 <div class="mb-3 col-md-6">
                                     <label for="firstName" class="form-label">Nombre</label>
-                                    <input class="form-control" type="text" id="firstName" name="firstName" value="<?php echo $_SESSION['nombre'] ?? ''; ?>" readonly />
+                                    <input class="form-control" type="text" id="firstName" name="firstName"
+                                        value="<?php echo $_SESSION['nombre'] ?? ''; ?>" readonly />
                                 </div>
                                 <div class="mb-3 col-md-6">
                                     <label for="lastName" class="form-label">Apellido</label>
-                                    <input class="form-control" type="text" name="lastName" id="lastName" value="<?php echo $_SESSION['apellido'] ?? ''; ?>" readonly />
+                                    <input class="form-control" type="text" name="lastName" id="lastName"
+                                        value="<?php echo $_SESSION['apellido'] ?? ''; ?>" readonly />
                                 </div>
                                 <div class="mb-3 col-md-6">
                                     <label for="email" class="form-label">Correo</label>
-                                    <input class="form-control" type="text" id="email" name="email" value="<?php echo $usuario['email'] ?? ''; ?>" readonly />
+                                    <input class="form-control" type="text" id="email" name="email"
+                                        value="<?php echo $usuario['email'] ?? ''; ?>" readonly />
                                 </div>
                                 <?php if (!$isAdmin && !$isMedico): ?>
-                                <div class="mb-3 col-md-6">
-                                    <label for="edad" class="form-label">Edad</label>
-                                    <input type="number" class="form-control" id="edad" name="edad" value="<?php echo $informacionPaciente['edad'] ?? ''; ?>" min="0" />
-                                </div>
-                                <div class="mb-3 col-md-6">
-                                    <label for="sexo" class="form-label">Sexo</label>
-                                    <select id="sexo" name="sexo" class="form-select">
-                                        <option value="">Selecciona</option>
-                                        <option value="masculino" <?php echo ($informacionPaciente['sexo'] ?? '') == 'masculino' ? 'selected' : ''; ?>>Masculino</option>
-                                        <option value="femenino" <?php echo ($informacionPaciente['sexo'] ?? '') == 'femenino' ? 'selected' : ''; ?>>Femenino</option>
-                                        <option value="otro" <?php echo ($informacionPaciente['sexo'] ?? '') == 'otro' ? 'selected' : ''; ?>>Otro</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3 col-md-6">
-                                    <label for="tipo_sangre" class="form-label">Tipo de sangre</label>
-                                    <select id="tipo_sangre" name="tipo_sangre" class="form-select">
-                                        <option value="">Selecciona</option>
-                                        <option value="A+" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'A+' ? 'selected' : ''; ?>>A+</option>
-                                        <option value="A-" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'A-' ? 'selected' : ''; ?>>A-</option>
-                                        <option value="B+" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'B+' ? 'selected' : ''; ?>>B+</option>
-                                        <option value="B-" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'B-' ? 'selected' : ''; ?>>B-</option>
-                                        <option value="AB+" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'AB+' ? 'selected' : ''; ?>>AB+</option>
-                                        <option value="AB-" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'AB-' ? 'selected' : ''; ?>>AB-</option>
-                                        <option value="O+" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'O+' ? 'selected' : ''; ?>>O+</option>
-                                        <option value="O-" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'O-' ? 'selected' : ''; ?>>O-</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label" for="telefono">Numero de telefono</label>
-                                    <div class="input-group input-group-merge">
-                                        <span class="input-group-text">PA (+507)</span>
-                                        <input type="text" id="telefono" name="telefono" class="form-control" placeholder="0000-0000" value="<?php echo $informacionPaciente['telefono'] ?? ''; ?>" />
+                                    <div class="mb-3 col-md-6">
+                                        <label for="cedula" class="form-label">Cédula</label>
+                                        <input type="text" class="form-control" id="cedula" name="cedula"
+                                            value="<?php echo $informacionPaciente['cedula'] ?? ''; ?>" />
                                     </div>
-                                </div>
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label" for="nacionalidad_id">Nacionalidad</label>
-                                    <select id="nacionalidad_id" name="nacionalidad_id" class="select2 form-select">
-                                        <option value="">Selecciona</option>
-                                        <?php foreach ($nacionalidades as $nacionalidad): ?>
-                                            <option value="<?php echo $nacionalidad['id']; ?>" <?php echo ($informacionPaciente['nacionalidad_id'] ?? '') == $nacionalidad['id'] ? 'selected' : ''; ?>>
-                                                <?php echo $nacionalidad['nombre']; ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="mb-3 col-md-6">
-                                    <label for="direccion" class="form-label">Dirección</label>
-                                    <input type="text" class="form-control" id="direccion" name="direccion" placeholder="Address" value="<?php echo $informacionPaciente['direccion'] ?? ''; ?>" />
-                                </div>
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label" for="provincia_id">Provincia</label>
-                                    <select id="provincia_id" name="provincia_id" class="select2 form-select">
-                                        <option value="">Selecciona</option>
-                                        <?php foreach ($provincias as $provincia): ?>
-                                            <option value="<?php echo $provincia['id']; ?>" <?php echo ($informacionPaciente['provincia_id'] ?? '') == $provincia['id'] ? 'selected' : ''; ?>>
-                                                <?php echo $provincia['nombre']; ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+                                        <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento"
+                                            value="<?php echo $informacionPaciente['fecha_nacimiento'] ?? ''; ?>" />
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="sexo" class="form-label">Sexo</label>
+                                        <select id="sexo" name="sexo" class="form-select">
+                                            <option value="">Selecciona</option>
+                                            <option value="masculino" <?php echo ($informacionPaciente['sexo'] ?? '') == 'masculino' ? 'selected' : ''; ?>>Masculino</option>
+                                            <option value="femenino" <?php echo ($informacionPaciente['sexo'] ?? '') == 'femenino' ? 'selected' : ''; ?>>Femenino</option>
+                                            <option value="otro" <?php echo ($informacionPaciente['sexo'] ?? '') == 'otro' ? 'selected' : ''; ?>>Otro</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="tipo_sangre" class="form-label">Tipo de sangre</label>
+                                        <select id="tipo_sangre" name="tipo_sangre" class="form-select">
+                                            <option value="">Selecciona</option>
+                                            <option value="A+" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'A+' ? 'selected' : ''; ?>>A+</option>
+                                            <option value="A-" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'A-' ? 'selected' : ''; ?>>A-</option>
+                                            <option value="B+" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'B+' ? 'selected' : ''; ?>>B+</option>
+                                            <option value="B-" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'B-' ? 'selected' : ''; ?>>B-</option>
+                                            <option value="AB+" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'AB+' ? 'selected' : ''; ?>>AB+</option>
+                                            <option value="AB-" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'AB-' ? 'selected' : ''; ?>>AB-</option>
+                                            <option value="O+" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'O+' ? 'selected' : ''; ?>>O+</option>
+                                            <option value="O-" <?php echo ($informacionPaciente['tipo_sangre'] ?? '') == 'O-' ? 'selected' : ''; ?>>O-</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label class="form-label" for="telefono">Numero de telefono</label>
+                                        <div class="input-group input-group-merge">
+                                            <span class="input-group-text">PA (+507)</span>
+                                            <input type="text" id="telefono" name="telefono" class="form-control"
+                                                placeholder="0000-0000"
+                                                value="<?php echo $informacionPaciente['telefono'] ?? ''; ?>" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label class="form-label" for="nacionalidad_id">Nacionalidad</label>
+                                        <select id="nacionalidad_id" name="nacionalidad_id" class="select2 form-select">
+                                            <option value="">Selecciona</option>
+                                            <?php foreach ($nacionalidades as $nacionalidad): ?>
+                                                <option value="<?php echo $nacionalidad['id']; ?>" <?php echo ($informacionPaciente['nacionalidad_id'] ?? '') == $nacionalidad['id'] ? 'selected' : ''; ?>>
+                                                    <?php echo $nacionalidad['nombre']; ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="direccion" class="form-label">Dirección</label>
+                                        <input type="text" class="form-control" id="direccion" name="direccion"
+                                            placeholder="Address"
+                                            value="<?php echo $informacionPaciente['direccion'] ?? ''; ?>" />
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label class="form-label" for="provincia_id">Provincia</label>
+                                        <select id="provincia_id" name="provincia_id" class="select2 form-select">
+                                            <option value="">Selecciona</option>
+                                            <?php foreach ($provincias as $provincia): ?>
+                                                <option value="<?php echo $provincia['id']; ?>" <?php echo ($informacionPaciente['provincia_id'] ?? '') == $provincia['id'] ? 'selected' : ''; ?>>
+                                                    <?php echo $provincia['nombre']; ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                             <div class="mt-2">
@@ -194,13 +209,16 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                         <div class="mb-3 col-12 mb-0">
                             <div class="alert alert-warning">
                                 <h6 class="alert-heading fw-bold mb-1">¿Seguro que quieres eliminar tu cuenta?</h6>
-                                <p class="mb-0">Una vez que elimine su cuenta, no hay vuelta atrás. Por favor, esté seguro.</p>
+                                <p class="mb-0">Una vez que elimine su cuenta, no hay vuelta atrás. Por favor, esté seguro.
+                                </p>
                             </div>
                         </div>
                         <form id="formAccountDeactivation" onsubmit="return false">
                             <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" name="accountActivation" id="accountActivation" />
-                                <label class="form-check-label" for="accountActivation">Confirmo la desactivación de mi cuenta</label>
+                                <input class="form-check-input" type="checkbox" name="accountActivation"
+                                    id="accountActivation" />
+                                <label class="form-check-label" for="accountActivation">Confirmo la desactivación de mi
+                                    cuenta</label>
                             </div>
                             <button type="submit" class="btn btn-danger deactivate-account">Desactivar cuenta</button>
                         </form>
