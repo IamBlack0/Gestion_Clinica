@@ -86,8 +86,8 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                     <!-- Account -->
                     <div class="card-body">
                         <div class="d-flex align-items-start align-items-sm-center gap-4">
-                            <img src="<?php echo $fotoPerfilSrc; ?>" alt="user-avatar" class="d-block rounded" height="100"
-                                width="100" id="uploadedAvatar" />
+                            <img src="<?php echo $fotoPerfilSrc; ?>" alt="user-avatar" class="d-block rounded"
+                                height="100" width="100" id="uploadedAvatar" />
                             <div class="button-wrapper">
                                 <label for="upload" class="btn btn-primary me-2 mb-4" tabindex="0">
                                     <span class="d-none d-sm-block">Subir nueva foto</span>
@@ -118,20 +118,27 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                                         value="<?php echo $_SESSION['apellido'] ?? ''; ?>" readonly />
                                 </div>
                                 <div class="mb-3 col-md-6">
+                                    <label for="cedula" class="form-label">Cédula</label>
+                                    <input class="form-control" type="text" id="cedula" name="cedula"
+                                        value="<?php echo $informacionPaciente['cedula'] ?? ''; ?>" required />
+                                </div>
+                                <div class="mb-3 col-md-6">
+                                    <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+                                    <input type="date" class="form-control" id="fecha_nacimiento"
+                                        name="fecha_nacimiento"
+                                        value="<?php echo $informacionPaciente['fecha_nacimiento'] ?? ''; ?>"
+                                        required />
+                                </div>
+                                <div class="mb-3 col-md-6">
                                     <label for="email" class="form-label">Correo</label>
                                     <input class="form-control" type="text" id="email" name="email"
                                         value="<?php echo $usuario['email'] ?? ''; ?>" readonly />
                                 </div>
                                 <?php if (!$isAdmin && !$isMedico): ?>
                                     <div class="mb-3 col-md-6">
-                                        <label for="cedula" class="form-label">Cédula</label>
-                                        <input type="text" class="form-control" id="cedula" name="cedula"
-                                            value="<?php echo $informacionPaciente['cedula'] ?? ''; ?>" />
-                                    </div>
-                                    <div class="mb-3 col-md-6">
-                                        <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
-                                        <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento"
-                                            value="<?php echo $informacionPaciente['fecha_nacimiento'] ?? ''; ?>" />
+                                        <label for="edad" class="form-label">Edad</label>
+                                        <input type="number" class="form-control" id="edad" name="edad"
+                                            value="<?php echo $informacionPaciente['edad'] ?? ''; ?>" readonly />
                                     </div>
                                     <div class="mb-3 col-md-6">
                                         <label for="sexo" class="form-label">Sexo</label>
@@ -209,8 +216,8 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                         <div class="mb-3 col-12 mb-0">
                             <div class="alert alert-warning">
                                 <h6 class="alert-heading fw-bold mb-1">¿Seguro que quieres eliminar tu cuenta?</h6>
-                                <p class="mb-0">Una vez que elimine su cuenta, no hay vuelta atrás. Por favor, esté seguro.
-                                </p>
+                                <p class="mb-0">Una vez que elimine su cuenta, no hay vuelta atrás. Por favor, esté
+                                    seguro.</p>
                             </div>
                         </div>
                         <form id="formAccountDeactivation" onsubmit="return false">
@@ -229,45 +236,78 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
     </div>
     <!-- / Content -->
 
-<?php
-// Verificar rutas
-$footerPath = __DIR__ . '/Templates/footer.php';
-if (!file_exists($footerPath)) {
-    die('Error: No se encontró el archivo footer.php en la ruta especificada.');
+    <?php
+    // Verificar rutas
+    $footerPath = __DIR__ . '/Templates/footer.php';
+    if (!file_exists($footerPath)) {
+        die('Error: No se encontró el archivo footer.php en la ruta especificada.');
+    }
+    require $footerPath;
+    ?>
+
+    <script>
+        document.getElementById('formAccountSettings').addEventListener('submit', function (event) {
+            event.preventDefault(); // Evitar el envío del formulario
+
+            var formData = new FormData(this);
+
+            fetch('./actualizarInformacionPaciente', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Información del paciente actualizada correctamente.');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al actualizar la información del paciente.');
+                });
+        });
+
+        // Validaciones en tiempo real
+        document.getElementById('edad').addEventListener('input', function () {
+            if (this.value < 0) {
+                this.value = 0;
+                alert('La edad no puede ser negativa.');
+            }
+        });
+
+        function calcularEdad(fechaNacimiento) {
+    const hoy = new Date();
+    const fechaNac = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - fechaNac.getFullYear();
+    const mes = hoy.getMonth() - fechaNac.getMonth();
+    
+    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+        edad--;
+    }
+    
+    return edad;
 }
-require $footerPath;
-?>
 
-<script>
-document.getElementById('formAccountSettings').addEventListener('submit', function(event) {
-    event.preventDefault(); // Evitar el envío del formulario
-
-    var formData = new FormData(this);
-
-    fetch('./actualizarInformacionPaciente', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Información del paciente actualizada correctamente.');
-            location.reload();
-        } else {
-            alert('Error: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error al actualizar la información del paciente.');
-    });
-});
-
-// Validaciones en tiempo real
-document.getElementById('edad').addEventListener('input', function() {
-    if (this.value < 0) {
-        this.value = 0;
-        alert('La edad no puede ser negativa.');
+// Actualizar la edad cuando cambie la fecha de nacimiento
+document.getElementById('fecha_nacimiento').addEventListener('change', function() {
+    const fechaNacimiento = this.value;
+    if (fechaNacimiento) {
+        const edad = calcularEdad(fechaNacimiento);
+        document.getElementById('edad').value = edad;
+    } else {
+        document.getElementById('edad').value = '';
     }
 });
-</script>
+
+// Calcular la edad inicial si hay una fecha de nacimiento
+window.addEventListener('load', function() {
+    const fechaNacimiento = document.getElementById('fecha_nacimiento').value;
+    if (fechaNacimiento) {
+        const edad = calcularEdad(fechaNacimiento);
+        document.getElementById('edad').value = edad;
+    }
+});
+    </script>
