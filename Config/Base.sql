@@ -72,6 +72,7 @@ CREATE TABLE pacientes (
 -- Crear tabla informacion_paciente con referencia a provincias y nacionalidades
 CREATE TABLE informacion_paciente (
     paciente_id INT NOT NULL PRIMARY KEY,
+    edad INT, -- Puede ser NULL inicialmente
     cedula VARCHAR(50) NOT NULL UNIQUE, -- Cédula única y no nula
     fecha_nacimiento DATE, -- Nuevo campo para almacenar la fecha de nacimiento
     sexo ENUM('masculino', 'femenino', 'otro'), -- Puede ser NULL inicialmente
@@ -214,7 +215,7 @@ CREATE TABLE citas (
     paciente_id INT NOT NULL,
     especialidad_id INT NOT NULL,
     medico_id INT NOT NULL,
-    horario ENUM('mañana', 'tarde', 'noche') NOT NULL,
+    horario TIME NOT NULL,
     razon TEXT NOT NULL,
     fecha_cita DATE NOT NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -231,7 +232,7 @@ CREATE TABLE historial_citas (
     fecha_cita DATE NOT NULL,
     estado_pago ENUM('pendiente', 'pagado') NOT NULL DEFAULT 'pendiente',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    estado_cita ENUM('aceptada', 'rechazada', 'pendiente') DEFAULT 'pendiente' NOT NULL,
+    estado_cita ENUM('aceptada', 'completada', 'pendiente') DEFAULT 'pendiente' NOT NULL,
     FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
     FOREIGN KEY (medico_id) REFERENCES colaboradores(id)
 );
@@ -239,16 +240,13 @@ CREATE TABLE historial_citas (
 
 
 DELIMITER //
-
 CREATE TRIGGER after_insert_cita
 AFTER INSERT ON citas
 FOR EACH ROW
 BEGIN
     INSERT INTO historial_citas (paciente_id, medico_id, fecha_cita, estado_pago, estado_cita, fecha_creacion)
-    VALUES (NEW.paciente_id, NEW.medico_id, NEW.fecha_cita, 'pendiente', 'pendiente', CURRENT_TIMESTAMP);
-END;
-
-//
+    VALUES (NEW.paciente_id, NEW.medico_id, NEW.fecha_cita, 'pendiente', 'aceptada', CURRENT_TIMESTAMP);
+END//
 
 DELIMITER ;
 
@@ -296,10 +294,10 @@ CREATE TABLE historial_medico (
     cirugias TEXT,
     habitos TEXT,
     antecedentes_familiares TEXT,
-    motivo_consulta TEXT,
-    diagnostico TEXT,
-    tratamiento TEXT,
-    enfermedades_preexistentes TEXT,
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    motivo_consulta TEXT,   -- EDITAR
+    diagnostico TEXT,       -- EDITAR
+    tratamiento TEXT,       -- EDITAR
+    enfermedades_preexistentes TEXT,   -- EDITAR
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- EDITAR
     FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 );

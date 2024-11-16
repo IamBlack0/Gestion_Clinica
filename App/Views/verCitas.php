@@ -26,8 +26,10 @@ require $headerPath;
                 <tbody>
                     <?php foreach ($citas as $cita): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?></td>
-                            <td><?php echo htmlspecialchars($cita['medico_nombre'] . ' ' . $cita['medico_apellido']); ?></td>
+                            <td><?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?>
+                            </td>
+                            <td><?php echo htmlspecialchars($cita['medico_nombre'] . ' ' . $cita['medico_apellido']); ?>
+                            </td>
                             <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
                             <td>
                                 <?php if ($cita['estado_pago'] === 'pagado'): ?>
@@ -39,14 +41,12 @@ require $headerPath;
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ($cita['estado_cita'] === 'aceptada'): ?>
+                                <?php if ($cita['estado_cita'] === 'completada'): ?>
+                                    <span class="badge bg-label-primary me-1">Completada</span>
+                                <?php elseif ($cita['estado_cita'] === 'aceptada'): ?>
                                     <span class="badge bg-label-success">Aceptada</span>
-                                <?php elseif ($cita['estado_cita'] === 'rechazada'): ?>
-                                    <span class="badge bg-label-danger">Rechazada</span>
                                 <?php elseif ($cita['estado_cita'] === 'pendiente'): ?>
                                     <span class="badge bg-label-warning">Pendiente</span>
-                                <?php else: ?>
-                                    <span class="badge bg-label-danger">Desconocido</span>
                                 <?php endif; ?>
                             </td>
                         </tr>

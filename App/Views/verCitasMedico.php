@@ -29,9 +29,7 @@ require $configPath;
                             <label for="horario" class="form-label">Horario</label>
                             <select class="form-select" id="horario" name="horario" required>
                                 <option value="">Seleccione un horario</option>
-                                <option value="mañana">Mañana</option>
-                                <option value="tarde">Tarde</option>
-                                <option value="noche">Noche</option>
+                                <!-- Los horarios se cargarán dinámicamente -->
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary">Filtrar Citas</button>
@@ -72,8 +70,10 @@ require $configPath;
                     <div class="card-body">
                         <!-- Formulario de Información del Paciente -->
                         <form id="formInformacionPaciente" method="POST" action="./procesarHistorialMedico">
-                            <input type="hidden" name="paciente_id" id="paciente_id"
+                            <input type="hidden" name="paciente_id"
                                 value="<?php echo htmlspecialchars($informacionPaciente['paciente']['id']); ?>">
+                                <input type="hidden" name="fecha_cita" value="<?php echo htmlspecialchars($_GET['fecha']); ?>">
+                                <input type="hidden" name="horario" value="<?php echo htmlspecialchars($_GET['horario']); ?>">
                             <h6>Datos del Usuario</h6>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Correo</label>
@@ -159,8 +159,9 @@ require $configPath;
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <h6>Historial Médico</h6>
+                            <h6>Historial Médico Base</h6>
                             <div id="historial-medico">
+                                <!-- Campos editables -->
                                 <div class="mb-3">
                                     <label for="peso" class="form-label">Peso (kg)</label>
                                     <input type="number" step="0.01" class="form-control" id="peso" name="peso"
@@ -218,21 +219,27 @@ require $configPath;
                                         name="antecedentes_familiares" rows="3"
                                         required><?php echo htmlspecialchars($informacionPaciente['historial_medico']['antecedentes_familiares'] ?? ''); ?></textarea>
                                 </div>
+                            </div>
+                            <h6>Nueva Consulta</h6>
+                            <div id="nueva-consulta">
                                 <div class="mb-3">
                                     <label for="motivo_consulta" class="form-label">Motivo de Consulta</label>
                                     <textarea class="form-control" id="motivo_consulta" name="motivo_consulta" rows="3"
                                         required><?php echo htmlspecialchars($informacionPaciente['historial_medico']['motivo_consulta'] ?? ''); ?></textarea>
                                 </div>
+
                                 <div class="mb-3">
                                     <label for="diagnostico" class="form-label">Diagnóstico</label>
                                     <textarea class="form-control" id="diagnostico" name="diagnostico" rows="3"
                                         required><?php echo htmlspecialchars($informacionPaciente['historial_medico']['diagnostico'] ?? ''); ?></textarea>
                                 </div>
+
                                 <div class="mb-3">
                                     <label for="tratamiento" class="form-label">Tratamiento</label>
                                     <textarea class="form-control" id="tratamiento" name="tratamiento" rows="3"
                                         required><?php echo htmlspecialchars($informacionPaciente['historial_medico']['tratamiento'] ?? ''); ?></textarea>
                                 </div>
+
                                 <div class="mb-3">
                                     <label for="enfermedades_preexistentes" class="form-label">Enfermedades
                                         Preexistentes</label>
@@ -249,6 +256,38 @@ require $configPath;
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+    document.getElementById('fecha').addEventListener('change', function () {
+        const fecha = this.value;
+        const horarioSelect = document.getElementById('horario');
+
+        if (fecha) {
+            // Obtener el ID del médico de la sesión o de donde corresponda
+            fetch(`./obtenerHorariosCitas?fecha=${fecha}`)
+                .then(response => response.json())
+                .then(data => {
+                    horarioSelect.innerHTML = '<option value="">Seleccione un horario</option>';
+                    data.forEach(horario => {
+                        const option = document.createElement('option');
+                        option.value = horario;
+                        option.textContent = horario;
+                        horarioSelect.appendChild(option);
+                    });
+                    horarioSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    horarioSelect.disabled = true;
+                });
+        } else {
+            horarioSelect.innerHTML = '<option value="">Seleccione un horario</option>';
+            horarioSelect.disabled = true;
+        }
+    });
+</script>
+
+
 
 <?php
 // Verificar rutas

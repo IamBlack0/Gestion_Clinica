@@ -28,39 +28,37 @@ class CitasController
 
     public function obtenerMedicosDisponibles($especialidadId, $fecha)
     {
-        $query = "SELECT c.id, c.nombre, c.apellido, h.horario 
-                  FROM colaboradores c
-                  LEFT JOIN citas h ON c.id = h.medico_id AND h.fecha_cita = :fecha
-                  WHERE c.especialidad_id = :especialidadId";
+        // Obtener todos los médicos de la especialidad
+        $query = "SELECT DISTINCT c.id, c.nombre, c.apellido
+              FROM colaboradores c
+              WHERE c.especialidad_id = :especialidadId";
+
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':especialidadId', $especialidadId, PDO::PARAM_INT);
-        $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
         $stmt->execute();
         $medicos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Agrupar los horarios por médico
+        // Obtener las citas existentes para cada médico en la fecha especificada
+        $queryHorarios = "SELECT medico_id, TIME_FORMAT(horario, '%h:%i %p') as horario
+                      FROM citas
+                      WHERE fecha_cita = :fecha
+                      AND medico_id IN (SELECT id FROM colaboradores WHERE especialidad_id = :especialidadId)";
+
+        $stmtHorarios = $this->db->prepare($queryHorarios);
+        $stmtHorarios->bindParam(':fecha', $fecha, PDO::PARAM_STR);
+        $stmtHorarios->bindParam(':especialidadId', $especialidadId, PDO::PARAM_INT);
+        $stmtHorarios->execute();
+        $citasOcupadas = $stmtHorarios->fetchAll(PDO::FETCH_GROUP | PDO::FETCH_COLUMN);
+
+        // Preparar la respuesta
         $medicosDisponibles = [];
         foreach ($medicos as $medico) {
-            if (!isset($medicosDisponibles[$medico['id']])) {
-                $medicosDisponibles[$medico['id']] = [
-                    'id' => $medico['id'],
-                    'nombre' => $medico['nombre'],
-                    'apellido' => $medico['apellido'],
-                    'horarios' => ['mañana', 'tarde', 'noche']
-                ];
-            }
-            if ($medico['horario']) {
-                $index = array_search($medico['horario'], $medicosDisponibles[$medico['id']]['horarios']);
-                if ($index !== false) {
-                    unset($medicosDisponibles[$medico['id']]['horarios'][$index]);
-                }
-            }
+            $medicosDisponibles[] = [
+                'id' => $medico['id'],
+                'nombre' => $medico['nombre'],
+                'apellido' => $medico['apellido']
+            ];
         }
-
-        // Filtrar médicos que no tienen horarios disponibles
-        $medicosDisponibles = array_filter($medicosDisponibles, function ($medico) {
-            return !empty($medico['horarios']);
-        });
 
         return [
             'medicos' => array_values($medicosDisponibles)
@@ -69,17 +67,35 @@ class CitasController
 
     public function obtenerHorariosDisponibles($medicoId, $fecha, $especialidadId)
     {
-        $query = "SELECT horario FROM citas WHERE medico_id = :medicoId AND fecha_cita = :fecha";
+        // Consultar horarios ocupados para la fecha específica
+        $query = "SELECT TIME_FORMAT(horario, '%h:%i %p') as horario 
+              FROM citas 
+              WHERE medico_id = :medicoId 
+              AND fecha_cita = :fecha";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':medicoId', $medicoId, PDO::PARAM_INT);
         $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
         $stmt->execute();
-        $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $citasOcupadas = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-        $horariosOcupados = array_column($citas, 'horario');
-        $horariosDisponibles = array_diff(['mañana', 'tarde', 'noche'], $horariosOcupados);
+        // Generar todos los horarios posibles (8:00 AM a 5:00 PM)
+        $horariosDisponibles = [];
+        $inicio = strtotime('08:00');
+        $fin = strtotime('17:00');
 
-        return array_values($horariosDisponibles);
+        for ($hora = $inicio; $hora <= $fin; $hora += 1800) { // 1800 segundos = 30 minutos
+            $horarioFormateado = date('h:i A', $hora);
+
+            // Solo agregar el horario si no está ocupado para esa fecha específica
+            if (!in_array($horarioFormateado, $citasOcupadas)) {
+                $horariosDisponibles[] = $horarioFormateado;
+            }
+        }
+
+        // Asegurar que la respuesta sea JSON
+        header('Content-Type: application/json');
+        echo json_encode(array_values($horariosDisponibles));
+        exit();
     }
 
     public function procesarAgendarCita()
@@ -136,14 +152,6 @@ class CitasController
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function aceptarCita($citaId)
-    {
-        $query = "UPDATE historial_citas SET estado_cita = 'aceptada' WHERE id = :citaId";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':citaId', $citaId, PDO::PARAM_INT);
-        return $stmt->execute();
-    }
-   
     public function procesarAgendarCitaMedico()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -156,8 +164,15 @@ class CitasController
             $fecha_cita = $_POST['fecha_cita'];
     
             // Insertar la cita en la base de datos
-            $query = "INSERT INTO citas (paciente_id, especialidad_id, medico_id, horario, razon, fecha_cita)
-                      VALUES (:paciente_id, :especialidad_id, :medico_id, :horario, :razon, :fecha_cita)";
+            $query = "SELECT c.id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido,
+              c.fecha_cita, c.horario, c.razon
+              FROM citas c
+              JOIN pacientes p ON c.paciente_id = p.id
+              JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
+              AND c.fecha_cita = hc.fecha_cita
+              WHERE c.medico_id = :medico_id 
+              AND hc.estado_cita != 'completada'
+              ORDER BY c.fecha_cita ASC, c.horario ASC";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
             $stmt->bindParam(':especialidad_id', $especialidad_id, PDO::PARAM_INT);
@@ -179,5 +194,28 @@ class CitasController
             header('Location: ./agendarCitaMedico');
             exit();
         }
+    }
+
+
+    public function obtenerHorariosCitas($fecha)
+    {
+        // Consultar horarios ocupados para la fecha específica, excluyendo citas completadas
+        $query = "SELECT DISTINCT TIME_FORMAT(c.horario, '%h:%i %p') as horario 
+              FROM citas c
+              JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
+              AND c.fecha_cita = hc.fecha_cita
+              WHERE c.fecha_cita = :fecha
+              AND hc.estado_cita != 'completada'
+              ORDER BY c.horario ASC";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
+        $stmt->execute();
+        $horarios = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        // Asegurar que la respuesta sea JSON
+        header('Content-Type: application/json');
+        echo json_encode($horarios);
+        exit();
     }
 }

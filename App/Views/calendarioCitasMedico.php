@@ -27,11 +27,19 @@ if (!$medico) {
 }
 
 // Obtener las citas del médico
-$queryCitas = "SELECT c.id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido, c.fecha_cita, c.horario, c.razon, hc.estado_cita
+$queryCitas = "SELECT c.id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido, 
+               c.fecha_cita, 
+               DATE_FORMAT(c.horario, '%H:%i:00') as horario_24,
+               DATE_FORMAT(c.horario, '%h:%i %p') as horario_display,
+               c.razon
                FROM citas c
                JOIN pacientes p ON c.paciente_id = p.id
-               JOIN historial_citas hc ON c.id = hc.id
-               WHERE c.medico_id = :medico_id";
+               JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
+               AND c.fecha_cita = hc.fecha_cita
+               WHERE c.medico_id = :medico_id
+               AND hc.estado_cita != 'completada'
+               ORDER BY c.fecha_cita ASC, c.horario ASC";
+
 $stmtCitas = $db->prepare($queryCitas);
 $stmtCitas->bindParam(':medico_id', $medico['id']);
 $stmtCitas->execute();
@@ -42,25 +50,7 @@ $citas = $stmtCitas->fetchAll(PDO::FETCH_ASSOC);
     <h4 class="fw-bold py-3 mb-4">Calendario de Citas</h4>
 
     <div class="row">
-        <div class="col-md-4">
-            <h5 class="card-header">Lista de Pacientes</h5>
-            <div class="list-group" style="max-height: 600px; overflow-y: auto;">
-                <?php foreach ($citas as $cita): ?>
-                    <?php if ($cita['estado_cita'] === 'pendiente'): ?>
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title"><?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?></h5>
-                                <p class="card-text"><strong>Fecha:</strong>  <?php echo htmlspecialchars($cita['fecha_cita']); ?></p>
-                                <p class="card-text"><strong>Horario:</strong>  <?php echo htmlspecialchars($cita['horario']); ?></p>
-                                <p class="card-text"><strong>Razón:</strong>  <?php echo htmlspecialchars($cita['razon']); ?></p>
-                                <button class="btn btn-success aceptar-cita" data-cita-id="<?php echo $cita['id']; ?>">Aceptar</button>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div id="calendar"></div>
         </div>
     </div>
@@ -80,51 +70,35 @@ require $footerPath;
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        events: [
-            <?php foreach ($citas as $index => $cita): ?>
-            <?php if ($cita['estado_cita'] === 'aceptada'): ?>
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            slotMinTime: '08:00:00',
+            slotMaxTime: '17:00:00',
+            displayEventTime: true,
+            eventTimeFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short'
+            },
+            events: [
+                <?php foreach ($citas as $index => $cita): ?>
             {
-                title: '<?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?>',
-                start: '<?php echo htmlspecialchars($cita['fecha_cita'] . 'T' . ($cita['horario'] === 'mañana' ? '08:00:00' : ($cita['horario'] === 'tarde' ? '13:00:00' : '18:00:00'))); ?>',
-                description: '<?php echo htmlspecialchars($cita['razon']); ?>',
-                horario: '<?php echo htmlspecialchars($cita['horario']); ?>'
-            }<?php if ($index < count($citas) - 1) echo ','; ?>
-            <?php endif; ?>
-            <?php endforeach; ?>
-        ],
-        eventClick: function(info) {
-            alert('Paciente: ' + info.event.title + '\nHorario: ' + info.event.extendedProps.horario + '\nRazón: ' + info.event.extendedProps.description);
-        }
-    });
-
-    calendar.render();
-
-    // Manejar la aceptación de citas
-    document.querySelectorAll('.aceptar-cita').forEach(function(button) {
-        button.addEventListener('click', function() {
-            var citaId = this.getAttribute('data-cita-id');
-            fetch(`./aceptarCita?cita_id=${citaId}`, {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Cita aceptada correctamente.');
-                    location.reload();
-                } else {
-                    alert('Error al aceptar la cita.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al aceptar la cita.');
-            });
+                        title: '<?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?>',
+                        start: '<?php echo htmlspecialchars($cita['fecha_cita'] . 'T' . $cita['horario_24']); ?>',
+                        description: '<?php echo htmlspecialchars($cita['razon']); ?>',
+                        horario: '<?php echo htmlspecialchars($cita['horario_display']); ?>'
+                    }<?php if ($index < count($citas) - 1)
+                        echo ','; ?>
+    <?php endforeach; ?>
+            ],
+            eventClick: function (info) {
+                alert('Paciente: ' + info.event.title + '\nHorario: ' + info.event.extendedProps.horario + '\nRazón: ' + info.event.extendedProps.description);
+            }
         });
+
+        calendar.render();
     });
-});
 </script>

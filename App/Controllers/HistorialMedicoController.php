@@ -18,10 +18,17 @@ class HistorialMedicoController
             $horario = isset($_GET['horario']) ? $_GET['horario'] : null;
 
             if ($fecha && $horario) {
-                $query = "SELECT c.id, p.id AS paciente_id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido, c.fecha_cita, c.horario, c.razon
-                          FROM citas c
-                          JOIN pacientes p ON c.paciente_id = p.id
-                          WHERE c.medico_id = :medico_id AND c.fecha_cita = :fecha AND c.horario = :horario";
+                $query = "SELECT c.id, p.id AS paciente_id, p.nombre AS paciente_nombre, 
+                      p.apellido AS paciente_apellido, c.fecha_cita, c.horario, c.razon
+                      FROM citas c
+                      JOIN pacientes p ON c.paciente_id = p.id
+                      JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
+                      AND c.fecha_cita = hc.fecha_cita
+                      WHERE c.medico_id = :medico_id 
+                      AND c.fecha_cita = :fecha 
+                      AND c.horario = :horario
+                      AND hc.estado_cita != 'completada'";
+
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
                 $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
@@ -74,7 +81,15 @@ class HistorialMedicoController
         $stmtInformacionPaciente->execute();
         $informacion_paciente = $stmtInformacionPaciente->fetch(PDO::FETCH_ASSOC);
 
-        $queryHistorialMedico = "SELECT * FROM historial_medico WHERE paciente_id = :paciente_id";
+        $queryHistorialMedico = "
+    SELECT 
+        peso, altura, presion_arterial, frecuencia_cardiaca, 
+        temperatura, alergias, medicamentos, cirugias, habitos, 
+        antecedentes_familiares
+    FROM historial_medico
+    WHERE paciente_id = :paciente_id
+    ORDER BY fecha_registro DESC LIMIT 1";
+
         $stmtHistorialMedico = $this->db->prepare($queryHistorialMedico);
         $stmtHistorialMedico->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
         $stmtHistorialMedico->execute();
@@ -103,50 +118,93 @@ class HistorialMedicoController
     public function procesarHistorialMedico()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $paciente_id = $_POST['paciente_id'];
-            $peso = $_POST['peso'];
-            $altura = $_POST['altura'];
-            $presion_arterial = $_POST['presion_arterial'];
-            $frecuencia_cardiaca = $_POST['frecuencia_cardiaca'];
-            $temperatura = $_POST['temperatura'];
-            $alergias = $_POST['alergias'];
-            $medicamentos = $_POST['medicamentos'];
-            $cirugias = $_POST['cirugias'];
-            $habitos = $_POST['habitos'];
-            $antecedentes_familiares = $_POST['antecedentes_familiares'];
-            $motivo_consulta = $_POST['motivo_consulta'];
-            $diagnostico = $_POST['diagnostico'];
-            $tratamiento = $_POST['tratamiento'];
-            $enfermedades_preexistentes = $_POST['enfermedades_preexistentes'];
-    
-            $query = "INSERT INTO historial_medico (paciente_id, peso, altura, presion_arterial, frecuencia_cardiaca, temperatura, alergias, medicamentos, cirugias, habitos, antecedentes_familiares, motivo_consulta, diagnostico, tratamiento, enfermedades_preexistentes, fecha_registro)
-                      VALUES (:paciente_id, :peso, :altura, :presion_arterial, :frecuencia_cardiaca, :temperatura, :alergias, :medicamentos, :cirugias, :habitos, :antecedentes_familiares, :motivo_consulta, :diagnostico, :tratamiento, :enfermedades_preexistentes, NOW())";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
-            $stmt->bindParam(':peso', $peso, PDO::PARAM_STR);
-            $stmt->bindParam(':altura', $altura, PDO::PARAM_STR);
-            $stmt->bindParam(':presion_arterial', $presion_arterial, PDO::PARAM_STR);
-            $stmt->bindParam(':frecuencia_cardiaca', $frecuencia_cardiaca, PDO::PARAM_INT);
-            $stmt->bindParam(':temperatura', $temperatura, PDO::PARAM_STR);
-            $stmt->bindParam(':alergias', $alergias, PDO::PARAM_STR);
-            $stmt->bindParam(':medicamentos', $medicamentos, PDO::PARAM_STR);
-            $stmt->bindParam(':cirugias', $cirugias, PDO::PARAM_STR);
-            $stmt->bindParam(':habitos', $habitos, PDO::PARAM_STR);
-            $stmt->bindParam(':antecedentes_familiares', $antecedentes_familiares, PDO::PARAM_STR);
-            $stmt->bindParam(':motivo_consulta', $motivo_consulta, PDO::PARAM_STR);
-            $stmt->bindParam(':diagnostico', $diagnostico, PDO::PARAM_STR);
-            $stmt->bindParam(':tratamiento', $tratamiento, PDO::PARAM_STR);
-            $stmt->bindParam(':enfermedades_preexistentes', $enfermedades_preexistentes, PDO::PARAM_STR);
-    
-            if ($stmt->execute()) {
-                header('Location: ./dashboard');
+            try {
+                $this->db->beginTransaction();
+
+                // Obtener datos del formulario
+                $paciente_id = $_POST['paciente_id'] ?? null;
+                $fecha_cita = $_POST['fecha_cita'] ?? null;
+                $horario = $_POST['horario'] ?? null;
+
+                // Validar datos requeridos
+                if (!$paciente_id || !$fecha_cita || !$horario) {
+                    throw new Exception("Faltan datos requeridos");
+                }
+
+                // Insertar nuevo historial médico
+                $query = "INSERT INTO historial_medico (
+                paciente_id, 
+                peso, altura, presion_arterial, frecuencia_cardiaca,
+                temperatura, alergias, medicamentos, cirugias, 
+                habitos, antecedentes_familiares,
+                motivo_consulta, diagnostico, tratamiento, 
+                enfermedades_preexistentes
+            ) VALUES (
+                :paciente_id,
+                :peso, :altura, :presion_arterial, :frecuencia_cardiaca,
+                :temperatura, :alergias, :medicamentos, :cirugias,
+                :habitos, :antecedentes_familiares,
+                :motivo_consulta, :diagnostico, :tratamiento,
+                :enfermedades_preexistentes
+            )";
+
+                $stmt = $this->db->prepare($query);
+
+                // Bind todos los parámetros
+                $params = [
+                    ':paciente_id' => $paciente_id,
+                    ':peso' => $_POST['peso'] ?? null,
+                    ':altura' => $_POST['altura'] ?? null,
+                    ':presion_arterial' => $_POST['presion_arterial'] ?? null,
+                    ':frecuencia_cardiaca' => $_POST['frecuencia_cardiaca'] ?? null,
+                    ':temperatura' => $_POST['temperatura'] ?? null,
+                    ':alergias' => $_POST['alergias'] ?? null,
+                    ':medicamentos' => $_POST['medicamentos'] ?? null,
+                    ':cirugias' => $_POST['cirugias'] ?? null,
+                    ':habitos' => $_POST['habitos'] ?? null,
+                    ':antecedentes_familiares' => $_POST['antecedentes_familiares'] ?? null,
+                    ':motivo_consulta' => $_POST['motivo_consulta'] ?? null,
+                    ':diagnostico' => $_POST['diagnostico'] ?? null,
+                    ':tratamiento' => $_POST['tratamiento'] ?? null,
+                    ':enfermedades_preexistentes' => $_POST['enfermedades_preexistentes'] ?? null
+                ];
+
+                foreach ($params as $param => $value) {
+                    $stmt->bindValue($param, $value);
+                }
+
+                // Ejecutar inserción del historial
+                if (!$stmt->execute()) {
+                    throw new Exception("Error al insertar el historial médico");
+                }
+
+                // Actualizar estado de la cita
+                $queryUpdateCitas = "UPDATE citas c
+                               JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
+                               AND c.fecha_cita = hc.fecha_cita
+                               SET hc.estado_cita = 'completada'
+                               WHERE c.paciente_id = :paciente_id 
+                               AND c.fecha_cita = :fecha_cita
+                               AND c.horario = :horario";
+
+                $stmtUpdate = $this->db->prepare($queryUpdateCitas);
+                $stmtUpdate->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
+                $stmtUpdate->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
+                $stmtUpdate->bindParam(':horario', $horario, PDO::PARAM_STR);
+
+                if (!$stmtUpdate->execute()) {
+                    throw new Exception("Error al actualizar el estado de la cita");
+                }
+
+                $this->db->commit();
+                header('Location: ./verCitasMedico');
                 exit();
-            } else {
-                echo "Error al guardar el historial médico.";
+
+            } catch (Exception $e) {
+                $this->db->rollBack();
+                error_log($e->getMessage());
+                echo "Error: " . $e->getMessage();
             }
-        } else {
-            header('Location: ./dashboard');
-            exit();
         }
     }
 
@@ -154,19 +212,19 @@ class HistorialMedicoController
     {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $paciente_id = $_SESSION['user_id'];
-    
+
             $queryUsuario = "SELECT email FROM usuarios WHERE id = :user_id";
             $stmtUsuario = $this->db->prepare($queryUsuario);
             $stmtUsuario->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
             $stmtUsuario->execute();
             $usuario = $stmtUsuario->fetch(PDO::FETCH_ASSOC);
-    
+
             $queryPaciente = "SELECT * FROM pacientes WHERE usuario_id = :user_id";
             $stmtPaciente = $this->db->prepare($queryPaciente);
             $stmtPaciente->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
             $stmtPaciente->execute();
             $paciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
-    
+
             $queryInformacionPaciente = "SELECT ip.*, p.nombre AS provincia_nombre, n.nombre AS nacionalidad_nombre
                                          FROM informacion_paciente ip
                                          LEFT JOIN provincias p ON ip.provincia_id = p.id
@@ -176,13 +234,13 @@ class HistorialMedicoController
             $stmtInformacionPaciente->bindParam(':paciente_id', $paciente['id'], PDO::PARAM_INT);
             $stmtInformacionPaciente->execute();
             $informacion_paciente = $stmtInformacionPaciente->fetch(PDO::FETCH_ASSOC);
-    
+
             $queryHistorialMedico = "SELECT * FROM historial_medico WHERE paciente_id = :paciente_id";
             $stmtHistorialMedico = $this->db->prepare($queryHistorialMedico);
             $stmtHistorialMedico->bindParam(':paciente_id', $paciente['id'], PDO::PARAM_INT);
             $stmtHistorialMedico->execute();
             $historial_medico = $stmtHistorialMedico->fetchAll(PDO::FETCH_ASSOC);
-    
+
             require_once __DIR__ . '/../Views/verHistorialMedico.php';
         } else {
             header('Location: ./dashboard');

@@ -26,8 +26,8 @@ if (!$paciente) {
     die('Error: No se encontró el paciente con el ID especificado.');
 }
 
-// Obtener las especialidades
-$queryEspecialidades = "SELECT id, nombre FROM especialidades";
+// Modificar la consulta para obtener solo Medicina General
+$queryEspecialidades = "SELECT id, nombre FROM especialidades WHERE nombre = 'Medicina General'";
 $stmtEspecialidades = $db->prepare($queryEspecialidades);
 $stmtEspecialidades->execute();
 $especialidades = $stmtEspecialidades->fetchAll(PDO::FETCH_ASSOC);
@@ -102,9 +102,29 @@ require $footerPath;
 document.getElementById('fecha_cita').addEventListener('change', function() {
     const fecha = this.value;
     const especialidadSelect = document.getElementById('especialidad_id');
+    const medicoSelect = document.getElementById('medico_id');
+    const horarioSelect = document.getElementById('horario');
+    const razonTextarea = document.getElementById('razon');
+    const submitButton = document.querySelector('button[type="submit"]');
     const today = new Date().toISOString().split('T')[0];
+
+    // Resetear campos dependientes
+    medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
+    horarioSelect.innerHTML = '<option value="">Seleccione un horario</option>';
+    razonTextarea.value = '';
+
+    // Deshabilitar campos dependientes
+    medicoSelect.disabled = true;
+    horarioSelect.disabled = true;
+    razonTextarea.disabled = true;
+    submitButton.disabled = true;
+
     if (fecha && fecha >= today) {
         especialidadSelect.disabled = false;
+        // Si ya hay una especialidad seleccionada, cargar médicos
+        if (especialidadSelect.value) {
+            cargarMedicos(especialidadSelect.value, fecha);
+        }
     } else {
         especialidadSelect.disabled = true;
         alert('La fecha de la cita no puede ser menor a la fecha actual.');
@@ -114,7 +134,24 @@ document.getElementById('fecha_cita').addEventListener('change', function() {
 document.getElementById('especialidad_id').addEventListener('change', function() {
     const especialidadId = this.value;
     const fecha = document.getElementById('fecha_cita').value;
+    cargarMedicos(especialidadId, fecha);
+});
+
+function cargarMedicos(especialidadId, fecha) {
     const medicoSelect = document.getElementById('medico_id');
+    const horarioSelect = document.getElementById('horario');
+    const razonTextarea = document.getElementById('razon');
+    const submitButton = document.querySelector('button[type="submit"]');
+
+    // Resetear campos dependientes
+    horarioSelect.innerHTML = '<option value="">Seleccione un horario</option>';
+    razonTextarea.value = '';
+    
+    // Deshabilitar campos dependientes
+    horarioSelect.disabled = true;
+    razonTextarea.disabled = true;
+    submitButton.disabled = true;
+
     if (especialidadId && fecha) {
         fetch(`./obtenerMedicosDisponibles?especialidad_id=${especialidadId}&fecha=${fecha}`)
             .then(response => response.json())
@@ -128,31 +165,40 @@ document.getElementById('especialidad_id').addEventListener('change', function()
                 });
                 medicoSelect.disabled = false;
             });
-    } else {
-        medicoSelect.disabled = true;
     }
-});
+}
 
 document.getElementById('medico_id').addEventListener('change', function() {
     const medicoId = this.value;
     const fecha = document.getElementById('fecha_cita').value;
     const especialidadId = document.getElementById('especialidad_id').value;
     const horarioSelect = document.getElementById('horario');
+    const razonTextarea = document.getElementById('razon');
+    const submitButton = document.querySelector('button[type="submit"]');
+
+    // Resetear campos dependientes
+    razonTextarea.value = '';
+    razonTextarea.disabled = true;
+    submitButton.disabled = true;
+    
     if (medicoId) {
         fetch(`./obtenerHorariosDisponibles?medico_id=${medicoId}&fecha=${fecha}&especialidad_id=${especialidadId}`)
             .then(response => response.json())
             .then(data => {
                 horarioSelect.innerHTML = '<option value="">Seleccione un horario</option>';
-                data.horarios.forEach(horario => {
+                const horarios = Array.isArray(data) ? data : [];
+                horarios.forEach(horario => {
                     const option = document.createElement('option');
                     option.value = horario;
-                    option.textContent = horario.charAt(0).toUpperCase() + horario.slice(1);
+                    option.textContent = horario;
                     horarioSelect.appendChild(option);
                 });
                 horarioSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error al obtener horarios:', error);
+                horarioSelect.disabled = true;
             });
-    } else {
-        horarioSelect.disabled = true;
     }
 });
 
@@ -160,12 +206,8 @@ document.getElementById('horario').addEventListener('change', function() {
     const horario = this.value;
     const razonTextarea = document.getElementById('razon');
     const submitButton = document.querySelector('button[type="submit"]');
-    if (horario) {
-        razonTextarea.disabled = false;
-        submitButton.disabled = false;
-    } else {
-        razonTextarea.disabled = true;
-        submitButton.disabled = true;
-    }
+    
+    razonTextarea.disabled = !horario;
+    submitButton.disabled = !horario;
 });
 </script>

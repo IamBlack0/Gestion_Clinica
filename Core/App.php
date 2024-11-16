@@ -148,8 +148,7 @@ class App
                 $medicoId = $_GET['medico_id'];
                 $fecha = $_GET['fecha'];
                 $especialidadId = $_GET['especialidad_id'];
-                $horariosDisponibles = $citasController->obtenerHorariosDisponibles($medicoId, $fecha, $especialidadId);
-                echo json_encode(['horarios' => $horariosDisponibles]);
+                $citasController->obtenerHorariosDisponibles($medicoId, $fecha, $especialidadId);
                 break;
             case 'verCitas':
                 if (isset($_SESSION['user_id'])) {
@@ -177,13 +176,6 @@ class App
                     header('Location: ./login');
                 }
                 break;
-            case 'aceptarCita':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    $citaId = $_GET['cita_id'];
-                    $success = $citasController->aceptarCita($citaId);
-                    echo json_encode(['success' => $success]);
-                }
-                break;
             case 'procesarAgendarCitaMedico':
                 // Verificar si el usuario está autenticado antes de procesar la solicitud
                 if (isset($_SESSION['user_id'])) {
@@ -203,6 +195,11 @@ class App
                 } else {
                     header('Location: ./login');
                 }
+                break;
+
+            case 'obtenerHorariosCitas':
+                $fecha = $_GET['fecha'] ?? '';
+                $citasController->obtenerHorariosCitas($fecha);
                 break;
 
             case 'procesarHistorialMedico':
