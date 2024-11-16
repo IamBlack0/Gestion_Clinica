@@ -71,11 +71,12 @@ class HistorialMedicoController
         $stmtPaciente->execute();
         $paciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
 
-        $queryInformacionPaciente = "SELECT ip.*, p.nombre AS provincia_nombre, n.nombre AS nacionalidad_nombre
-                                     FROM informacion_paciente ip
-                                     LEFT JOIN provincias p ON ip.provincia_id = p.id
-                                     LEFT JOIN nacionalidades n ON ip.nacionalidad_id = n.id
-                                     WHERE ip.paciente_id = :paciente_id";
+        $queryInformacionPaciente = "SELECT ip.*, p.nombre AS provincia_nombre, n.nombre AS nacionalidad_nombre,
+                                   ip.cedula, ip.fecha_nacimiento
+                            FROM informacion_paciente ip
+                            LEFT JOIN provincias p ON ip.provincia_id = p.id
+                            LEFT JOIN nacionalidades n ON ip.nacionalidad_id = n.id
+                            WHERE ip.paciente_id = :paciente_id";
         $stmtInformacionPaciente = $this->db->prepare($queryInformacionPaciente);
         $stmtInformacionPaciente->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
         $stmtInformacionPaciente->execute();

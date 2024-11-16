@@ -91,7 +91,7 @@ class CitasController
                 $horariosDisponibles[] = $horarioFormateado;
             }
         }
-
+        
         // Asegurar que la respuesta sea JSON
         header('Content-Type: application/json');
         echo json_encode(array_values($horariosDisponibles));
@@ -155,42 +155,43 @@ class CitasController
     public function procesarAgendarCitaMedico()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Obtener los datos del formulario
-            $paciente_id = $_POST['paciente_id'];
-            $especialidad_id = $_POST['especialidad_id'];
-            $medico_id = $_POST['medico_id'];
-            $horario = $_POST['horario'];
-            $razon = $_POST['razon'];
-            $fecha_cita = $_POST['fecha_cita'];
-    
-            // Insertar la cita en la base de datos
-            $query = "SELECT c.id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido,
-              c.fecha_cita, c.horario, c.razon
-              FROM citas c
-              JOIN pacientes p ON c.paciente_id = p.id
-              JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
-              AND c.fecha_cita = hc.fecha_cita
-              WHERE c.medico_id = :medico_id 
-              AND hc.estado_cita != 'completada'
-              ORDER BY c.fecha_cita ASC, c.horario ASC";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
-            $stmt->bindParam(':especialidad_id', $especialidad_id, PDO::PARAM_INT);
-            $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
-            $stmt->bindParam(':horario', $horario, PDO::PARAM_STR);
-            $stmt->bindParam(':razon', $razon, PDO::PARAM_STR);
-            $stmt->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
-    
-            if ($stmt->execute()) {
-                // Redirigir a la página de inicio con un mensaje de éxito
-                header('Location: ./dashboard?mensaje=suceso');
-                exit();
-            } else {
-                // Mostrar un mensaje de error
-                echo "Error al agendar la cita.";
+            try {
+                // Obtener los datos del formulario
+                $paciente_id = $_POST['paciente_id'];
+                $especialidad_id = $_POST['especialidad_id'];
+                $medico_id = $_POST['medico_id'];
+                $horario = $_POST['horario'];
+                $razon = $_POST['razon'];
+                $fecha_cita = $_POST['fecha_cita'];
+
+                // Iniciar transacción
+                $this->db->beginTransaction();
+
+                // 1. Insertar la cita
+                $queryCita = "INSERT INTO citas (paciente_id, especialidad_id, medico_id, horario, razon, fecha_cita)
+                         VALUES (:paciente_id, :especialidad_id, :medico_id, :horario, :razon, :fecha_cita)";
+
+                $stmtCita = $this->db->prepare($queryCita);
+                $stmtCita->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
+                $stmtCita->bindParam(':especialidad_id', $especialidad_id, PDO::PARAM_INT);
+                $stmtCita->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
+                $stmtCita->bindParam(':horario', $horario, PDO::PARAM_STR);
+                $stmtCita->bindParam(':razon', $razon, PDO::PARAM_STR);
+                $stmtCita->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
+
+                if ($stmtCita->execute()) {
+                    $this->db->commit();
+                    header('Location: ./dashboard?mensaje=suceso');
+                    exit();
+                } else {
+                    $this->db->rollBack();
+                    throw new Exception("Error al agendar la cita.");
+                }
+            } catch (Exception $e) {
+                $this->db->rollBack();
+                echo "Error: " . $e->getMessage();
             }
         } else {
-            // Redirigir al formulario de agendar cita si la solicitud no es POST
             header('Location: ./agendarCitaMedico');
             exit();
         }
@@ -216,6 +217,43 @@ class CitasController
         // Asegurar que la respuesta sea JSON
         header('Content-Type: application/json');
         echo json_encode($horarios);
+        exit();
+    }
+
+    public function buscarPacientePorCedula($cedula)
+    {
+        $query = "SELECT p.id, p.nombre, p.apellido 
+              FROM pacientes p
+              JOIN informacion_paciente ip ON p.id = ip.paciente_id
+              WHERE ip.cedula = :cedula";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':cedula', $cedula, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        header('Content-Type: application/json');
+        echo json_encode(['paciente' => $paciente]);
+        exit();
+    }
+
+    public function obtenerTodosPacientes()
+    {
+        $query = "SELECT p.id, p.nombre, p.apellido 
+              FROM pacientes p
+              JOIN citas c ON p.id = c.paciente_id
+              WHERE c.medico_id = :medico_id
+              GROUP BY p.id";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':medico_id', $_SESSION['medico_id'], PDO::PARAM_INT);
+        $stmt->execute();
+
+        $pacientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        header('Content-Type: application/json');
+        echo json_encode(['pacientes' => $pacientes]);
         exit();
     }
 }

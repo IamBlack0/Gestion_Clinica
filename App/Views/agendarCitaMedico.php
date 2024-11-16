@@ -51,16 +51,14 @@ $especialidades = $stmtEspecialidades->fetchAll(PDO::FETCH_ASSOC);
         <div class="card-body">
             <form action="./procesarAgendarCitaMedico" method="POST">
                 <div class="mb-3">
-                    <label for="paciente_id" class="form-label">Paciente</label>
-                    <select class="form-select" id="paciente_id" name="paciente_id" required>
-                        <option value="">Seleccione un paciente</option>
-                        <?php foreach ($pacientes as $paciente): ?>
-                            <option value="<?php echo htmlspecialchars($paciente['id']); ?>">
-                                <?php echo htmlspecialchars($paciente['nombre'] . ' ' . $paciente['apellido']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+    <label for="buscar_cedula" class="form-label">Buscar por Cédula</label>
+    <input type="text" class="form-control" id="buscar_cedula" placeholder="Ingrese la cédula del paciente" required>
+</div>
+<div class="mb-3">
+    <label for="paciente_nombre_display" class="form-label">Paciente</label>
+    <input type="text" class="form-control" id="paciente_nombre_display" readonly>
+    <input type="hidden" id="paciente_id" name="paciente_id">
+</div>
                 <div class="mb-3">
                     <label for="fecha_cita" class="form-label">Fecha de la Cita</label>
                     <input type="date" class="form-control" id="fecha_cita" name="fecha_cita" required disabled>
@@ -91,7 +89,8 @@ $especialidades = $stmtEspecialidades->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div class="mb-3">
                     <label for="razon" class="form-label">Razón</label>
-                    <textarea class="form-control" id="razon" name="razon" rows="5" maxlength="300" required disabled></textarea>
+                    <textarea class="form-control" id="razon" name="razon" rows="5" maxlength="300" required
+                        disabled></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary" disabled>Agendar</button>
             </form>
@@ -109,82 +108,140 @@ require $footerPath;
 ?>
 
 <script>
-document.getElementById('paciente_id').addEventListener('change', function() {
-    const pacienteId = this.value;
-    const fechaCitaInput = document.getElementById('fecha_cita');
-    if (pacienteId) {
-        fechaCitaInput.disabled = false;
-    } else {
-        fechaCitaInput.disabled = true;
-    }
-});
+    document.getElementById('paciente_id').addEventListener('change', function () {
+        const pacienteId = this.value;
+        const fechaCitaInput = document.getElementById('fecha_cita');
+        if (pacienteId) {
+            fechaCitaInput.disabled = false;
+        } else {
+            fechaCitaInput.disabled = true;
+        }
+    });
 
-document.getElementById('fecha_cita').addEventListener('change', function() {
-    const fecha = this.value;
-    const especialidadSelect = document.getElementById('especialidad_id');
-    const today = new Date().toISOString().split('T')[0];
-    if (fecha && fecha >= today) {
-        especialidadSelect.disabled = false;
-    } else {
-        especialidadSelect.disabled = true;
-        alert('La fecha de la cita no puede ser menor a la fecha actual.');
-    }
-});
+    document.getElementById('fecha_cita').addEventListener('change', function () {
+        const fecha = this.value;
+        const especialidadSelect = document.getElementById('especialidad_id');
+        const today = new Date().toISOString().split('T')[0];
+        if (fecha && fecha >= today) {
+            especialidadSelect.disabled = false;
+        } else {
+            especialidadSelect.disabled = true;
+            alert('La fecha de la cita no puede ser menor a la fecha actual.');
+        }
+    });
 
-document.getElementById('especialidad_id').addEventListener('change', function() {
-    const especialidadId = this.value;
-    const medicoSelect = document.getElementById('medico_id');
-    if (especialidadId) {
-        fetch(`./obtenerMedicosPorEspecialidad?especialidad_id=${especialidadId}`)
-            .then(response => response.json())
-            .then(data => {
-                medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
-                data.medicos.forEach(medico => {
-                    const option = document.createElement('option');
-                    option.value = medico.id;
-                    option.textContent = `${medico.nombre} ${medico.apellido}`;
-                    medicoSelect.appendChild(option);
+    document.getElementById('especialidad_id').addEventListener('change', function () {
+        const especialidadId = this.value;
+        const medicoSelect = document.getElementById('medico_id');
+        if (especialidadId) {
+            fetch(`./obtenerMedicosPorEspecialidad?especialidad_id=${especialidadId}`)
+                .then(response => response.json())
+                .then(data => {
+                    medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
+                    data.medicos.forEach(medico => {
+                        const option = document.createElement('option');
+                        option.value = medico.id;
+                        option.textContent = `${medico.nombre} ${medico.apellido}`;
+                        medicoSelect.appendChild(option);
+                    });
+                    medicoSelect.disabled = false;
                 });
-                medicoSelect.disabled = false;
-            });
-    } else {
-        medicoSelect.disabled = true;
-    }
-});
+        } else {
+            medicoSelect.disabled = true;
+        }
+    });
 
-document.getElementById('medico_id').addEventListener('change', function() {
-    const medicoId = this.value;
-    const fecha = document.getElementById('fecha_cita').value;
-    const especialidadId = document.getElementById('especialidad_id').value;
-    const horarioSelect = document.getElementById('horario');
-    if (medicoId) {
-        fetch(`./obtenerHorariosDisponibles?medico_id=${medicoId}&fecha=${fecha}&especialidad_id=${especialidadId}`)
-            .then(response => response.json())
-            .then(data => {
-                horarioSelect.innerHTML = '<option value="">Seleccione un horario</option>';
-                data.horarios.forEach(horario => {
-                    const option = document.createElement('option');
-                    option.value = horario;
-                    option.textContent = horario.charAt(0).toUpperCase() + horario.slice(1);
-                    horarioSelect.appendChild(option);
-                });
-                horarioSelect.disabled = false;
-            });
-    } else {
-        horarioSelect.disabled = true;
-    }
-});
+    document.getElementById('medico_id').addEventListener('change', function () {
+        const medicoId = this.value;
+        const fecha = document.getElementById('fecha_cita').value;
+        const especialidadId = document.getElementById('especialidad_id').value;
+        const horarioSelect = document.getElementById('horario');
+        const razonTextarea = document.getElementById('razon');
+        const submitButton = document.querySelector('button[type="submit"]');
 
-document.getElementById('horario').addEventListener('change', function() {
-    const horario = this.value;
-    const razonTextarea = document.getElementById('razon');
-    const submitButton = document.querySelector('button[type="submit"]');
-    if (horario) {
-        razonTextarea.disabled = false;
-        submitButton.disabled = false;
-    } else {
+        // Resetear y deshabilitar campos dependientes
+        horarioSelect.innerHTML = '<option value="">Seleccione un horario</option>';
+        razonTextarea.value = '';
         razonTextarea.disabled = true;
         submitButton.disabled = true;
+
+        if (medicoId && fecha && especialidadId) {
+            fetch(`./obtenerHorariosDisponibles?medico_id=${medicoId}&fecha=${fecha}&especialidad_id=${especialidadId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                    return response.json();
+                })
+                .then(horarios => {
+                    console.log('Horarios recibidos:', horarios); // Debug
+
+                    horarioSelect.innerHTML = '<option value="">Seleccione un horario</option>';
+
+                    if (Array.isArray(horarios)) {
+                        horarios.forEach(horario => {
+                            const option = document.createElement('option');
+                            option.value = horario;
+                            option.textContent = horario;
+                            horarioSelect.appendChild(option);
+                        });
+                    }
+
+                    horarioSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error al obtener horarios:', error);
+                    alert('Error al cargar los horarios disponibles');
+                    horarioSelect.disabled = true;
+                });
+        } else {
+            horarioSelect.disabled = true;
+        }
+    });
+
+    document.getElementById('horario').addEventListener('change', function () {
+        const horario = this.value;
+        const razonTextarea = document.getElementById('razon');
+        const submitButton = document.querySelector('button[type="submit"]');
+        if (horario) {
+            razonTextarea.disabled = false;
+            submitButton.disabled = false;
+        } else {
+            razonTextarea.disabled = true;
+            submitButton.disabled = true;
+        }
+    });
+
+    document.getElementById('buscar_cedula').addEventListener('input', function() {
+    const cedula = this.value;
+    const pacienteNombreDisplay = document.getElementById('paciente_nombre_display');
+    const pacienteIdInput = document.getElementById('paciente_id');
+    const fechaCitaInput = document.getElementById('fecha_cita');
+    
+    if (cedula.length > 0) {
+        fetch(`./buscarPacientePorCedula?cedula=${cedula}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.paciente) {
+                    pacienteNombreDisplay.value = `${data.paciente.nombre} ${data.paciente.apellido}`;
+                    pacienteIdInput.value = data.paciente.id;
+                    fechaCitaInput.disabled = false;
+                } else {
+                    pacienteNombreDisplay.value = 'Paciente no encontrado';
+                    pacienteIdInput.value = '';
+                    fechaCitaInput.disabled = true;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                pacienteNombreDisplay.value = 'Error al buscar paciente';
+                pacienteIdInput.value = '';
+                fechaCitaInput.disabled = true;
+            });
+    } else {
+        pacienteNombreDisplay.value = '';
+        pacienteIdInput.value = '';
+        fechaCitaInput.disabled = true;
     }
 });
 </script>

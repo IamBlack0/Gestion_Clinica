@@ -72,8 +72,8 @@ require $configPath;
                         <form id="formInformacionPaciente" method="POST" action="./procesarHistorialMedico">
                             <input type="hidden" name="paciente_id"
                                 value="<?php echo htmlspecialchars($informacionPaciente['paciente']['id']); ?>">
-                                <input type="hidden" name="fecha_cita" value="<?php echo htmlspecialchars($_GET['fecha']); ?>">
-                                <input type="hidden" name="horario" value="<?php echo htmlspecialchars($_GET['horario']); ?>">
+                            <input type="hidden" name="fecha_cita" value="<?php echo htmlspecialchars($_GET['fecha']); ?>">
+                            <input type="hidden" name="horario" value="<?php echo htmlspecialchars($_GET['horario']); ?>">
                             <h6>Datos del Usuario</h6>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Correo</label>
@@ -93,6 +93,19 @@ require $configPath;
                                 <input type="text" class="form-control" id="apellido" name="apellido"
                                     value="<?php echo htmlspecialchars($informacionPaciente['paciente']['apellido']); ?>"
                                     readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="cedula" class="form-label">Cédula</label>
+                                <input type="text" class="form-control" id="cedula" name="cedula"
+                                    value="<?php echo htmlspecialchars($informacionPaciente['informacion_paciente']['cedula'] ?? ''); ?>"
+                                    required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+                                <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento"
+                                    value="<?php echo htmlspecialchars($informacionPaciente['informacion_paciente']['fecha_nacimiento'] ?? ''); ?>"
+                                    required>
                             </div>
                             <h6>Información del Paciente</h6>
                             <div class="mb-3">
@@ -285,6 +298,27 @@ require $configPath;
             horarioSelect.disabled = true;
         }
     });
+    document.getElementById('fecha_nacimiento').addEventListener('change', function() {
+    const fechaNacimiento = new Date(this.value);
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+    const mes = hoy.getMonth() - fechaNacimiento.getMonth();
+    
+    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+        edad--;
+    }
+    
+    document.getElementById('edad').value = edad;
+});
+
+// Calcular edad inicial si hay una fecha de nacimiento
+window.addEventListener('load', function() {
+    const fechaNacimientoInput = document.getElementById('fecha_nacimiento');
+    if (fechaNacimientoInput.value) {
+        const evento = new Event('change');
+        fechaNacimientoInput.dispatchEvent(evento);
+    }
+});
 </script>
 
 

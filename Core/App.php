@@ -217,7 +217,14 @@ class App
                     header('Location: ./login');
                 }
                 break;
+            case 'buscarPacientePorCedula':
+                $cedula = $_GET['cedula'] ?? '';
+                $citasController->buscarPacientePorCedula($cedula);
+                break;
 
+            case 'obtenerTodosPacientes':
+                $citasController->obtenerTodosPacientes();
+                break;
             
             //CASO PARA RESTABLECER CONTRASEÑA
             case 'restablecerContrasena':
