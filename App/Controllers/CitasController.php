@@ -141,11 +141,16 @@ class CitasController
     {
         $query = "SELECT hc.id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido, 
                      c.nombre AS medico_nombre, c.apellido AS medico_apellido, 
-                     hc.fecha_cita, hc.estado_pago, hc.estado_cita
+                     hc.fecha_cita, hc.estado_pago, hc.estado_cita,
+                     ct.horario  -- Agregado el campo horario
               FROM historial_citas hc
               JOIN pacientes p ON hc.paciente_id = p.id
               JOIN colaboradores c ON hc.medico_id = c.id
+              JOIN citas ct ON hc.paciente_id = ct.paciente_id 
+                          AND hc.fecha_cita = ct.fecha_cita
+                          AND hc.medico_id = ct.medico_id
               WHERE p.usuario_id = :user_id";
+
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
         $stmt->execute();

@@ -13,21 +13,32 @@ class HistorialMedicoController
     public function verCitasMedico()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $medico_id = $_SESSION['user_id'];
+            // Primero obtener el ID del colaborador (médico) basado en el user_id
+            $query = "SELECT id FROM colaboradores WHERE usuario_id = :user_id";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+            $stmt->execute();
+            $medico = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$medico) {
+                die('Error: No se encontró el registro del médico.');
+            }
+
+            $medico_id = $medico['id'];
             $fecha = isset($_GET['fecha']) ? $_GET['fecha'] : null;
             $horario = isset($_GET['horario']) ? $_GET['horario'] : null;
 
             if ($fecha && $horario) {
                 $query = "SELECT c.id, p.id AS paciente_id, p.nombre AS paciente_nombre, 
-                      p.apellido AS paciente_apellido, c.fecha_cita, c.horario, c.razon
-                      FROM citas c
-                      JOIN pacientes p ON c.paciente_id = p.id
-                      JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
-                      AND c.fecha_cita = hc.fecha_cita
-                      WHERE c.medico_id = :medico_id 
-                      AND c.fecha_cita = :fecha 
-                      AND c.horario = :horario
-                      AND hc.estado_cita != 'completada'";
+          p.apellido AS paciente_apellido, c.fecha_cita, c.horario, c.razon,
+          hc.id AS historial_cita_id
+          FROM citas c
+          JOIN pacientes p ON c.paciente_id = p.id
+          LEFT JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
+          AND c.fecha_cita = hc.fecha_cita
+          WHERE c.medico_id = :medico_id 
+          AND c.fecha_cita = :fecha
+          AND TIME_FORMAT(c.horario, '%h:%i %p') = :horario";
 
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
@@ -39,18 +50,10 @@ class HistorialMedicoController
                 if (count($citas) > 0) {
                     $paciente_id = $citas[0]['paciente_id'];
                     $informacionPaciente = $this->obtenerInformacionPaciente($paciente_id);
-                } else {
-                    $informacionPaciente = null;
                 }
-            } else {
-                $citas = [];
-                $informacionPaciente = null;
             }
 
             require_once __DIR__ . '/../Views/verCitasMedico.php';
-        } else {
-            header('Location: ./dashboard');
-            exit();
         }
     }
 
@@ -174,39 +177,20 @@ class HistorialMedicoController
                     $stmt->bindValue($param, $value);
                 }
 
-                // Ejecutar inserción del historial
                 if (!$stmt->execute()) {
                     throw new Exception("Error al insertar el historial médico");
                 }
 
-                // Actualizar estado de la cita
-                $queryUpdateCitas = "UPDATE citas c
-                               JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
-                               AND c.fecha_cita = hc.fecha_cita
-                               SET hc.estado_cita = 'completada'
-                               WHERE c.paciente_id = :paciente_id 
-                               AND c.fecha_cita = :fecha_cita
-                               AND c.horario = :horario";
-
-                $stmtUpdate = $this->db->prepare($queryUpdateCitas);
-                $stmtUpdate->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
-                $stmtUpdate->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
-                $stmtUpdate->bindParam(':horario', $horario, PDO::PARAM_STR);
-
-                if (!$stmtUpdate->execute()) {
-                    throw new Exception("Error al actualizar el estado de la cita");
-                }
-
                 $this->db->commit();
-                header('Location: ./verCitasMedico');
-                exit();
+                return true;
 
             } catch (Exception $e) {
                 $this->db->rollBack();
                 error_log($e->getMessage());
-                echo "Error: " . $e->getMessage();
+                throw $e;
             }
         }
+        return false;
     }
 
     public function verHistorialMedico()

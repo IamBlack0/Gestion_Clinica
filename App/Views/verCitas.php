@@ -16,9 +16,9 @@ require $headerPath;
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Nombre del Paciente</th>
                         <th>Nombre del Médico</th>
                         <th>Fecha de la Cita</th>
+                        <th>Hora</th> 
                         <th>Estado de Pago</th>
                         <th>Estado de la Cita</th>
                     </tr>
@@ -26,11 +26,11 @@ require $headerPath;
                 <tbody>
                     <?php foreach ($citas as $cita): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?>
-                            </td>
                             <td><?php echo htmlspecialchars($cita['medico_nombre'] . ' ' . $cita['medico_apellido']); ?>
                             </td>
                             <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
+                            <td><?php echo htmlspecialchars(date('h:i A', strtotime($cita['horario']))); ?></td>
+                            <!-- Nueva celda -->
                             <td>
                                 <?php if ($cita['estado_pago'] === 'pagado'): ?>
                                     <span class="badge bg-label-primary">Pagado</span>

@@ -257,9 +257,13 @@ DELIMITER ;
 CREATE TABLE pagos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     historial_cita_id INT NOT NULL,
-    monto DECIMAL(10, 2) NOT NULL,
+    monto_consulta DECIMAL(10, 2) NOT NULL, -- Costo base de la consulta
+    monto_insumos DECIMAL(10, 2) DEFAULT 0, -- Costo total de los insumos
+    monto_total DECIMAL(10, 2) AS (monto_consulta + monto_insumos) STORED, -- Costo total
     fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     metodo_pago ENUM('tarjeta', 'efectivo') NOT NULL,
+    forma_pago ENUM('contado', 'crédito', 'débito') NOT NULL,
+    numero_comprobante VARCHAR(50),
     FOREIGN KEY (historial_cita_id) REFERENCES historial_citas(id) ON DELETE CASCADE
 );
 

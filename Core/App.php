@@ -17,6 +17,8 @@ require_once __DIR__ . '/../App/Controllers/PasswordController.php';
 
 require_once __DIR__ . '/../App/Models/User.php';
 
+require_once __DIR__ . '/../App/Controllers/PaymentController.php';
+
 /**
  * Clase App para manejar las rutas de la aplicación.
  */
@@ -37,8 +39,10 @@ class App
         $historialMedicoController = new HistorialMedicoController();
         // Instanciar el controlador de contraseñas
         $passwordController = new PasswordController();
+        // Instanciar el controlador de pagos
+        $paymentController = new PaymentController();
 
-        
+
 
         // Si no hay una URL, cargar la página de inicio de sesión por defecto
         if (empty($url[0])) {
@@ -95,7 +99,7 @@ class App
                 $controller->obtenerUsuarios();
                 break;
 
-                //CASOS PARA EL INVENTARIO
+            //CASOS PARA EL INVENTARIO
             case 'obtenerInventarios':
                 $controllerInv->obtenerInventarios();
                 break;
@@ -116,7 +120,7 @@ class App
                 break;
 
 
-                //CASO PARA AGENDAR CITA
+            //CASO PARA AGENDAR CITA
             case 'agendarCita':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
                 if (isset($_SESSION['user_id'])) {
@@ -159,7 +163,7 @@ class App
                 }
                 break;
 
-                // PARA AGENDAR CITAS DESDE EL MEDICO
+            // PARA AGENDAR CITAS DESDE EL MEDICO
             case 'agendarCitaMedico':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
                 if (isset($_SESSION['user_id'])) {
@@ -188,7 +192,7 @@ class App
 
 
 
-                //CASO PARA VER CITAS DEL MEDICO
+            //CASO PARA VER CITAS DEL MEDICO
             case 'verCitasMedico':
                 if (isset($_SESSION['user_id'])) {
                     $historialMedicoController->verCitasMedico();
@@ -225,7 +229,7 @@ class App
             case 'obtenerTodosPacientes':
                 $citasController->obtenerTodosPacientes();
                 break;
-            
+
             //CASO PARA RESTABLECER CONTRASEÑA
             case 'restablecerContrasena':
                 // Verificar que el usuario NO esté autenticado
@@ -236,40 +240,57 @@ class App
                 }
                 break;
 
-                case 'solicitarRestablecimiento':
-                    if (!isset($_SESSION['user_id'])) {
-                        $passwordController = new PasswordController();
-                        $passwordController->solicitarRestablecimiento();
-                    } else {
-                        header('Location: ./dashboard');
-                    }
-                    break;
-                
-                case 'restablecer':
-                    if (isset($_GET['token'])) {
-                        require_once __DIR__ . '/../App/Views/nuevaContrasena.php';
-                    } else {
-                        header('Location: ./login');
-                    }
-                    break;
+            case 'solicitarRestablecimiento':
+                if (!isset($_SESSION['user_id'])) {
+                    $passwordController = new PasswordController();
+                    $passwordController->solicitarRestablecimiento();
+                } else {
+                    header('Location: ./dashboard');
+                }
+                break;
 
-                    case 'actualizarContrasena':
-                        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                            $token = $_POST['token'];
-                            
-                            if ($_POST['password'] === $_POST['confirm-password']) {
-                                if ($passwordController->actualizarContrasena($_POST['password'], $token)) {
-                                    header('Location: ./login?mensaje=Contraseña actualizada correctamente');
-                                } else {
-                                    header('Location: ./restablecer?token=' . $token . '&error=Error al actualizar la contraseña');
-                                }
-                            } else {
-                                header('Location: ./restablecer?token=' . $token . '&error=Las contraseñas no coinciden');
-                            }
-                            exit();
+            case 'restablecer':
+                if (isset($_GET['token'])) {
+                    require_once __DIR__ . '/../App/Views/nuevaContrasena.php';
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
+            case 'actualizarContrasena':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $token = $_POST['token'];
+
+                    if ($_POST['password'] === $_POST['confirm-password']) {
+                        if ($passwordController->actualizarContrasena($_POST['password'], $token)) {
+                            header('Location: ./login?mensaje=Contraseña actualizada correctamente');
+                        } else {
+                            header('Location: ./restablecer?token=' . $token . '&error=Error al actualizar la contraseña');
                         }
-                        break;
-                //CASO PARA CERRAR SESION
+                    } else {
+                        header('Location: ./restablecer?token=' . $token . '&error=Las contraseñas no coinciden');
+                    }
+                    exit();
+                }
+                break;
+
+            // PARA PAGAR CITAS
+            case 'pagarCita':
+                if (isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../App/Views/procesarPago.php';
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
+            case 'procesarPago':
+                if (isset($_SESSION['user_id'])) {
+                    $paymentController->procesarPago();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+            //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
                 break;

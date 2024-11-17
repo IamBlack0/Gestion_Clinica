@@ -261,7 +261,11 @@ require $configPath;
                                         required><?php echo htmlspecialchars($informacionPaciente['historial_medico']['enfermedades_preexistentes'] ?? ''); ?></textarea>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            <div class="mt-4">
+                                <button type="button" class="btn btn-primary" onclick="validarYProcesarPago()">
+                                    Procesar Pago
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -269,6 +273,112 @@ require $configPath;
         </div>
     <?php endif; ?>
 </div>
+
+<!-- Modal de Pago -->
+<div class="modal fade" id="pagoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Procesar Pago de Consulta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="./procesarPago" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="historial_cita_id" id="historialCitaId">
+                    <div class="mb-3">
+                        <label class="form-label">Monto de Consulta</label>
+                        <input type="number" class="form-control" name="monto_consulta" value="50.00" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Método de Pago</label>
+                        <select class="form-select" name="metodo_pago" required>
+                            <option value="">Seleccione método de pago</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Forma de Pago</label>
+                        <select class="form-select" name="forma_pago" required>
+                            <option value="">Seleccione forma de pago</option>
+                            <option value="contado">Contado</option>
+                            <option value="crédito">Crédito</option>
+                            <option value="débito">Débito</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Número de Comprobante</label>
+                        <input type="text" class="form-control" name="numero_comprobante">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function validarYProcesarPago() {
+        const formPrincipal = document.getElementById('formInformacionPaciente');
+
+        // Validar todos los campos requeridos
+        if (!formPrincipal.checkValidity()) {
+            // Mostrar validaciones del navegador
+            formPrincipal.reportValidity();
+            return;
+        }
+
+        // Si el formulario es válido, mostrar el modal
+        const modal = new bootstrap.Modal(document.getElementById('pagoModal'));
+        modal.show();
+    }
+
+    document.getElementById('pagoModal').addEventListener('show.bs.modal', function (event) {
+        const formPago = document.querySelector('#pagoModal form');
+        const formPrincipal = document.getElementById('formInformacionPaciente');
+
+        // Agregar el ID del historial_citas al formulario de pago
+        const historialCitaId = '<?php echo $citas[0]['historial_cita_id'] ?? ''; ?>';
+        document.getElementById('historialCitaId').value = historialCitaId;
+
+        formPago.onsubmit = function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(formPrincipal);
+            const formDataPago = new FormData(formPago);
+
+            // Asegurarse de que se incluyan todos los datos necesarios
+            formData.append('paciente_id', '<?php echo $informacionPaciente['paciente']['id'] ?? ''; ?>');
+            formData.append('fecha_cita', '<?php echo $_GET['fecha'] ?? ''; ?>');
+            formData.append('horario', '<?php echo $_GET['horario'] ?? ''; ?>');
+
+            for (let pair of formDataPago.entries()) {
+                formData.append(pair[0], pair[1]);
+            }
+
+            fetch('./procesarPago', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = './verCitasMedico?mensaje=pago_exitoso';
+                    } else {
+                        alert('Error al procesar el pago: ' + (data.message || 'Error desconocido'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al procesar el pago');
+                });
+        };
+    });
+</script>
+
 
 <script>
     document.getElementById('fecha').addEventListener('change', function () {
@@ -298,27 +408,27 @@ require $configPath;
             horarioSelect.disabled = true;
         }
     });
-    document.getElementById('fecha_nacimiento').addEventListener('change', function() {
-    const fechaNacimiento = new Date(this.value);
-    const hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
-    const mes = hoy.getMonth() - fechaNacimiento.getMonth();
-    
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
-        edad--;
-    }
-    
-    document.getElementById('edad').value = edad;
-});
+    document.getElementById('fecha_nacimiento').addEventListener('change', function () {
+        const fechaNacimiento = new Date(this.value);
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+        const mes = hoy.getMonth() - fechaNacimiento.getMonth();
 
-// Calcular edad inicial si hay una fecha de nacimiento
-window.addEventListener('load', function() {
-    const fechaNacimientoInput = document.getElementById('fecha_nacimiento');
-    if (fechaNacimientoInput.value) {
-        const evento = new Event('change');
-        fechaNacimientoInput.dispatchEvent(evento);
-    }
-});
+        if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+            edad--;
+        }
+
+        document.getElementById('edad').value = edad;
+    });
+
+    // Calcular edad inicial si hay una fecha de nacimiento
+    window.addEventListener('load', function () {
+        const fechaNacimientoInput = document.getElementById('fecha_nacimiento');
+        if (fechaNacimientoInput.value) {
+            const evento = new Event('change');
+            fechaNacimientoInput.dispatchEvent(evento);
+        }
+    });
 </script>
 
 
