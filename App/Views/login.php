@@ -72,7 +72,7 @@ include $headerPath;
                                     </g>
                                 </svg>
                             </span>
-                            <span class="app-brand-text demo text-body fw-bolder">Clinica</span>
+                            <span class="app-brand-text demo text-body fw-bolder">medisfera</span>
                         </a>
                     </div>
                     <!-- /Logo -->
