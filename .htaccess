@@ -1,4 +1,13 @@
 RewriteEngine On
+RewriteBase /PROGRAMACION/gestion_clinica/
+
+# Reglas para la API
+RewriteCond %{REQUEST_URI} ^/PROGRAMACION/gestion_clinica/api/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ api/index.php/$1 [QSA,L]
+
+# Reglas para el resto de la aplicación
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
