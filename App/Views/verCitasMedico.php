@@ -291,7 +291,7 @@ require $configPath;
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Método de Pago</label>
-                        <select class="form-select" name="metodo_pago" required>
+                        <select class="form-select" name="metodo_pago" id="metodo_pago" required>
                             <option value="">Seleccione método de pago</option>
                             <option value="efectivo">Efectivo</option>
                             <option value="tarjeta">Tarjeta</option>
@@ -299,16 +299,13 @@ require $configPath;
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Forma de Pago</label>
-                        <select class="form-select" name="forma_pago" required>
+                        <select class="form-select" name="forma_pago" id="forma_pago" required disabled>
                             <option value="">Seleccione forma de pago</option>
-                            <option value="contado">Contado</option>
-                            <option value="crédito">Crédito</option>
-                            <option value="débito">Débito</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Número de Comprobante</label>
-                        <input type="text" class="form-control" name="numero_comprobante">
+                        <input type="text" class="form-control" name="numero_comprobante" readonly>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -316,6 +313,28 @@ require $configPath;
                     <button type="submit" class="btn btn-primary">Confirmar Pago</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmacionModal" tabindex="-1" aria-labelledby="confirmacionModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmacionModalLabel">¡Pago Procesado!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="bx bx-check-circle text-success" style="font-size: 64px;"></i>
+                </div>
+                <p>El pago ha sido procesado exitosamente. La cita ha sido marcada como completada.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary"
+                    onclick="window.location.href='./verCitasMedico'">OK</button>
+            </div>
         </div>
     </div>
 </div>
@@ -339,6 +358,18 @@ require $configPath;
     document.getElementById('pagoModal').addEventListener('show.bs.modal', function (event) {
         const formPago = document.querySelector('#pagoModal form');
         const formPrincipal = document.getElementById('formInformacionPaciente');
+        const numeroComprobanteInput = document.querySelector('input[name="numero_comprobante"]');
+
+        // Obtener el siguiente número de comprobante
+        fetch('./obtenerSiguienteComprobante')
+            .then(response => response.json())
+            .then(data => {
+                if (data.comprobante) {
+                    numeroComprobanteInput.value = data.comprobante;
+                    numeroComprobanteInput.readOnly = true;
+                }
+            })
+            .catch(error => console.error('Error:', error));
 
         // Agregar el ID del historial_citas al formulario de pago
         const historialCitaId = '<?php echo $citas[0]['historial_cita_id'] ?? ''; ?>';
@@ -366,7 +397,18 @@ require $configPath;
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = './verCitasMedico?mensaje=pago_exitoso';
+                        // Cerrar el modal de pago
+                        const pagoModal = bootstrap.Modal.getInstance(document.getElementById('pagoModal'));
+                        pagoModal.hide();
+
+                        // Mostrar el modal de confirmación
+                        const confirmacionModal = new bootstrap.Modal(document.getElementById('confirmacionModal'));
+                        confirmacionModal.show();
+
+                        // Agregar evento al botón OK del modal de confirmación
+                        document.querySelector('#confirmacionModal .btn-primary').onclick = function () {
+                            window.location.href = './verCitasMedico';
+                        };
                     } else {
                         alert('Error al procesar el pago: ' + (data.message || 'Error desconocido'));
                     }
@@ -377,6 +419,27 @@ require $configPath;
                 });
         };
     });
+
+    document.getElementById('metodo_pago').addEventListener('change', function () {
+        const formaPagoSelect = document.getElementById('forma_pago');
+        formaPagoSelect.innerHTML = '<option value="">Seleccione forma de pago</option>';
+
+        if (this.value === 'efectivo') {
+            formaPagoSelect.innerHTML += `
+            <option value="contado">Contado</option>
+        `;
+            formaPagoSelect.disabled = false;
+        } else if (this.value === 'tarjeta') {
+            formaPagoSelect.innerHTML += `
+            <option value="débito">Débito</option>
+            <option value="crédito">Crédito</option>
+        `;
+            formaPagoSelect.disabled = false;
+        } else {
+            formaPagoSelect.disabled = true;
+        }
+    });
+
 </script>
 
 

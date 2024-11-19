@@ -290,6 +290,12 @@ class App
                     header('Location: ./login');
                 }
                 break;
+
+            case 'obtenerSiguienteComprobante':
+                if (isset($_SESSION['user_id'])) {
+                    $paymentController->obtenerSiguienteComprobante();
+                }
+                break;
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión

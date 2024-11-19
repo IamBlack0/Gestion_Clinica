@@ -151,6 +151,33 @@ AND hc.fecha_cita = :fecha_cita";
         }
     }
 
+    public function obtenerSiguienteComprobante()
+    {
+        try {
+            $query = "SELECT numero_comprobante 
+                  FROM pagos 
+                  WHERE numero_comprobante LIKE 'MDF-%' 
+                  ORDER BY CAST(SUBSTRING(numero_comprobante, 5) AS UNSIGNED) DESC 
+                  LIMIT 1";
 
+            $stmt = $this->db->query($query);
+            $ultimo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($ultimo) {
+                $ultimoNumero = intval(substr($ultimo['numero_comprobante'], 4));
+                $siguienteNumero = $ultimoNumero + 1;
+            } else {
+                $siguienteNumero = 1;
+            }
+
+            $nuevoComprobante = sprintf("MDF-%05d", $siguienteNumero);
+
+            echo json_encode(['comprobante' => $nuevoComprobante]);
+            exit();
+        } catch (Exception $e) {
+            echo json_encode(['error' => $e->getMessage()]);
+            exit();
+        }
+    }
 
 }
