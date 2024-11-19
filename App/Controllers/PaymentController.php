@@ -180,4 +180,122 @@ AND hc.fecha_cita = :fecha_cita";
         }
     }
 
+    public function confirmarPagoEfectivo()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $cita_id = $data['cita_id'] ?? null;
+
+                if (!$cita_id) {
+                    throw new Exception("ID de cita no proporcionado");
+                }
+
+                $this->db->beginTransaction();
+
+                // Actualizar el estado a pagado
+                $query = "UPDATE historial_citas 
+                     SET estado_pago = 'pagado' 
+                     WHERE id = :cita_id";
+
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':cita_id', $cita_id);
+
+                if (!$stmt->execute()) {
+                    throw new Exception("Error al confirmar el pago");
+                }
+
+                $this->db->commit();
+                echo json_encode(['success' => true]);
+
+            } catch (Exception $e) {
+                $this->db->rollBack();
+                echo json_encode([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+            }
+            exit();
+        }
+    }
+
+    
+
+    public function procesarPagoTarjeta()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $cita_id = $data['cita_id'];
+
+                // Aquí irían las validaciones de la tarjeta y la integración
+                // con el gateway de pago real
+
+                $this->db->beginTransaction();
+
+                // Actualizar el estado a pagado
+                $query = "UPDATE historial_citas 
+                     SET estado_pago = 'pagado' 
+                     WHERE id = :cita_id";
+
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':cita_id', $cita_id);
+
+                if (!$stmt->execute()) {
+                    throw new Exception("Error al procesar el pago");
+                }
+
+                $this->db->commit();
+                echo json_encode(['success' => true]);
+
+            } catch (Exception $e) {
+                $this->db->rollBack();
+                echo json_encode([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+            }
+            exit();
+        }
+    }
+
+    public function verPagosPendientes()
+{
+    try {
+        $query = "SELECT 
+            hc.id,
+            c.medico_id,
+            col.nombre as medico_nombre,
+            col.apellido as medico_apellido,
+            c.fecha_cita,
+            c.horario,
+            c.razon,
+            hc.estado_pago,
+            p.metodo_pago,
+            p.numero_comprobante
+        FROM historial_citas hc
+        JOIN citas c ON hc.paciente_id = c.paciente_id 
+            AND hc.fecha_cita = c.fecha_cita
+        JOIN colaboradores col ON c.medico_id = col.id
+        LEFT JOIN pagos p ON hc.id = p.historial_cita_id
+        WHERE hc.paciente_id = (
+            SELECT id FROM pacientes WHERE usuario_id = :user_id
+        )
+        AND (hc.estado_pago = 'pendiente' OR hc.estado_pago = 'pendiente_efectivo')";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        require_once __DIR__ . '/../Views/procesarPago.php';
+        
+    } catch (Exception $e) {
+        error_log("Error en verPagosPendientes: " . $e->getMessage());
+        header('Location: ./dashboard?error=Error al cargar los pagos pendientes');
+        exit();
+    }
+}
+
 }
