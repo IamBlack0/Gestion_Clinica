@@ -29,16 +29,28 @@ class HistorialMedicoController
             $horario = isset($_GET['horario']) ? $_GET['horario'] : null;
 
             if ($fecha && $horario) {
-                $query = "SELECT c.id, p.id AS paciente_id, p.nombre AS paciente_nombre, 
-          p.apellido AS paciente_apellido, c.fecha_cita, c.horario, c.razon,
-          hc.id AS historial_cita_id
-          FROM citas c
-          JOIN pacientes p ON c.paciente_id = p.id
-          LEFT JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
-          AND c.fecha_cita = hc.fecha_cita
-          WHERE c.medico_id = :medico_id 
-          AND c.fecha_cita = :fecha
-          AND TIME_FORMAT(c.horario, '%h:%i %p') = :horario";
+                // Modificar la consulta para evitar duplicados y filtrar correctamente por médico
+                $query = "SELECT DISTINCT 
+              c.id, 
+              p.id AS paciente_id, 
+              p.nombre AS paciente_nombre,
+              p.apellido AS paciente_apellido, 
+              c.fecha_cita, 
+              TIME_FORMAT(c.horario, '%h:%i %p') as horario, 
+              c.razon,
+              COALESCE(hc.id, 0) as historial_cita_id
+              FROM citas c
+              JOIN pacientes p ON c.paciente_id = p.id
+              LEFT JOIN historial_citas hc ON (
+                  c.paciente_id = hc.paciente_id 
+                  AND c.fecha_cita = hc.fecha_cita
+                  AND c.medico_id = hc.medico_id
+              )
+              WHERE c.medico_id = :medico_id 
+              AND c.fecha_cita = :fecha
+              AND TIME_FORMAT(c.horario, '%h:%i %p') = :horario
+              AND (hc.estado_cita IS NULL OR hc.estado_cita != 'completada')
+              GROUP BY c.id";
 
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
@@ -182,15 +194,20 @@ class HistorialMedicoController
                 }
 
                 $this->db->commit();
-                return true;
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true]);
+                exit();
 
             } catch (Exception $e) {
                 $this->db->rollBack();
-                error_log($e->getMessage());
-                throw $e;
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+                exit();
             }
         }
-        return false;
     }
 
     public function verHistorialMedico()

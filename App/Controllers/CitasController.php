@@ -91,7 +91,7 @@ class CitasController
                 $horariosDisponibles[] = $horarioFormateado;
             }
         }
-        
+
         // Asegurar que la respuesta sea JSON
         header('Content-Type: application/json');
         echo json_encode(array_values($horariosDisponibles));
@@ -101,35 +101,44 @@ class CitasController
     public function procesarAgendarCita()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Obtener los datos del formulario
-            $paciente_id = $_POST['paciente_id'];
-            $especialidad_id = $_POST['especialidad_id'];
-            $medico_id = $_POST['medico_id'];
-            $horario = $_POST['horario'];
-            $razon = $_POST['razon'];
-            $fecha_cita = $_POST['fecha_cita'];
+            try {
+                // Obtener los datos del formulario
+                $paciente_id = $_POST['paciente_id'];
+                $especialidad_id = $_POST['especialidad_id'];
+                $medico_id = $_POST['medico_id'];
+                $horario = $_POST['horario'];
+                $razon = $_POST['razon'];
+                $fecha_cita = $_POST['fecha_cita'];
 
-            // Insertar la cita en la base de datos
-            $query = "INSERT INTO citas (paciente_id, especialidad_id, medico_id, horario, razon, fecha_cita)
+                // Convertir el horario al formato correcto
+                $hora = DateTime::createFromFormat('h:i A', $horario);
+                if (!$hora) {
+                    throw new Exception("Formato de hora inválido");
+                }
+                $horarioFormateado = $hora->format('H:i:s');
+
+                // Insertar la cita en la base de datos
+                $query = "INSERT INTO citas (paciente_id, especialidad_id, medico_id, horario, razon, fecha_cita)
                       VALUES (:paciente_id, :especialidad_id, :medico_id, :horario, :razon, :fecha_cita)";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
-            $stmt->bindParam(':especialidad_id', $especialidad_id, PDO::PARAM_INT);
-            $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
-            $stmt->bindParam(':horario', $horario, PDO::PARAM_STR);
-            $stmt->bindParam(':razon', $razon, PDO::PARAM_STR);
-            $stmt->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
 
-            if ($stmt->execute()) {
-                // Redirigir a la página de inicio con un mensaje de éxito
-                header('Location: ./dashboard?mensaje=suceso');
-                exit();
-            } else {
-                // Mostrar un mensaje de error
-                echo "Error al agendar la cita.";
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
+                $stmt->bindParam(':especialidad_id', $especialidad_id, PDO::PARAM_INT);
+                $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
+                $stmt->bindParam(':horario', $horarioFormateado, PDO::PARAM_STR);
+                $stmt->bindParam(':razon', $razon, PDO::PARAM_STR);
+                $stmt->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
+
+                if ($stmt->execute()) {
+                    header('Location: ./dashboard?mensaje=suceso');
+                    exit();
+                } else {
+                    echo "Error al agendar la cita.";
+                }
+            } catch (Exception $e) {
+                echo "Error: " . $e->getMessage();
             }
         } else {
-            // Redirigir al formulario de agendar cita si la solicitud no es POST
             header('Location: ./agendarCita');
             exit();
         }
@@ -169,18 +178,46 @@ class CitasController
                 $razon = $_POST['razon'];
                 $fecha_cita = $_POST['fecha_cita'];
 
+                // Convertir el horario al formato correcto
+                $hora = DateTime::createFromFormat('h:i A', $horario);
+                if (!$hora) {
+                    throw new Exception("Formato de hora inválido");
+                }
+
+                // Validar el rango de horas (8:00 AM a 5:00 PM)
+                $horaFormateada = $hora->format('H:i:s');
+                $hora_inicio = '08:00:00';
+                $hora_fin = '17:00:00';
+
+                if ($horaFormateada < $hora_inicio || $horaFormateada > $hora_fin) {
+                    throw new Exception("La hora debe estar entre 8:00 AM y 5:00 PM");
+                }
+
                 // Iniciar transacción
                 $this->db->beginTransaction();
 
-                // 1. Insertar la cita
-                $queryCita = "INSERT INTO citas (paciente_id, especialidad_id, medico_id, horario, razon, fecha_cita)
-                         VALUES (:paciente_id, :especialidad_id, :medico_id, :horario, :razon, :fecha_cita)";
+                // Insertar la cita
+                $queryCita = "INSERT INTO citas (
+                paciente_id, 
+                especialidad_id, 
+                medico_id, 
+                horario, 
+                razon, 
+                fecha_cita
+            ) VALUES (
+                :paciente_id,
+                :especialidad_id,
+                :medico_id,
+                :horario,
+                :razon,
+                :fecha_cita
+            )";
 
                 $stmtCita = $this->db->prepare($queryCita);
                 $stmtCita->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
                 $stmtCita->bindParam(':especialidad_id', $especialidad_id, PDO::PARAM_INT);
                 $stmtCita->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
-                $stmtCita->bindParam(':horario', $horario, PDO::PARAM_STR);
+                $stmtCita->bindParam(':horario', $horaFormateada, PDO::PARAM_STR);
                 $stmtCita->bindParam(':razon', $razon, PDO::PARAM_STR);
                 $stmtCita->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
 
@@ -205,24 +242,47 @@ class CitasController
 
     public function obtenerHorariosCitas($fecha)
     {
-        // Consultar horarios ocupados para la fecha específica, excluyendo citas completadas
-        $query = "SELECT DISTINCT TIME_FORMAT(c.horario, '%h:%i %p') as horario 
-              FROM citas c
-              JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
-              AND c.fecha_cita = hc.fecha_cita
-              WHERE c.fecha_cita = :fecha
-              AND hc.estado_cita != 'completada'
-              ORDER BY c.horario ASC";
+        try {
+            // Primero obtener el ID del médico actual
+            $queryMedico = "SELECT id FROM colaboradores WHERE usuario_id = :user_id";
+            $stmtMedico = $this->db->prepare($queryMedico);
+            $stmtMedico->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+            $stmtMedico->execute();
+            $medico = $stmtMedico->fetch(PDO::FETCH_ASSOC);
 
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
-        $stmt->execute();
-        $horarios = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            if (!$medico) {
+                throw new Exception("No se encontró el médico");
+            }
 
-        // Asegurar que la respuesta sea JSON
-        header('Content-Type: application/json');
-        echo json_encode($horarios);
-        exit();
+            // Consultar horarios ocupados para la fecha específica y el médico específico
+            $query = "SELECT DISTINCT TIME_FORMAT(c.horario, '%h:%i %p') as horario 
+                 FROM citas c
+                 LEFT JOIN historial_citas hc ON (
+                     c.paciente_id = hc.paciente_id 
+                     AND c.fecha_cita = hc.fecha_cita
+                     AND c.medico_id = hc.medico_id
+                 )
+                 WHERE c.fecha_cita = :fecha
+                 AND c.medico_id = :medico_id
+                 AND (hc.estado_cita IS NULL OR hc.estado_cita != 'completada')
+                 ORDER BY c.horario ASC";
+
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
+            $stmt->bindParam(':medico_id', $medico['id'], PDO::PARAM_INT);
+            $stmt->execute();
+            $horarios = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            // Asegurar que la respuesta sea JSON
+            header('Content-Type: application/json');
+            echo json_encode($horarios);
+            exit();
+
+        } catch (Exception $e) {
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+            exit();
+        }
     }
 
     public function buscarPacientePorCedula($cedula)

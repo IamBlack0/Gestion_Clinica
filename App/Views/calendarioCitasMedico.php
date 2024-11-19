@@ -27,17 +27,19 @@ if (!$medico) {
 }
 
 // Obtener las citas del médico
-$queryCitas = "SELECT c.id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido, 
+$queryCitas = "SELECT DISTINCT c.id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido, 
                c.fecha_cita, 
                DATE_FORMAT(c.horario, '%H:%i:00') as horario_24,
                DATE_FORMAT(c.horario, '%h:%i %p') as horario_display,
                c.razon
                FROM citas c
                JOIN pacientes p ON c.paciente_id = p.id
-               JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
-               AND c.fecha_cita = hc.fecha_cita
+               LEFT JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
+                   AND c.fecha_cita = hc.fecha_cita
+                   AND c.medico_id = hc.medico_id
                WHERE c.medico_id = :medico_id
-               AND hc.estado_cita != 'completada'
+               AND (hc.estado_cita IS NULL OR hc.estado_cita != 'completada')
+               GROUP BY c.id, c.fecha_cita, c.horario
                ORDER BY c.fecha_cita ASC, c.horario ASC";
 
 $stmtCitas = $db->prepare($queryCitas);

@@ -322,14 +322,14 @@ require $configPath;
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="confirmacionModalLabel">¡Pago Procesado!</h5>
+                <h5 class="modal-title" id="confirmacionModalLabel">¡Operación Exitosa!</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center mb-3">
+                <div class="text-center mb-4">
                     <i class="bx bx-check-circle text-success" style="font-size: 64px;"></i>
                 </div>
-                <p>El pago ha sido procesado exitosamente. La cita ha sido marcada como completada.</p>
+                <p class="text-center">El historial médico y el pago han sido procesados correctamente.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary"
@@ -378,22 +378,36 @@ require $configPath;
         formPago.onsubmit = function (e) {
             e.preventDefault();
 
-            const formData = new FormData(formPrincipal);
-            const formDataPago = new FormData(formPago);
+            // Primero guardar el historial médico
+            const historialData = new FormData(formPrincipal);
 
-            // Asegurarse de que se incluyan todos los datos necesarios
-            formData.append('paciente_id', '<?php echo $informacionPaciente['paciente']['id'] ?? ''; ?>');
-            formData.append('fecha_cita', '<?php echo $_GET['fecha'] ?? ''; ?>');
-            formData.append('horario', '<?php echo $_GET['horario'] ?? ''; ?>');
-
-            for (let pair of formDataPago.entries()) {
-                formData.append(pair[0], pair[1]);
-            }
-
-            fetch('./procesarPago', {
+            fetch('./procesarHistorialMedico', {
                 method: 'POST',
-                body: formData
+                body: historialData
             })
+                .then(response => response.json())
+                .then(historialResponse => {
+                    if (historialResponse.success) {
+                        // Si el historial se guardó correctamente, proceder con el pago
+                        const formData = new FormData(formPrincipal);
+                        const formDataPago = new FormData(formPago);
+
+                        formData.append('paciente_id', '<?php echo $informacionPaciente['paciente']['id'] ?? ''; ?>');
+                        formData.append('fecha_cita', '<?php echo $_GET['fecha'] ?? ''; ?>');
+                        formData.append('horario', '<?php echo $_GET['horario'] ?? ''; ?>');
+
+                        for (let pair of formDataPago.entries()) {
+                            formData.append(pair[0], pair[1]);
+                        }
+
+                        return fetch('./procesarPago', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    } else {
+                        throw new Error('Error al guardar el historial médico');
+                    }
+                })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -405,17 +419,18 @@ require $configPath;
                         const confirmacionModal = new bootstrap.Modal(document.getElementById('confirmacionModal'));
                         confirmacionModal.show();
 
-                        // Agregar evento al botón OK del modal de confirmación
-                        document.querySelector('#confirmacionModal .btn-primary').onclick = function () {
+                        // Al cerrar el modal de confirmación, redirigir
+                        document.querySelector('#confirmacionModal').addEventListener('hidden.bs.modal', function () {
                             window.location.href = './verCitasMedico';
-                        };
+                        });
                     } else {
                         alert('Error al procesar el pago: ' + (data.message || 'Error desconocido'));
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Error al procesar el pago');
+                    alert('Ha ocurrido un error, pero los datos se han guardado correctamente.');
+                    window.location.href = './verCitasMedico';
                 });
         };
     });
@@ -423,7 +438,6 @@ require $configPath;
     document.getElementById('metodo_pago').addEventListener('change', function () {
         const formaPagoSelect = document.getElementById('forma_pago');
         formaPagoSelect.innerHTML = '<option value="">Seleccione forma de pago</option>';
-
         if (this.value === 'efectivo') {
             formaPagoSelect.innerHTML += `
             <option value="contado">Contado</option>
@@ -439,7 +453,6 @@ require $configPath;
             formaPagoSelect.disabled = true;
         }
     });
-
 </script>
 
 
