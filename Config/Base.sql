@@ -239,52 +239,9 @@ CREATE TABLE historial_citas (
 
 
 
--- Eliminar el trigger existente
-DROP TRIGGER IF EXISTS after_insert_cita;
-
-DELIMITER //
-
-CREATE TRIGGER after_insert_cita
-AFTER INSERT ON citas
-FOR EACH ROW
-BEGIN
-    -- Insertar en historial_citas solo si no existe una cita con la misma combinación
-    -- de paciente, médico, fecha y hora específica
-    IF NOT EXISTS (
-        SELECT 1 
-        FROM historial_citas hc 
-        WHERE hc.paciente_id = NEW.paciente_id 
-        AND hc.medico_id = NEW.medico_id 
-        AND hc.fecha_cita = NEW.fecha_cita
-        AND EXISTS (
-            SELECT 1 
-            FROM citas c 
-            WHERE c.paciente_id = hc.paciente_id
-            AND c.medico_id = hc.medico_id
-            AND c.fecha_cita = hc.fecha_cita
-            AND c.horario = NEW.horario
-        )
-    ) THEN
-        INSERT INTO historial_citas (
-            paciente_id,
-            medico_id,
-            fecha_cita,
-            estado_pago,
-            estado_cita,
-            fecha_creacion
-        ) 
-        VALUES (
-            NEW.paciente_id,
-            NEW.medico_id,
-            NEW.fecha_cita,
-            'pendiente',
-            'aceptada',
-            CURRENT_TIMESTAMP
-        );
-    END IF;
-END//
-
-DELIMITER ;
+ALTER TABLE historial_citas 
+ADD COLUMN cita_id INT,
+ADD FOREIGN KEY (cita_id) REFERENCES citas(id);
 
 
 

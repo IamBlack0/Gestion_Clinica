@@ -102,6 +102,8 @@ class CitasController
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
+                $this->db->beginTransaction();
+
                 // Obtener los datos del formulario
                 $paciente_id = $_POST['paciente_id'];
                 $especialidad_id = $_POST['especialidad_id'];
@@ -117,30 +119,70 @@ class CitasController
                 }
                 $horarioFormateado = $hora->format('H:i:s');
 
-                // Insertar la cita en la base de datos
-                $query = "INSERT INTO citas (paciente_id, especialidad_id, medico_id, horario, razon, fecha_cita)
-                      VALUES (:paciente_id, :especialidad_id, :medico_id, :horario, :razon, :fecha_cita)";
+                // Insertar la cita
+                $queryCita = "INSERT INTO citas (
+                paciente_id, 
+                especialidad_id, 
+                medico_id, 
+                horario, 
+                razon, 
+                fecha_cita
+            ) VALUES (
+                :paciente_id,
+                :especialidad_id,
+                :medico_id,
+                :horario,
+                :razon,
+                :fecha_cita
+            )";
 
-                $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
-                $stmt->bindParam(':especialidad_id', $especialidad_id, PDO::PARAM_INT);
-                $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
-                $stmt->bindParam(':horario', $horarioFormateado, PDO::PARAM_STR);
-                $stmt->bindParam(':razon', $razon, PDO::PARAM_STR);
-                $stmt->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
+                $stmtCita = $this->db->prepare($queryCita);
+                $stmtCita->bindParam(':paciente_id', $paciente_id);
+                $stmtCita->bindParam(':especialidad_id', $especialidad_id);
+                $stmtCita->bindParam(':medico_id', $medico_id);
+                $stmtCita->bindParam(':horario', $horarioFormateado);
+                $stmtCita->bindParam(':razon', $razon);
+                $stmtCita->bindParam(':fecha_cita', $fecha_cita);
 
-                if ($stmt->execute()) {
-                    header('Location: ./dashboard?mensaje=suceso');
-                    exit();
-                } else {
-                    echo "Error al agendar la cita.";
+                if ($stmtCita->execute()) {
+                    $cita_id = $this->db->lastInsertId();
+
+                    // Crear el registro en historial_citas
+                    $queryHistorial = "INSERT INTO historial_citas (
+                    paciente_id,
+                    medico_id,
+                    fecha_cita,
+                    estado_pago,
+                    estado_cita,
+                    cita_id
+                ) VALUES (
+                    :paciente_id,
+                    :medico_id,
+                    :fecha_cita,
+                    'pendiente',
+                    'aceptada',
+                    :cita_id
+                )";
+
+                    $stmtHistorial = $this->db->prepare($queryHistorial);
+                    $stmtHistorial->bindParam(':paciente_id', $paciente_id);
+                    $stmtHistorial->bindParam(':medico_id', $medico_id);
+                    $stmtHistorial->bindParam(':fecha_cita', $fecha_cita);
+                    $stmtHistorial->bindParam(':cita_id', $cita_id);
+
+                    if ($stmtHistorial->execute()) {
+                        $this->db->commit();
+                        header('Location: ./dashboard?mensaje=suceso');
+                        exit();
+                    }
                 }
+
+                throw new Exception("Error al agendar la cita");
+
             } catch (Exception $e) {
+                $this->db->rollBack();
                 echo "Error: " . $e->getMessage();
             }
-        } else {
-            header('Location: ./agendarCita');
-            exit();
         }
     }
 
@@ -148,17 +190,22 @@ class CitasController
 
     public function obtenerHistorialCitas()
     {
-        $query = "SELECT hc.id, p.nombre AS paciente_nombre, p.apellido AS paciente_apellido, 
-                     c.nombre AS medico_nombre, c.apellido AS medico_apellido, 
-                     hc.fecha_cita, hc.estado_pago, hc.estado_cita,
-                     ct.horario  -- Agregado el campo horario
+        $query = "SELECT DISTINCT 
+                hc.id, 
+                p.nombre AS paciente_nombre, 
+                p.apellido AS paciente_apellido,
+                c.nombre AS medico_nombre, 
+                c.apellido AS medico_apellido,
+                hc.fecha_cita, 
+                hc.estado_pago, 
+                hc.estado_cita,
+                ct.horario
               FROM historial_citas hc
               JOIN pacientes p ON hc.paciente_id = p.id
               JOIN colaboradores c ON hc.medico_id = c.id
-              JOIN citas ct ON hc.paciente_id = ct.paciente_id 
-                          AND hc.fecha_cita = ct.fecha_cita
-                          AND hc.medico_id = ct.medico_id
-              WHERE p.usuario_id = :user_id";
+              JOIN citas ct ON hc.cita_id = ct.id
+              WHERE p.usuario_id = :user_id
+              ORDER BY hc.fecha_cita DESC, ct.horario ASC";
 
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
@@ -222,12 +269,40 @@ class CitasController
                 $stmtCita->bindParam(':fecha_cita', $fecha_cita, PDO::PARAM_STR);
 
                 if ($stmtCita->execute()) {
-                    $this->db->commit();
-                    header('Location: ./dashboard?mensaje=suceso');
-                    exit();
+                    $cita_id = $this->db->lastInsertId();
+
+                    // Crear el registro en historial_citas
+                    $queryHistorial = "INSERT INTO historial_citas (
+                    paciente_id,
+                    medico_id,
+                    fecha_cita,
+                    estado_pago,
+                    estado_cita,
+                    cita_id
+                ) VALUES (
+                    :paciente_id,
+                    :medico_id,
+                    :fecha_cita,
+                    'pendiente',
+                    'aceptada',
+                    :cita_id
+                )";
+
+                    $stmtHistorial = $this->db->prepare($queryHistorial);
+                    $stmtHistorial->bindParam(':paciente_id', $paciente_id);
+                    $stmtHistorial->bindParam(':medico_id', $medico_id);
+                    $stmtHistorial->bindParam(':fecha_cita', $fecha_cita);
+                    $stmtHistorial->bindParam(':cita_id', $cita_id);
+
+                    if ($stmtHistorial->execute()) {
+                        $this->db->commit();
+                        header('Location: ./dashboard?mensaje=suceso');
+                        exit();
+                    } else {
+                        throw new Exception("Error al crear el historial de la cita");
+                    }
                 } else {
-                    $this->db->rollBack();
-                    throw new Exception("Error al agendar la cita.");
+                    throw new Exception("Error al agendar la cita");
                 }
             } catch (Exception $e) {
                 $this->db->rollBack();
@@ -243,7 +318,7 @@ class CitasController
     public function obtenerHorariosCitas($fecha)
     {
         try {
-            // Primero obtener el ID del médico actual
+            // Obtener el ID del médico actual
             $queryMedico = "SELECT id FROM colaboradores WHERE usuario_id = :user_id";
             $stmtMedico = $this->db->prepare($queryMedico);
             $stmtMedico->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
@@ -254,17 +329,13 @@ class CitasController
                 throw new Exception("No se encontró el médico");
             }
 
-            // Consultar horarios ocupados para la fecha específica y el médico específico
+            // Modificar la consulta para mostrar solo citas 'aceptadas'
             $query = "SELECT DISTINCT TIME_FORMAT(c.horario, '%h:%i %p') as horario 
                  FROM citas c
-                 LEFT JOIN historial_citas hc ON (
-                     c.paciente_id = hc.paciente_id 
-                     AND c.fecha_cita = hc.fecha_cita
-                     AND c.medico_id = hc.medico_id
-                 )
+                 INNER JOIN historial_citas hc ON c.id = hc.cita_id
                  WHERE c.fecha_cita = :fecha
                  AND c.medico_id = :medico_id
-                 AND (hc.estado_cita IS NULL OR hc.estado_cita != 'completada')
+                 AND hc.estado_cita = 'aceptada'
                  ORDER BY c.horario ASC";
 
             $stmt = $this->db->prepare($query);

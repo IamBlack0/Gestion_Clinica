@@ -34,12 +34,9 @@ $queryCitas = "SELECT DISTINCT c.id, p.nombre AS paciente_nombre, p.apellido AS 
                c.razon
                FROM citas c
                JOIN pacientes p ON c.paciente_id = p.id
-               LEFT JOIN historial_citas hc ON c.paciente_id = hc.paciente_id 
-                   AND c.fecha_cita = hc.fecha_cita
-                   AND c.medico_id = hc.medico_id
+               JOIN historial_citas hc ON c.id = hc.cita_id
                WHERE c.medico_id = :medico_id
-               AND (hc.estado_cita IS NULL OR hc.estado_cita != 'completada')
-               GROUP BY c.id, c.fecha_cita, c.horario
+               AND hc.estado_cita = 'aceptada'
                ORDER BY c.fecha_cita ASC, c.horario ASC";
 
 $stmtCitas = $db->prepare($queryCitas);

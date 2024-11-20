@@ -13,64 +13,65 @@ class HistorialMedicoController
     public function verCitasMedico()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            // Primero obtener el ID del colaborador (médico) basado en el user_id
-            $query = "SELECT id FROM colaboradores WHERE usuario_id = :user_id";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
-            $stmt->execute();
-            $medico = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$medico) {
-                die('Error: No se encontró el registro del médico.');
-            }
-
-            $medico_id = $medico['id'];
-            $fecha = isset($_GET['fecha']) ? $_GET['fecha'] : null;
-            $horario = isset($_GET['horario']) ? $_GET['horario'] : null;
-
-            if ($fecha && $horario) {
-                // Modificar la consulta para evitar duplicados y filtrar correctamente por médico
-                $query = "SELECT DISTINCT 
-              c.id, 
-              p.id AS paciente_id, 
-              p.nombre AS paciente_nombre,
-              p.apellido AS paciente_apellido, 
-              c.fecha_cita, 
-              TIME_FORMAT(c.horario, '%h:%i %p') as horario, 
-              c.razon,
-              COALESCE(hc.id, 0) as historial_cita_id
-              FROM citas c
-              JOIN pacientes p ON c.paciente_id = p.id
-              LEFT JOIN historial_citas hc ON (
-                  c.paciente_id = hc.paciente_id 
-                  AND c.fecha_cita = hc.fecha_cita
-                  AND c.medico_id = hc.medico_id
-              )
-              WHERE c.medico_id = :medico_id 
-              AND c.fecha_cita = :fecha
-              AND TIME_FORMAT(c.horario, '%h:%i %p') = :horario
-              AND (hc.estado_cita IS NULL OR hc.estado_cita != 'completada')
-              GROUP BY c.id";
-
+            try {
+                // Obtener el ID del colaborador (médico) 
+                $query = "SELECT id FROM colaboradores WHERE usuario_id = :user_id";
                 $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
-                $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
-                $stmt->bindParam(':horario', $horario, PDO::PARAM_STR);
+                $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
                 $stmt->execute();
-                $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $medico = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                if (count($citas) > 0) {
-                    $paciente_id = $citas[0]['paciente_id'];
-                    $informacionPaciente = $this->obtenerInformacionPaciente($paciente_id);
+                if (!$medico) {
+                    die('Error: No se encontró el registro del médico.');
                 }
-            }
 
-            require_once __DIR__ . '/../Views/verCitasMedico.php';
+                $medico_id = $medico['id'];
+                $fecha = isset($_GET['fecha']) ? $_GET['fecha'] : null;
+                $horario = isset($_GET['horario']) ? $_GET['horario'] : null;
+
+                if ($fecha && $horario) {
+                    // Modificar la consulta para mostrar solo citas 'aceptadas'
+                    $query = "SELECT DISTINCT 
+                    c.id, 
+                    p.id AS paciente_id, 
+                    p.nombre AS paciente_nombre,
+                    p.apellido AS paciente_apellido, 
+                    c.fecha_cita, 
+                    TIME_FORMAT(c.horario, '%h:%i %p') as horario, 
+                    c.razon,
+                    hc.id as historial_cita_id
+                FROM citas c
+                JOIN pacientes p ON c.paciente_id = p.id
+                JOIN historial_citas hc ON c.id = hc.cita_id
+                WHERE c.medico_id = :medico_id 
+                AND c.fecha_cita = :fecha
+                AND TIME_FORMAT(c.horario, '%h:%i %p') = :horario
+                AND hc.estado_cita = 'aceptada'";
+
+                    $stmt = $this->db->prepare($query);
+                    $stmt->bindParam(':medico_id', $medico_id, PDO::PARAM_INT);
+                    $stmt->bindParam(':fecha', $fecha, PDO::PARAM_STR);
+                    $stmt->bindParam(':horario', $horario, PDO::PARAM_STR);
+                    $stmt->execute();
+                    $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    if (count($citas) > 0) {
+                        $paciente_id = $citas[0]['paciente_id'];
+                        $informacionPaciente = $this->obtenerInformacionPaciente($paciente_id);
+                    }
+                }
+
+                require_once __DIR__ . '/../Views/verCitasMedico.php';
+            } catch (Exception $e) {
+                error_log("Error en verCitasMedico: " . $e->getMessage());
+                die('Error: ' . $e->getMessage());
+            }
         }
     }
 
     private function obtenerInformacionPaciente($paciente_id)
     {
+        try {
         $queryUsuario = "SELECT u.email
                          FROM usuarios u
                          JOIN pacientes p ON u.id = p.usuario_id
@@ -79,6 +80,10 @@ class HistorialMedicoController
         $stmtUsuario->bindParam(':paciente_id', $paciente_id, PDO::PARAM_INT);
         $stmtUsuario->execute();
         $usuario = $stmtUsuario->fetch(PDO::FETCH_ASSOC);
+
+        if (!$usuario) {
+            return null; // Retornamos null si no encontramos usuario
+        }
 
         $queryPaciente = "SELECT * FROM pacientes WHERE id = :paciente_id";
         $stmtPaciente = $this->db->prepare($queryPaciente);
@@ -121,14 +126,18 @@ class HistorialMedicoController
         $stmtNacionalidades->execute();
         $nacionalidades = $stmtNacionalidades->fetchAll(PDO::FETCH_ASSOC);
 
-        return [
-            'usuario' => $usuario,
-            'paciente' => $paciente,
-            'informacion_paciente' => $informacion_paciente,
-            'historial_medico' => $historial_medico,
-            'provincias' => $provincias,
-            'nacionalidades' => $nacionalidades
-        ];
+            return [
+                'usuario' => $usuario,
+                'paciente' => $paciente,
+                'informacion_paciente' => $informacion_paciente,
+                'historial_medico' => $historial_medico,
+                'provincias' => $provincias,
+                'nacionalidades' => $nacionalidades
+            ];
+        } catch (Exception $e) {
+            error_log("Error en obtenerInformacionPaciente: " . $e->getMessage());
+            return null;
+        }
     }
 
     public function procesarHistorialMedico()
