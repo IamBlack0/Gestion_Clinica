@@ -19,6 +19,10 @@ class Inventario
     public $proveedor_nombre;
     public $producto_id;
 
+    public $fechaSalida;
+    public $cantidadSalida;
+
+
     /**
      * Constructor de la clase que recibe la conexión a la base de datos.
      */
@@ -172,6 +176,54 @@ class Inventario
             }
         } else {
             return false;
+        }
+    }
+
+
+    public function registrarSalidaProducto()
+    {
+        try {
+            $this->conn->beginTransaction();
+
+            // Verificar stock disponible
+            $query = "SELECT cantidad FROM cantidad WHERE producto_id = :producto_id FOR UPDATE";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':producto_id', $this->producto_id);
+            $stmt->execute();
+
+            $stock = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$stock || $stock['cantidad'] < $this->cantidadSalida) {
+                throw new Exception("Stock insuficiente para realizar la salida");
+            }
+
+            // Actualizar cantidad
+            $nuevaCantidad = $stock['cantidad'] - $this->cantidadSalida;
+            $queryUpdate = "UPDATE cantidad SET cantidad = :nueva_cantidad WHERE producto_id = :producto_id";
+            $stmtUpdate = $this->conn->prepare($queryUpdate);
+            $stmtUpdate->bindParam(':nueva_cantidad', $nuevaCantidad);
+            $stmtUpdate->bindParam(':producto_id', $this->producto_id);
+
+            if (!$stmtUpdate->execute()) {
+                throw new Exception("Error al actualizar el stock");
+            }
+
+            // Registrar movimiento
+            $queryMovimiento = "INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad) 
+                           VALUES (:producto_id, :fecha, 'salida', :cantidad)";
+            $stmtMovimiento = $this->conn->prepare($queryMovimiento);
+            $stmtMovimiento->bindParam(':producto_id', $this->producto_id);
+            $stmtMovimiento->bindParam(':fecha', $this->fechaSalida);
+            $stmtMovimiento->bindParam(':cantidad', $this->cantidadSalida);
+
+            if (!$stmtMovimiento->execute()) {
+                throw new Exception("Error al registrar el movimiento");
+            }
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            throw $e;
         }
     }
 }

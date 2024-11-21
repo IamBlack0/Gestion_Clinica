@@ -102,4 +102,39 @@ class InventarioController
             require_once __DIR__ . '/../Views/editarMedicamentos.php';
         }
     }
+
+    public function salidaProducto()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+
+            try {
+                // Validar que los datos necesarios existen
+                if (!isset($_POST['producto_id']) || !isset($_POST['cantidadSalida'])) {
+                    throw new Exception("Faltan datos requeridos");
+                }
+
+                $this->producto->producto_id = $_POST['producto_id'];
+                $this->producto->movimiento = $_POST['movimiento'];
+                $this->producto->cantidadSalida = $_POST['cantidadSalida'];
+                $this->producto->fechaSalida = $_POST['fechaSalida'];
+
+                // Intenta registrar la salida
+                if ($this->producto->registrarSalidaProducto()) {
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Salida registrada correctamente'
+                    ]);
+                } else {
+                    throw new Exception("Error al registrar la salida");
+                }
+            } catch (Exception $e) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+            }
+            exit(); // Asegura que no haya más output
+        }
+    }
 }

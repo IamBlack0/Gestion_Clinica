@@ -127,6 +127,18 @@ class App
             case 'editarProducto':
                 $controllerInv->actualizarProducto();
                 break;
+            case 'salidaProducto':
+                $controllerInv->salidaProducto();
+                break;
+            case 'salidaProductoVista':
+                // Verificar si el usuario está autenticado y es administrador
+                if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
+                    require_once __DIR__ . '/../App/Views/salidaProductos.php';
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
             //CASO PARA AGENDAR CITA
             case 'agendarCita':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
