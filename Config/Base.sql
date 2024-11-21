@@ -156,7 +156,6 @@ CREATE TABLE cantidad (
     stock_id INT PRIMARY KEY AUTO_INCREMENT,
     producto_id INT NOT NULL,
     cantidad INT DEFAULT 0 CHECK (cantidad >= 0),
-    ubicacion VARCHAR(100),
     CONSTRAINT fk_producto_stock FOREIGN KEY (producto_id) REFERENCES productos(producto_id)
 );
 
@@ -166,7 +165,6 @@ CREATE TABLE movimientos_inventario (
     fecha_movimiento DATE NOT NULL,
     tipo_movimiento ENUM('entrada', 'salida') NOT NULL,
     cantidad INT NOT NULL CHECK (cantidad > 0),
-    descripcion TEXT,
     CONSTRAINT fk_producto_movimiento FOREIGN KEY (producto_id) REFERENCES productos(producto_id)
 );
 
@@ -192,10 +190,10 @@ VALUES ('Ibuprofeno 400mg', 'IBU400', 1, 'Tableta', '2030-10-22');
 INSERT INTO productos (nombre, codigo_sku, categoria_id, unidad_medida, fecha_expiracion) 
 VALUES ('Amoxicilina 500mg', 'AMOX500', 2, 'Cápsula', '2030-10-22');
 
-INSERT INTO cantidad (producto_id, cantidad, ubicacion) 
-VALUES (1, 100, 'Almacén central');
-INSERT INTO cantidad (producto_id, cantidad, ubicacion) 
-VALUES (2, 50, 'Almacén central');
+INSERT INTO cantidad (producto_id, cantidad) 
+VALUES (1, 100);
+INSERT INTO cantidad (producto_id, cantidad) 
+VALUES (2, 50);
 
 INSERT INTO productos_proveedores (producto_id, proveedor_id, precio)
 VALUES (1, 1, 0.50);

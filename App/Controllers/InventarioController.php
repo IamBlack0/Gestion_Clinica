@@ -25,7 +25,14 @@ class InventarioController
     {
         // Obtener la lista de productos
         $productos = $this->producto->obtenerTodosLosProductos();
-        require_once __DIR__ . '/../Views/gestionInventario.php';
+        require_once __DIR__ . '/../Views/agregarProductos.php';
+    }
+
+    public function editarProductosVista()
+    {
+        // Obtener la lista de productos
+        $productos = $this->producto->obtenerTodosLosProductos();
+        require_once __DIR__ . '/../Views/editarMedicamentos.php';
     }
 
     public function agregarProducto()
@@ -53,7 +60,7 @@ class InventarioController
             }
         } else {
             // Manejar el caso donde no es un POST
-            require_once __DIR__ . '/../Views/gestionInventario.php'; // Cambia esta ruta según tu estructura
+            require_once __DIR__ . '/../Views/agregarProductos.php';
         }
     }
 
@@ -63,21 +70,36 @@ class InventarioController
         echo json_encode($productos);
     }
 
-    public function obtenerProductoId()
+    public function editarProducto($producto_id)
+    {
+        // Obtener el producto por ID
+        $producto = $this->producto->obtenerProductoPorId($producto_id);
+        require_once __DIR__ . '/../Views/editarMedicamentos.php'; // Vista de edición
+    }
+
+    public function actualizarProducto()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            error_log(print_r($_POST, true));
-            $this->producto->producto_id = $_POST['producto_id'];
+            // Obtener el ID del producto desde el formulario
+            $producto_id = $_POST['producto_id'];
 
-            $producto = $this->producto->getProductoById();
-            if ($producto) {
-                var_dump($producto);
-                echo json_encode(['success' => true, 'producto' => $producto]);
+            // Asignar valores del formulario a las propiedades del producto
+            $this->producto->producto_id = $producto_id;
+            $this->producto->nombre_producto = $_POST['nombre'];
+            $this->producto->codigo_sku = $_POST['codigo'];
+            $this->producto->categoria_id = $_POST['tipoProducto'];
+            $this->producto->cantidad = $_POST['cantidad'];
+            $this->producto->precio = $_POST['precio'];
+            $this->producto->forma = $_POST['forma'];
+
+            // Intentar actualizar el producto
+            if ($this->producto->actualizarProducto()) {
+                echo json_encode(['success' => true, 'message' => 'Producto actualizado correctamente.']);
             } else {
-                echo json_encode(['success' => false, 'message' => 'Error obteniendo Producto ID']);
+                echo json_encode(['success' => false, 'message' => 'Error al actualizar el producto.']);
             }
         } else {
-            require_once __DIR__ . '/../Views/gestionInventario.php';
+            require_once __DIR__ . '/../Views/editarMedicamentos.php';
         }
     }
 }

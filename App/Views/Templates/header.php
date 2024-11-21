@@ -170,11 +170,34 @@ $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
                 <div data-i18n="User interface">Reportes</div>
               </a>
             </li>
+            <!-- Extended components -->
             <li class="menu-item">
-              <a href="./gestionInventario" class="menu-link">
+              <a href="javascript:void(0)" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-copy"></i>
                 <div data-i18n="Extended UI">Inventario</div>
               </a>
+              <ul class="menu-sub">
+                <li class="menu-item">
+                  <a href="./agregarProductos" class="menu-link">
+                    <div data-i18n="Perfect Scrollbar">Agregar Medicamentos</div>
+                  </a>
+                </li>
+                <li class="menu-item">
+                  <a href="./editarProductos" class="menu-link">
+                    <div data-i18n="Text Divider">Editar Medicamentos</div>
+                  </a>
+                </li>
+                    <li class="menu-item">
+                  <a href="./" class="menu-link">
+                    <div data-i18n="Text Divider">Salida de Medicamentos</div>
+                  </a>
+                </li>
+                    <li class="menu-item">
+                  <a href="./" class="menu-link">
+                    <div data-i18n="Text Divider">Administrar Pedidos</div>
+                  </a>
+                </li>
+              </ul>
             </li>
             <li class="menu-item">
               <a href="#" class="menu-link">

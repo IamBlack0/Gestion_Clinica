@@ -103,7 +103,7 @@ class App
             case 'obtenerInventarios':
                 $controllerInv->obtenerInventarios();
                 break;
-            case 'gestionInventario':
+            case 'agregarProductos':
                 // Verificar si el usuario está autenticado y es administrador antes de mostrar la lista de productos
                 if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
                     $controllerInv->mostrarListaProductos(); // Llamar al método para mostrar la lista de productos
@@ -112,14 +112,21 @@ class App
                     header('Location: ./login');
                 }
                 break;
+            case 'editarProductos':
+                // Verificar si el usuario está autenticado y es administrador antes de mostrar la lista de productos
+                if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
+                    $controllerInv->editarProductosVista(); // Llamar al método para mostrar la lista de productos
+
+                } else {
+                    header('Location: ./login');
+                }
+                break;
             case 'agregarProducto':
                 $controllerInv->agregarProducto(); // Llamar al método para agregar un producto
                 break;
-            case 'getProductoById':
-                $controllerInv->obtenerProductoId();
+            case 'editarProducto':
+                $controllerInv->actualizarProducto();
                 break;
-
-
             //CASO PARA AGENDAR CITA
             case 'agendarCita':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
@@ -305,4 +312,3 @@ class App
         }
     }
 }
-
