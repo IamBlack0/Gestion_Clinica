@@ -127,54 +127,60 @@ class Inventario
 
     public function actualizarProducto()
     {
-        $queryEditarProductos = "UPDATE productos 
+        try {
+            $this->conn->beginTransaction();
+
+            // Actualizar tabla productos
+            $queryEditarProductos = "UPDATE productos 
                 SET nombre = :nombre_producto, 
                     codigo_sku = :codigo_sku, 
                     categoria_id = :categoria_id, 
-                    -- cantidad = :cantidad,
                     unidad_medida = :forma 
                 WHERE producto_id = :producto_id";
 
-        $stmtEditarProductos = $this->conn->prepare($queryEditarProductos);
+            $stmtEditarProductos = $this->conn->prepare($queryEditarProductos);
+            $stmtEditarProductos->bindParam(':producto_id', $this->producto_id);
+            $stmtEditarProductos->bindParam(':nombre_producto', $this->nombre_producto);
+            $stmtEditarProductos->bindParam(':codigo_sku', $this->codigo_sku);
+            $stmtEditarProductos->bindParam(':categoria_id', $this->categoria_id);
+            $stmtEditarProductos->bindParam(':forma', $this->forma);
 
-        // Enlazar los parámetros
-        $stmtEditarProductos->bindParam(':producto_id', $this->producto_id);
-        $stmtEditarProductos->bindParam(':nombre_producto', $this->nombre_producto);
-        $stmtEditarProductos->bindParam(':codigo_sku', $this->codigo_sku);
-        $stmtEditarProductos->bindParam(':categoria_id', $this->categoria_id);
-        // $stmt->bindParam(':cantidad', $this->cantidad);
-        $stmtEditarProductos->bindParam(':forma', $this->forma);
+            if (!$stmtEditarProductos->execute()) {
+                throw new Exception("Error al actualizar producto");
+            }
 
-        // Ejecutar la consulta
-        if ($stmtEditarProductos->execute()) {
-            $queryEditarCantidad = "UPDATE cantidad
-                    SET cantidad = :cantidad
-                    WHERE producto_id = :producto_id";
+            // Actualizar cantidad
+            $queryEditarCantidad = "UPDATE cantidad 
+                               SET cantidad = :cantidad 
+                               WHERE producto_id = :producto_id";
 
             $stmtEditarCantidad = $this->conn->prepare($queryEditarCantidad);
-
             $stmtEditarCantidad->bindParam(':cantidad', $this->cantidad);
             $stmtEditarCantidad->bindParam(':producto_id', $this->producto_id);
 
-            if ($stmtEditarCantidad->execute()) {
-                $queryEditarProductosProveedores = "UPDATE productos_proveedores
-                                                    SET precio = :precio
-                                                    WHERE producto_id = :producto_id";
-
-                $stmtEditarCantidad = $this->conn->prepare($queryEditarProductosProveedores);
-
-                $stmtEditarCantidad->bindParam(':precio', $this->precio);
-                $stmtEditarCantidad->bindParam(':producto_id', $this->producto_id);
-
-                if ($stmtEditarCantidad->execute()) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
+            if (!$stmtEditarCantidad->execute()) {
+                throw new Exception("Error al actualizar cantidad");
             }
-        } else {
+
+            // Actualizar precio en productos_proveedores
+            $queryEditarPrecio = "UPDATE productos_proveedores 
+                             SET precio = :precio 
+                             WHERE producto_id = :producto_id";
+
+            $stmtEditarPrecio = $this->conn->prepare($queryEditarPrecio);
+            $stmtEditarPrecio->bindParam(':precio', $this->precio);
+            $stmtEditarPrecio->bindParam(':producto_id', $this->producto_id);
+
+            if (!$stmtEditarPrecio->execute()) {
+                throw new Exception("Error al actualizar precio");
+            }
+
+            $this->conn->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            error_log("Error en actualizarProducto: " . $e->getMessage());
             return false;
         }
     }

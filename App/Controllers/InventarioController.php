@@ -80,26 +80,30 @@ class InventarioController
     public function actualizarProducto()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Obtener el ID del producto desde el formulario
-            $producto_id = $_POST['producto_id'];
+            try {
+                // Log de datos recibidos
+                error_log("Datos recibidos: " . print_r($_POST, true));
 
-            // Asignar valores del formulario a las propiedades del producto
-            $this->producto->producto_id = $producto_id;
-            $this->producto->nombre_producto = $_POST['nombre'];
-            $this->producto->codigo_sku = $_POST['codigo'];
-            $this->producto->categoria_id = $_POST['tipoProducto'];
-            $this->producto->cantidad = $_POST['cantidad'];
-            $this->producto->precio = $_POST['precio'];
-            $this->producto->forma = $_POST['forma'];
+                $producto_id = $_POST['producto_id'];
 
-            // Intentar actualizar el producto
-            if ($this->producto->actualizarProducto()) {
-                echo json_encode(['success' => true, 'message' => 'Producto actualizado correctamente.']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Error al actualizar el producto.']);
+                $this->producto->producto_id = $producto_id;
+                $this->producto->nombre_producto = $_POST['nombre'];
+                $this->producto->codigo_sku = $_POST['codigo'];
+                $this->producto->categoria_id = $_POST['tipoProducto'];
+                $this->producto->cantidad = $_POST['cantidad'];
+                $this->producto->precio = $_POST['precio'];
+                $this->producto->forma = $_POST['forma'];
+
+                if ($this->producto->actualizarProducto()) {
+                    echo json_encode(['success' => true, 'message' => 'Producto actualizado correctamente']);
+                } else {
+                    throw new Exception('Error al actualizar el producto');
+                }
+            } catch (Exception $e) {
+                error_log("Error en actualizarProducto: " . $e->getMessage());
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
             }
-        } else {
-            require_once __DIR__ . '/../Views/editarMedicamentos.php';
+            exit();
         }
     }
 
