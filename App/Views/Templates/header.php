@@ -187,12 +187,12 @@ $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
                     <div data-i18n="Text Divider">Editar Medicamentos</div>
                   </a>
                 </li>
-                    <li class="menu-item">
+                <li class="menu-item">
                   <a href="./salidaProductoVista" class="menu-link">
                     <div data-i18n="Text Divider">Salida de Medicamentos</div>
                   </a>
                 </li>
-                    <li class="menu-item">
+                <li class="menu-item">
                   <a href="./" class="menu-link">
                     <div data-i18n="Text Divider">Administrar Pedidos</div>
                   </a>
@@ -233,6 +233,20 @@ $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
             </li>
           <?php endif; ?>
           <!--FIN DEL MENU DEL MEDICO -->
+
+          <!-- INICIO DEL MENU DE LA SECRETARIA -->
+          <?php if ($rol === 'secretaria'): ?>
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Secretaria</span>
+            </li>
+            <li class="menu-item">
+              <a href="./procesarPagoCaja" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-dollar-circle"></i>
+                <div data-i18n="Misc">Caja - Pagos</div>
+              </a>
+            </li>
+          <?php endif; ?>
+
         </ul>
       </aside>
       <!-- / Menu -->

@@ -296,3 +296,19 @@ CREATE TABLE historial_medico (
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- EDITAR
     FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 );
+
+
+-- Corregir el rol en la inserción del usuario
+INSERT INTO usuarios (email, contraseña, rol_id)
+VALUES ('secretaria1@clinica.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', 
+    (SELECT id FROM roles WHERE nombre = 'secretaria'));
+
+-- Corregir el rol en la inserción del colaborador
+INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, fecha_contratacion)
+VALUES (
+    (SELECT id FROM usuarios WHERE email = 'secretaria1@clinica.com'),
+    (SELECT id FROM roles WHERE nombre = 'secretaria'),
+    'Juana',
+    'Montes',
+    '2024-11-22'
+);

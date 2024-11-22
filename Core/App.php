@@ -317,6 +317,13 @@ class App
                 }
                 break;
 
+            case 'procesarPagoCaja':
+                if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'secretaria') {
+                    require_once __DIR__ . '/../App/Views/procesarPagoCaja.php';
+                } else {
+                    header('Location: ./login');
+                }
+                break;
             case 'obtenerSiguienteComprobante':
                 if (isset($_SESSION['user_id'])) {
                     $paymentController->obtenerSiguienteComprobante();
