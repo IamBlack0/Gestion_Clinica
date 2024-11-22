@@ -296,7 +296,7 @@ class App
             // PARA PAGAR CITAS
             case 'pagarCita':
                 if (isset($_SESSION['user_id'])) {
-                    require_once __DIR__ . '/../App/Views/procesarPago.php';
+                    $paymentController->verPagosPendientes();
                 } else {
                     header('Location: ./login');
                 }
@@ -309,6 +309,14 @@ class App
                     header('Location: ./login');
                 }
                 break;
+            case 'actualizarEstadoPago':
+                if (isset($_SESSION['user_id'])) {
+                    $paymentController->actualizarEstadoPago();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
             case 'obtenerSiguienteComprobante':
                 if (isset($_SESSION['user_id'])) {
                     $paymentController->obtenerSiguienteComprobante();

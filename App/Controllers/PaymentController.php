@@ -137,5 +137,117 @@ class PaymentController
             exit();
         }
     }
+    public function verPagosPendientes()
+    {
+        try {
+            if (!isset($_SESSION['user_id'])) {
+                throw new Exception("Usuario no autenticado");
+            }
 
+            // Obtener ID del paciente
+            $queryPaciente = "SELECT id FROM pacientes WHERE usuario_id = :user_id";
+            $stmtPaciente = $this->db->prepare($queryPaciente);
+            $stmtPaciente->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+            $stmtPaciente->execute();
+            $paciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
+
+            if (!$paciente) {
+                throw new Exception("No se encontró el paciente");
+            }
+
+            // Modificar la consulta para mostrar citas completadas con pago pendiente
+            $query = "SELECT DISTINCT 
+            c.id, 
+            col.nombre as medico_nombre, 
+            col.apellido as medico_apellido,
+            c.fecha_cita,
+            c.horario,
+            hc.estado_pago,
+            p.metodo_pago
+        FROM citas c
+        INNER JOIN historial_citas hc ON c.id = hc.cita_id
+        INNER JOIN colaboradores col ON c.medico_id = col.id
+        INNER JOIN pagos p ON hc.id = p.historial_cita_id
+        WHERE c.paciente_id = :paciente_id
+        AND hc.estado_cita = 'completada'
+        AND hc.estado_pago = 'pendiente'
+        ORDER BY c.fecha_cita ASC, c.horario ASC";
+
+            // Agregar logs para depuración
+            error_log("Ejecutando consulta para paciente_id: " . $paciente['id']);
+
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':paciente_id', $paciente['id'], PDO::PARAM_INT);
+            $stmt->execute();
+            $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            error_log("Citas encontradas: " . count($citas));
+            error_log("Datos de citas: " . print_r($citas, true));
+
+            require_once __DIR__ . '/../Views/procesarPago.php';
+
+        } catch (Exception $e) {
+            error_log("Error en verPagosPendientes: " . $e->getMessage());
+            header('Location: ./dashboard?error=' . urlencode($e->getMessage()));
+            exit();
+        }
+    }
+
+    public function actualizarEstadoPago()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $this->db->beginTransaction();
+
+                $cita_id = $_POST['cita_id'] ?? null;
+
+                if (!$cita_id) {
+                    throw new Exception("ID de cita no proporcionado");
+                }
+
+                // Obtener el ID del historial_citas usando el cita_id
+                $queryHistorial = "SELECT hc.id 
+                     FROM historial_citas hc
+                     JOIN citas c ON c.id = hc.cita_id
+                     WHERE c.id = :cita_id
+                     AND hc.estado_pago = 'pendiente'
+                     LIMIT 1";
+
+                $stmtHistorial = $this->db->prepare($queryHistorial);
+                $stmtHistorial->bindParam(':cita_id', $cita_id);
+                $stmtHistorial->execute();
+
+                $historialCita = $stmtHistorial->fetch(PDO::FETCH_ASSOC);
+
+                if (!$historialCita) {
+                    throw new Exception("No se encontró la cita correspondiente");
+                }
+
+                // Actualizar solo el estado de pago
+                $queryUpdate = "UPDATE historial_citas 
+                      SET estado_pago = 'pagado'
+                      WHERE id = :historial_cita_id";
+
+                $stmtUpdate = $this->db->prepare($queryUpdate);
+                $stmtUpdate->bindParam(':historial_cita_id', $historialCita['id']);
+
+                if (!$stmtUpdate->execute()) {
+                    throw new Exception("Error al actualizar el estado del pago");
+                }
+
+                $this->db->commit();
+                echo json_encode(['success' => true]);
+                exit();
+
+            } catch (Exception $e) {
+                $this->db->rollBack();
+                error_log("Error en actualizarEstadoPago: " . $e->getMessage());
+                echo json_encode([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+                exit();
+            }
+        }
+    }
 }
