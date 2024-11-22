@@ -20,18 +20,15 @@ class PaymentController
                 $fecha_cita = $_POST['fecha_cita'] ?? null;
                 $horario = $_POST['horario'] ?? null;
 
-                // Primero, obtener el ID del historial_citas
+                // Modificar la consulta para obtener el historial específico
                 $queryHistorial = "SELECT hc.id 
-                             FROM historial_citas hc
-                             JOIN citas c ON (
-                                 c.paciente_id = hc.paciente_id 
-                                 AND c.fecha_cita = hc.fecha_cita
-                                 AND c.medico_id = hc.medico_id
-                             )
-                             WHERE hc.paciente_id = :paciente_id 
-                             AND hc.fecha_cita = :fecha_cita
-                             AND TIME_FORMAT(c.horario, '%h:%i %p') = :horario
-                             LIMIT 1";
+                         FROM historial_citas hc
+                         JOIN citas c ON hc.cita_id = c.id
+                         WHERE c.paciente_id = :paciente_id 
+                         AND c.fecha_cita = :fecha_cita
+                         AND TIME_FORMAT(c.horario, '%h:%i %p') = :horario
+                         AND hc.estado_cita = 'aceptada'
+                         LIMIT 1";
 
                 $stmtHistorial = $this->db->prepare($queryHistorial);
                 $stmtHistorial->bindParam(':paciente_id', $paciente_id);
@@ -82,11 +79,12 @@ class PaymentController
                     throw new Exception("Error al procesar el pago");
                 }
 
-                // Actualizar estado en historial_citas
+                // Actualizar estado en historial_citas solo para esta cita específica
                 $queryUpdate = "UPDATE historial_citas 
-                          SET estado_pago = 'pendiente',
-                              estado_cita = 'completada'
-                          WHERE id = :historial_cita_id";
+                      SET estado_pago = 'pendiente',
+                          estado_cita = 'completada'
+                      WHERE id = :historial_cita_id
+                      AND estado_cita = 'aceptada'";
 
                 $stmtUpdate = $this->db->prepare($queryUpdate);
                 $stmtUpdate->bindParam(':historial_cita_id', $historialCitaId);
