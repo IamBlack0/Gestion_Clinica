@@ -6,6 +6,25 @@ if (session_status() == PHP_SESSION_NONE) {
 
 // Obtener el rol del usuario desde la sesión
 $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
+
+// Incluir archivo de base de datos y crear conexión
+require_once __DIR__ . '/../../../Config/DataBase.php';
+$database = new Database();
+$db = $database->getConnection();
+
+// Consulta para traer los productos proximos a vencer
+$queryProductos = "SELECT nombre, fecha_expiracion FROM productos WHERE fecha_expiracion <= DATE_ADD(CURDATE(), INTERVAL 20 DAY)";
+$stmtProductos = $db->query($queryProductos);
+$productosProximosAVencer = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
+
+$notificaciones = [];
+// Construir las notificaciones
+foreach ($productosProximosAVencer as $producto) {
+    $notificaciones[] = [
+        'nombre' => $producto['nombre'],
+        'fecha_expiracion' => $producto['fecha_expiracion']
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="es" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-Public-path="../Public/"
@@ -273,9 +292,23 @@ $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
               </div>
             </div>
             <!-- /Search -->
-
+             
             <ul class="navbar-nav flex-row align-items-center ms-auto">
               <!-- Place this tag where you want the button to render. -->
+
+              <!-- Campana -->
+              <li class="menu-item m-4">
+                <a href="#" id="notificaciones-boton" class="menu-link">
+                  <i class="menu-icon bx bx-bell"></i>
+                </a>
+                <!-- Contenedor de notificaciones -->
+                <div id="notificaciones-container" class="notificaciones-container" style="display: none;">
+                  <ul id="notificaciones-lista">
+                    <!-- Las notificaciones se cargarán dinámicamente aquí -->
+                  </ul>
+                </div>
+              </li>
+              <!-- /Campana -->
 
               <!-- User -->
               <li class="nav-item navbar-dropdown dropdown-user dropdown">
@@ -336,3 +369,40 @@ $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
         </nav>
 
         <!-- / Navbar -->
+<script>
+  function cargarNotificaciones() {
+    return <?php echo json_encode($notificaciones); ?>; // Insertar las notificaciones
+  }
+
+  // Función para manejar el clic en la campana
+  document.getElementById("notificaciones-boton").addEventListener("click", function (event) {
+    event.preventDefault(); 
+    
+    const contenedor = document.getElementById("notificaciones-container");
+    const notificaciones = cargarNotificaciones();
+
+    // Obtener la lista de notificaciones
+    const lista = document.getElementById("notificaciones-lista");
+    lista.innerHTML = ""; // Limpia la lista antes de agregar nuevas notificaciones
+
+    // Verifica si hay notificaciones próximas a vencer
+    if (notificaciones.length === 0) {
+      const mensaje = document.createElement("li");
+      mensaje.textContent = "Sin notificaciones";
+      lista.appendChild(mensaje);
+    } else {
+      // Agregar cada notificación a la lista
+      notificaciones.forEach(function(notificacion) {
+        const li = document.createElement("li");
+        li.textContent = "⚠️ El producto " + notificacion.nombre + " vencerá el " + notificacion.fecha_expiracion;
+        lista.appendChild(li);
+      });
+    }
+    // Alternar la visibilidad del contenedor de notificaciones
+    if (contenedor.style.display === "none" || contenedor.style.display === "") {
+      contenedor.style.display = "block"; // Mostrar las notificaciones
+    } else {
+      contenedor.style.display = "none"; // Ocultar las notificaciones
+    }
+  });
+</script>
