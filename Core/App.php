@@ -138,7 +138,9 @@ class App
                     header('Location: ./login');
                 }
                 break;
-
+            case 'agregarInsumo':
+                $controllerInv->agregarInsumo(); // Llamar al método para agregar un producto
+                break;
             //CASO PARA AGENDAR CITA
             case 'agendarCita':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas

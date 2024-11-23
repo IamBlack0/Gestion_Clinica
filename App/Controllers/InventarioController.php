@@ -10,6 +10,7 @@ class InventarioController
 {
     private $db;
     private $producto;
+    private $insumo;
 
     /**
      * Constructor que inicializa la conexión a la base de datos y los modelos de usuario, paciente y colaborador.
@@ -141,4 +142,27 @@ class InventarioController
             exit(); // Asegura que no haya más output
         }
     }
+
+    public function agregarInsumo() 
+    {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Asignar valores de los campos del formulario a las propiedades del objeto insumo
+        $this->insumo->nombre_insumo = $_POST['nombre_insumo'];
+        $this->insumo->descripcion_insu = $_POST['descripcion_insu'];
+        $this->insumo->cantidad_insumo = $_POST['cantidad_insumo'];
+        $this->insumo->precio_insumo = $_POST['precio_insumo'];
+        $this->insumo->fechaRegistro = $_POST['fechaRegistro'];
+
+        // Intentar registrar el insumo
+        if ($this->insumo->registroInsumo()) {
+            echo json_encode(['success' => true, 'message' => 'Insumo agregado correctamente.']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error en el registro del insumo.']);
+        }
+    } else {
+        // Manejar el caso donde no es un POST
+        require_once __DIR__ . '/../Views/agregarInsumo.php';
+    }
+}
+
 }

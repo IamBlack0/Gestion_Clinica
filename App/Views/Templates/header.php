@@ -177,28 +177,50 @@ $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
                 <div data-i18n="Extended UI">Inventario</div>
               </a>
               <ul class="menu-sub">
+                <!-- Submenú para Insumos -->
                 <li class="menu-item">
-                  <a href="./agregarProductos" class="menu-link">
-                    <div data-i18n="Perfect Scrollbar">Agregar Medicamentos</div>
+                  <a href="javascript:void(0)" class="menu-link menu-toggle">
+                    <div data-i18n="Insumos">Insumos</div>
                   </a>
+                  <ul class="menu-sub">
+                    <li class="menu-item">
+                      <a href="./agregarInsumo" class="menu-link">
+                        <div data-i18n="Perfect Scrollbar">Agregar Insumos</div>
+                      </a>
+                    </li>
+                  </ul>
                 </li>
+                <!-- Submenú para Medicamentos -->
                 <li class="menu-item">
-                  <a href="./editarProductos" class="menu-link">
-                    <div data-i18n="Text Divider">Editar Medicamentos</div>
+                  <a href="javascript:void(0)" class="menu-link menu-toggle">
+                    <div data-i18n="Medicamentos">Medicamentos</div>
                   </a>
-                </li>
-                <li class="menu-item">
-                  <a href="./salidaProductoVista" class="menu-link">
-                    <div data-i18n="Text Divider">Salida de Medicamentos</div>
-                  </a>
-                </li>
-                <li class="menu-item">
-                  <a href="./" class="menu-link">
-                    <div data-i18n="Text Divider">Administrar Pedidos</div>
-                  </a>
+                  <ul class="menu-sub">
+                    <li class="menu-item">
+                      <a href="./agregarProductos" class="menu-link">
+                        <div data-i18n="Perfect Scrollbar">Agregar Medicamentos</div>
+                      </a>
+                    </li>
+                    <li class="menu-item">
+                      <a href="./editarProductos" class="menu-link">
+                        <div data-i18n="Text Divider">Editar Medicamentos</div>
+                      </a>
+                    </li>
+                    <li class="menu-item">
+                      <a href="./salidaProductoVista" class="menu-link">
+                        <div data-i18n="Text Divider">Salida de Medicamentos</div>
+                      </a>
+                    </li>
+                    <li class="menu-item">
+                      <a href="./" class="menu-link">
+                        <div data-i18n="Text Divider">Administrar Pedidos</div>
+                      </a>
+                    </li>
+                  </ul>
                 </li>
               </ul>
             </li>
+
             <li class="menu-item">
               <a href="#" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-crown"></i>

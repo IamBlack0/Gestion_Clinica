@@ -5,6 +5,7 @@ class Inventario
 {
     protected $conn;
     protected $tableProductos = 'productos';
+    protected $tableInsumos = 'insumos';
 
     public $nombre_producto;
     public $codigo_sku;
@@ -21,6 +22,12 @@ class Inventario
 
     public $fechaSalida;
     public $cantidadSalida;
+
+    public $nombre_insumo;
+    public $descripcion_insu;
+    public $cantidad_insumo;
+    public $precio_insumo;
+    public $fechaRegistro;
 
 
     /**
@@ -232,4 +239,27 @@ class Inventario
             throw $e;
         }
     }
+
+    // Registros de insumos 
+    public function registroInsumo() {
+    // Insertar el insumo en la tabla 'insumos'
+    $queryInsumos = "INSERT INTO insumos (nombre, descripcion, cantidad, precio, fecha_registro)
+      VALUES (:nombre_insumo, :descripcion, :cantidad, :precio, :fecha_registro)";
+
+    $stmtInsumos = $this->conn->prepare($queryInsumos);
+
+    // Enlazar los parámetros
+    $stmtInsumos->bindParam(':nombre_insumo', $this->nombre_insumo);
+    $stmtInsumos->bindParam(':descripcion_insu', $this->descripcion_insu);
+    $stmtInsumos->bindParam(':cantidad_insumo', $this->cantidad_insumo);
+    $stmtInsumos->bindParam(':precio_insumo', $this->precio_insumo);
+    $stmtInsumos->bindParam(':fechaRegistro', $this->fechaRegistro);
+
+    // Ejecutar la consulta para insertar el insumo
+    if ($stmtInsumos->execute()) {        
+        return true; // Todo se ejecutó correctamente
+    } else {
+        return false; // Falló la inserción de insumo
+    }
+}
 }
