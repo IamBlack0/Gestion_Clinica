@@ -69,7 +69,7 @@ require $footerPath;
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         var calendarEl = document.getElementById('calendar');
 
         var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -83,17 +83,19 @@ require $footerPath;
                 meridiem: 'short'
             },
             events: [
-                <?php foreach ($citas as $index => $cita): ?>
-            {
+                <?php foreach ($citas as $index => $cita): ?> {
                         title: '<?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?>',
                         start: '<?php echo htmlspecialchars($cita['fecha_cita'] . 'T' . $cita['horario_24']); ?>',
                         description: '<?php echo htmlspecialchars($cita['razon']); ?>',
                         horario: '<?php echo htmlspecialchars($cita['horario_display']); ?>'
-                    }<?php if ($index < count($citas) - 1)
-                        echo ','; ?>
-    <?php endforeach; ?>
+                    }
+                    <?php
+                    if ($index < count($citas) - 1)
+                        echo ',';
+                    ?>
+                <?php endforeach; ?>
             ],
-            eventClick: function (info) {
+            eventClick: function(info) {
                 alert('Paciente: ' + info.event.title + '\nHorario: ' + info.event.extendedProps.horario + '\nRazón: ' + info.event.extendedProps.description);
             }
         });
