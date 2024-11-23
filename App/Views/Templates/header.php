@@ -296,19 +296,34 @@ foreach ($productosProximosAVencer as $producto) {
             <ul class="navbar-nav flex-row align-items-center ms-auto">
               <!-- Place this tag where you want the button to render. -->
 
-              <!-- Campana -->
-              <li class="menu-item m-4">
-                <a href="#" id="notificaciones-boton" class="menu-link">
-                  <i class="menu-icon bx bx-bell"></i>
+              <!-- Notificaciones -->
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle hide-arrow" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bx bx-bell bx-sm"></i>
+                  <?php if (count($notificaciones) > 0): ?>
+                    <span class="badge bg-danger rounded-pill" style="font-size: 0.7rem;"><?php echo count($notificaciones); ?></span>
+                  <?php endif; ?>
                 </a>
-                <!-- Contenedor de notificaciones -->
-                <div id="notificaciones-container" class="notificaciones-container" style="display: none;">
-                  <ul id="notificaciones-lista">
-                    <!-- Las notificaciones se cargarán dinámicamente aquí -->
-                  </ul>
-                </div>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li class="dropdown-header">Notificaciones</li>
+                  <?php if (!empty($notificaciones)): ?>
+                    <?php foreach ($notificaciones as $notificacion): ?>
+                      <li>
+                        <a href="#" class="dropdown-item">
+                          <div>
+                            <span class="d-block fw-bold"><?php echo htmlspecialchars($notificacion['nombre']); ?></span>
+                            <small class="text-muted">Expira: <?php echo htmlspecialchars($notificacion['fecha_expiracion']); ?></small>
+                          </div>
+                        </a>
+                      </li>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <li>
+                      <span class="dropdown-item text-muted">No hay notificaciones</span>
+                    </li>
+                  <?php endif; ?>
+                </ul>
               </li>
-              <!-- /Campana -->
 
               <!-- User -->
               <li class="nav-item navbar-dropdown dropdown-user dropdown">
