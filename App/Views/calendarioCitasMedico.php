@@ -83,7 +83,7 @@ require $footerPath;
                 meridiem: 'short'
             },
             events: [
-                <?php foreach ($citas as $index => $cita): ?>,
+                <?php foreach ($citas as $index => $cita): ?>
             {
                         title: '<?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?>',
                         start: '<?php echo htmlspecialchars($cita['fecha_cita'] . 'T' . $cita['horario_24']); ?>',
