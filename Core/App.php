@@ -19,6 +19,9 @@ require_once __DIR__ . '/../App/Models/User.php';
 
 require_once __DIR__ . '/../App/Controllers/PaymentController.php';
 
+// Incluir el controlador de movimientos de inventario
+require_once __DIR__ . '/../App/Controllers/MovimientoInventarioController.php';
+
 /**
  * Clase App para manejar las rutas de la aplicación.
  */
@@ -41,6 +44,8 @@ class App
         $passwordController = new PasswordController();
         // Instanciar el controlador de pagos
         $paymentController = new PaymentController();
+        // Instanciar el controlador de movimientos de inventario
+        $movimientoInventarioController = new MovimientoInventarioController();
 
 
 
@@ -342,6 +347,27 @@ class App
                     $controller->verificarCedula();
                 }
                 break;
+            // CASOS PARA MOVIMIENTOS DE INVENTARIO
+            case 'obtenerMovimientos':
+                // Verificar si el usuario está autenticado antes de acceder
+                if (isset($_SESSION['user_id'])) {
+                    $movimientos = $movimientoInventarioController->getMovimientos();
+                    require_once __DIR__ . '/../App/Views/movimientoInventario.php'; // Vista que muestra los movimientos
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
+            case 'movimientosVista':
+                // Verificar si el usuario está autenticado antes de mostrar la vista
+                if (isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../App/Views/movimientoInventario.php'; // Vista que lista los movimientos
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
+
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
