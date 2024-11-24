@@ -162,15 +162,15 @@ class UserController
      */
     public function actualizarInformacionPaciente()
     {
-        header('Content-Type: application/json'); // Asegurarse de que la respuesta sea JSON
-        // Verificar si la solicitud es POST (formulario enviado)
+        header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Verificar si el usuario está autenticado
             if (isset($_SESSION['user_id'])) {
                 $this->paciente->id = $_SESSION['user_id'];
 
-                // Verificar si el paciente existe en la tabla pacientes
-                $queryVerificarPaciente = "SELECT id FROM pacientes WHERE usuario_id = :usuario_id";
+                // Verificar si el paciente existe
+                $queryVerificarPaciente = "SELECT id, foto_perfil FROM pacientes p 
+                                     LEFT JOIN informacion_paciente ip ON p.id = ip.paciente_id 
+                                     WHERE p.usuario_id = :usuario_id";
                 $stmtVerificarPaciente = $this->db->prepare($queryVerificarPaciente);
                 $stmtVerificarPaciente->bindParam(':usuario_id', $this->paciente->id);
                 $stmtVerificarPaciente->execute();
@@ -180,11 +180,14 @@ class UserController
                     return;
                 }
 
-                // Obtener el id del paciente
+                // Obtener el id del paciente y la foto actual
                 $pacienteData = $stmtVerificarPaciente->fetch(PDO::FETCH_ASSOC);
                 $this->paciente->id = $pacienteData['id'];
 
-                // Asignar los datos del formulario al objeto Paciente
+                // Mantener la foto actual
+                $this->paciente->foto_perfil = $pacienteData['foto_perfil'];
+
+                // Asignar los datos del formulario
                 $this->paciente->cedula = $_POST['cedula'] ?? null;
                 $this->paciente->fecha_nacimiento = $_POST['fecha_nacimiento'] ?? null;
                 $this->paciente->edad = $_POST['edad'] ?? null;
@@ -195,32 +198,6 @@ class UserController
                 $this->paciente->nacionalidad_id = $_POST['nacionalidad_id'] ?? null;
                 $this->paciente->provincia_id = $_POST['provincia_id'] ?? null;
 
-                // Manejar la subida de la imagen
-                if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
-                    $fileTmpPath = $_FILES['foto_perfil']['tmp_name'];
-                    $fileName = $_FILES['foto_perfil']['name'];
-                    $fileSize = $_FILES['foto_perfil']['size'];
-                    $fileType = $_FILES['foto_perfil']['type'];
-                    $fileNameCmps = explode(".", $fileName);
-                    $fileExtension = strtolower(end($fileNameCmps));
-
-                    // Verificar si el archivo es una imagen JPG o PNG
-                    $allowedfileExtensions = array('jpg', 'jpeg', 'png');
-                    if (in_array($fileExtension, $allowedfileExtensions)) {
-                        // Leer el contenido del archivo
-                        $fileContent = file_get_contents($fileTmpPath);
-                        // Encriptar el contenido del archivo
-                        $encryptedContent = base64_encode($fileContent);
-                        $this->paciente->foto_perfil = $encryptedContent;
-                    } else {
-                        echo json_encode(['success' => false, 'message' => 'Formato de archivo no permitido. Solo se permiten JPG y PNG.']);
-                        return;
-                    }
-                } else {
-                    $this->paciente->foto_perfil = null;
-                }
-
-                // Actualizar la información del paciente
                 try {
                     if ($this->paciente->actualizarInformacionPaciente()) {
                         echo json_encode(['success' => true]);

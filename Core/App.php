@@ -329,6 +329,14 @@ class App
                     $paymentController->obtenerSiguienteComprobante();
                 }
                 break;
+
+            case 'subirFotoPerfil':
+                if (isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../App/Controllers/ImageController.php';
+                    $imageController = new ImageController();
+                    $imageController->subirFotoPerfil();
+                }
+                break;
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión

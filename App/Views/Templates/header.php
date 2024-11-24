@@ -25,6 +25,21 @@ foreach ($productosProximosAVencer as $producto) {
     'fecha_expiracion' => $producto['fecha_expiracion']
   ];
 }
+
+// Obtener la foto de perfil del usuario actual
+$fotoPerfilQuery = "SELECT ip.foto_perfil 
+                    FROM informacion_paciente ip
+                    JOIN pacientes p ON ip.paciente_id = p.id
+                    WHERE p.usuario_id = :user_id";
+$stmtFotoPerfil = $db->prepare($fotoPerfilQuery);
+$stmtFotoPerfil->bindParam(':user_id', $_SESSION['user_id']);
+$stmtFotoPerfil->execute();
+$fotoPerfil = $stmtFotoPerfil->fetch(PDO::FETCH_ASSOC);
+
+// Definir la ruta de la imagen por defecto
+$rutaImagenPerfil = !empty($fotoPerfil['foto_perfil']) ?
+  $fotoPerfil['foto_perfil'] :
+  'Public/img/avatars/default.png';
 ?>
 <!DOCTYPE html>
 <html lang="es" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-Public-path="../Public/"
@@ -337,7 +352,7 @@ foreach ($productosProximosAVencer as $producto) {
               <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                   <div class="avatar avatar-online">
-                    <img src="<?php echo BASE_URL; ?>Public/img/avatars/1.png" alt
+                    <img src="<?php echo htmlspecialchars($rutaImagenPerfil); ?>" alt="foto de perfil"
                       class="w-px-40 h-auto rounded-circle" />
                   </div>
                 </a>
@@ -347,7 +362,7 @@ foreach ($productosProximosAVencer as $producto) {
                       <div class="d-flex">
                         <div class="flex-shrink-0 me-3">
                           <div class="avatar avatar-online">
-                            <img src="<?php echo BASE_URL; ?>Public/img/avatars/1.png" alt
+                            <img src="<?php echo htmlspecialchars($rutaImagenPerfil); ?>" alt="foto de perfil"
                               class="w-px-40 h-auto rounded-circle" />
                           </div>
                         </div>

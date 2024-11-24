@@ -41,9 +41,6 @@ $stmtProvincias = $db->prepare($queryProvincias);
 $stmtProvincias->execute();
 $provincias = $stmtProvincias->fetchAll(PDO::FETCH_ASSOC);
 
-// Definir la URL de la foto de perfil
-$fotoPerfilSrc = !empty($informacionPaciente['foto_perfil']) ? 'data:image/jpeg;base64,' . $informacionPaciente['foto_perfil'] : '../Public/img/avatars/1.png';
-
 // Verificar si el usuario es administrador
 $queryAdmin = "SELECT id FROM roles WHERE nombre = 'administrador'";
 $stmtAdmin = $db->prepare($queryAdmin);
@@ -74,32 +71,26 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                     <li class="nav-item">
                         <a class="nav-link active" href="javascript:void(0);"><i class="bx bx-user me-1"></i> Cuenta</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bx bx-bell me-1"></i> Notificaciones</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bx bx-link-alt me-1"></i> Conexiónes</a>
-                    </li>
                 </ul>
                 <div class="card mb-4">
                     <h5 class="card-header">Detalles del Perfil</h5>
                     <!-- Account -->
+                    <!-- Sección de foto de perfil -->
                     <div class="card-body">
                         <div class="d-flex align-items-start align-items-sm-center gap-4">
-                            <img src="<?php echo $fotoPerfilSrc; ?>" alt="user-avatar" class="d-block rounded"
-                                height="100" width="100" id="uploadedAvatar" />
+                            <img src="<?php echo !empty($informacionPaciente['foto_perfil']) ? $informacionPaciente['foto_perfil'] : 'Public/img/avatars/default.png'; ?>"
+                                alt="user-avatar" class="d-block rounded" height="100" width="100"
+                                id="uploadedAvatar" />
                             <div class="button-wrapper">
-                                <label for="upload" class="btn btn-primary me-2 mb-4" tabindex="0">
-                                    <span class="d-none d-sm-block">Subir nueva foto</span>
-                                    <i class="bx bx-upload d-block d-sm-none"></i>
-                                    <input type="file" id="upload" class="account-file-input" hidden
-                                        accept="image/png, image/jpeg" />
-                                </label>
-                                <button type="button" class="btn btn-outline-secondary account-image-reset mb-4">
-                                    <i class="bx bx-reset d-block d-sm-none"></i>
-                                    <span class="d-none d-sm-block">Restablecer</span>
-                                </button>
-                                <p class="text-muted mb-0">Permitido JPG o PNG.</p>
+                                <form id="formFotoPerfil" enctype="multipart/form-data">
+                                    <label for="upload" class="btn btn-primary me-2 mb-4" tabindex="0">
+                                        <span class="d-none d-sm-block">Subir nueva foto</span>
+                                        <i class="bx bx-upload d-block d-sm-none"></i>
+                                        <input type="file" id="upload" name="foto_perfil" class="account-file-input"
+                                            hidden accept="image/png, image/jpeg" onchange="handleFileSelect(this)" />
+                                    </label>
+                                </form>
+                                <p class="text-muted mb-0">Permitido JPG o PNG. Tamaño máximo 800K</p>
                             </div>
                         </div>
                     </div>
@@ -210,27 +201,6 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                     </div>
                     <!-- /Account -->
                 </div>
-                <div class="card">
-                    <h5 class="card-header">Eliminar Cuenta</h5>
-                    <div class="card-body">
-                        <div class="mb-3 col-12 mb-0">
-                            <div class="alert alert-warning">
-                                <h6 class="alert-heading fw-bold mb-1">¿Seguro que quieres eliminar tu cuenta?</h6>
-                                <p class="mb-0">Una vez que elimine su cuenta, no hay vuelta atrás. Por favor, esté
-                                    seguro.</p>
-                            </div>
-                        </div>
-                        <form id="formAccountDeactivation" onsubmit="return false">
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" name="accountActivation"
-                                    id="accountActivation" />
-                                <label class="form-check-label" for="accountActivation">Confirmo la desactivación de mi
-                                    cuenta</label>
-                            </div>
-                            <button type="submit" class="btn btn-danger deactivate-account">Desactivar cuenta</button>
-                        </form>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -279,35 +249,67 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
         });
 
         function calcularEdad(fechaNacimiento) {
-    const hoy = new Date();
-    const fechaNac = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - fechaNac.getFullYear();
-    const mes = hoy.getMonth() - fechaNac.getMonth();
-    
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
-        edad--;
+            const hoy = new Date();
+            const fechaNac = new Date(fechaNacimiento);
+            let edad = hoy.getFullYear() - fechaNac.getFullYear();
+            const mes = hoy.getMonth() - fechaNac.getMonth();
+
+            if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+                edad--;
+            }
+
+            return edad;
+        }
+
+        // Actualizar la edad cuando cambie la fecha de nacimiento
+        document.getElementById('fecha_nacimiento').addEventListener('change', function () {
+            const fechaNacimiento = this.value;
+            if (fechaNacimiento) {
+                const edad = calcularEdad(fechaNacimiento);
+                document.getElementById('edad').value = edad;
+            } else {
+                document.getElementById('edad').value = '';
+            }
+        });
+
+        // Calcular la edad inicial si hay una fecha de nacimiento
+        window.addEventListener('load', function () {
+            const fechaNacimiento = document.getElementById('fecha_nacimiento').value;
+            if (fechaNacimiento) {
+                const edad = calcularEdad(fechaNacimiento);
+                document.getElementById('edad').value = edad;
+            }
+        });
+    </script>
+    <script>
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const formData = new FormData();
+        formData.append('foto_perfil', input.files[0]);
+
+        fetch('./subirFotoPerfil', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('uploadedAvatar').src = data.path;
+                alert('Foto de perfil actualizada correctamente');
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al subir la imagen');
+        });
     }
-    
-    return edad;
 }
 
-// Actualizar la edad cuando cambie la fecha de nacimiento
-document.getElementById('fecha_nacimiento').addEventListener('change', function() {
-    const fechaNacimiento = this.value;
-    if (fechaNacimiento) {
-        const edad = calcularEdad(fechaNacimiento);
-        document.getElementById('edad').value = edad;
-    } else {
-        document.getElementById('edad').value = '';
-    }
-});
-
-// Calcular la edad inicial si hay una fecha de nacimiento
-window.addEventListener('load', function() {
-    const fechaNacimiento = document.getElementById('fecha_nacimiento').value;
-    if (fechaNacimiento) {
-        const edad = calcularEdad(fechaNacimiento);
-        document.getElementById('edad').value = edad;
-    }
-});
-    </script>
+function resetImage() {
+    document.getElementById('uploadedAvatar').src = 'Public/img/avatars/default.png';
+    document.getElementById('upload').value = '';
+    // Aquí podrías agregar una llamada al servidor para eliminar la foto actual
+}
+</script>
