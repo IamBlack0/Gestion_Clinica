@@ -36,10 +36,16 @@ $stmtFotoPerfil->bindParam(':user_id', $_SESSION['user_id']);
 $stmtFotoPerfil->execute();
 $fotoPerfil = $stmtFotoPerfil->fetch(PDO::FETCH_ASSOC);
 
-// Definir la ruta de la imagen por defecto
-$rutaImagenPerfil = !empty($fotoPerfil['foto_perfil']) ?
-  $fotoPerfil['foto_perfil'] :
-  'Public/img/avatars/default.png';
+// Definir la ruta de la imagen por defecto según el rol
+if ($rol === 'paciente') {
+  $rutaImagenPerfil = !empty($fotoPerfil['foto_perfil']) ?
+    $fotoPerfil['foto_perfil'] :
+    'Public/img/avatars/default.png';
+} else {
+  // Imagen predeterminada para colaboradores (médico, administrador, secretaria)
+  $rutaImagenPerfil = 'https://definicion.de/wp-content/uploads/2019/07/perfil-de-usuario.png';
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="es" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-Public-path="../Public/"

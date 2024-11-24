@@ -133,7 +133,7 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                                     </div>
                                     <div class="mb-3 col-md-6">
                                         <label for="sexo" class="form-label">Sexo</label>
-                                        <select id="sexo" name="sexo" class="form-select">
+                                        <select id="sexo" name="sexo" class="form-select" required>
                                             <option value="">Selecciona</option>
                                             <option value="masculino" <?php echo ($informacionPaciente['sexo'] ?? '') == 'masculino' ? 'selected' : ''; ?>>Masculino</option>
                                             <option value="femenino" <?php echo ($informacionPaciente['sexo'] ?? '') == 'femenino' ? 'selected' : ''; ?>>Femenino</option>
@@ -160,12 +160,13 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                                             <span class="input-group-text">PA (+507)</span>
                                             <input type="text" id="telefono" name="telefono" class="form-control"
                                                 placeholder="0000-0000"
-                                                value="<?php echo $informacionPaciente['telefono'] ?? ''; ?>" />
+                                                value="<?php echo $informacionPaciente['telefono'] ?? ''; ?>" required />
                                         </div>
                                     </div>
                                     <div class="mb-3 col-md-6">
                                         <label class="form-label" for="nacionalidad_id">Nacionalidad</label>
-                                        <select id="nacionalidad_id" name="nacionalidad_id" class="select2 form-select">
+                                        <select id="nacionalidad_id" name="nacionalidad_id" class="select2 form-select"
+                                            required>
                                             <option value="">Selecciona</option>
                                             <?php foreach ($nacionalidades as $nacionalidad): ?>
                                                 <option value="<?php echo $nacionalidad['id']; ?>" <?php echo ($informacionPaciente['nacionalidad_id'] ?? '') == $nacionalidad['id'] ? 'selected' : ''; ?>>
@@ -178,11 +179,11 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                                         <label for="direccion" class="form-label">Dirección</label>
                                         <input type="text" class="form-control" id="direccion" name="direccion"
                                             placeholder="Address"
-                                            value="<?php echo $informacionPaciente['direccion'] ?? ''; ?>" />
+                                            value="<?php echo $informacionPaciente['direccion'] ?? ''; ?>" required />
                                     </div>
                                     <div class="mb-3 col-md-6">
                                         <label class="form-label" for="provincia_id">Provincia</label>
-                                        <select id="provincia_id" name="provincia_id" class="select2 form-select">
+                                        <select id="provincia_id" name="provincia_id" class="select2 form-select" required>
                                             <option value="">Selecciona</option>
                                             <?php foreach ($provincias as $provincia): ?>
                                                 <option value="<?php echo $provincia['id']; ?>" <?php echo ($informacionPaciente['provincia_id'] ?? '') == $provincia['id'] ? 'selected' : ''; ?>>
@@ -280,36 +281,108 @@ $isMedico = $usuario['rol_id'] == $medicoRole['id'];
                 document.getElementById('edad').value = edad;
             }
         });
-    </script>
-    <script>
-function handleFileSelect(input) {
-    if (input.files && input.files[0]) {
-        const formData = new FormData();
-        formData.append('foto_perfil', input.files[0]);
 
-        fetch('./subirFotoPerfil', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('uploadedAvatar').src = data.path;
-                alert('Foto de perfil actualizada correctamente');
-            } else {
-                alert('Error: ' + data.message);
+        // Validación de cédula única
+        document.getElementById('cedula').addEventListener('blur', function () {
+            const cedula = this.value;
+            const currentCedula = '<?php echo $informacionPaciente['cedula'] ?? ''; ?>';
+
+            // Solo verificar si la cédula ha cambiado
+            if (cedula && cedula !== currentCedula) {
+                fetch(`./verificarCedula?cedula=${cedula}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            alert('Esta cédula ya está registrada');
+                            this.value = currentCedula;
+                            this.focus();
+                        }
+                    });
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al subir la imagen');
         });
-    }
-}
 
-function resetImage() {
-    document.getElementById('uploadedAvatar').src = 'Public/img/avatars/default.png';
-    document.getElementById('upload').value = '';
-    // Aquí podrías agregar una llamada al servidor para eliminar la foto actual
-}
-</script>
+        // Validación de fecha de nacimiento
+        document.getElementById('fecha_nacimiento').addEventListener('change', function () {
+            const selectedDate = new Date(this.value);
+            const today = new Date();
+            const minDate = new Date('1960-01-01');
+            const maxDate = new Date('2020-12-31');
+
+            if (selectedDate > today) {
+                alert('La fecha de nacimiento no puede ser mayor al día actual');
+                this.value = '';
+                return;
+            }
+
+            if (selectedDate < minDate) {
+                alert('La fecha de nacimiento no puede ser anterior a 1960');
+                this.value = '';
+                return;
+            }
+
+            if (selectedDate > maxDate) {
+                alert('La fecha de nacimiento no puede ser posterior a 2020');
+                this.value = '';
+                return;
+            }
+
+            // Actualizar la edad después de validar la fecha
+            const edad = calcularEdad(this.value);
+            document.getElementById('edad').value = edad;
+        });
+
+        // Modificar el input de fecha para establecer los límites
+        document.addEventListener('DOMContentLoaded', function () {
+            const fechaNacimientoInput = document.getElementById('fecha_nacimiento');
+            fechaNacimientoInput.setAttribute('min', '1960-01-01');
+            fechaNacimientoInput.setAttribute('max', '2020-12-31');
+        });
+
+        // Validación del teléfono (formato panameño)
+        document.getElementById('telefono').addEventListener('input', function () {
+            let value = this.value.replace(/\D/g, ''); // Eliminar no dígitos
+            if (value.length > 8) value = value.slice(0, 8); // Máximo 8 dígitos
+
+            // Formatear como XXXX-XXXX
+            if (value.length > 4) {
+                value = value.slice(0, 4) + '-' + value.slice(4);
+            }
+
+            this.value = value;
+        });
+
+    </script>
+
+
+    <script>
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                const formData = new FormData();
+                formData.append('foto_perfil', input.files[0]);
+
+                fetch('./subirFotoPerfil', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('uploadedAvatar').src = data.path;
+                            alert('Foto de perfil actualizada correctamente');
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error al subir la imagen');
+                    });
+            }
+        }
+
+        function resetImage() {
+            document.getElementById('uploadedAvatar').src = 'Public/img/avatars/default.png';
+            document.getElementById('upload').value = '';
+            // Aquí podrías agregar una llamada al servidor para eliminar la foto actual
+        }
+    </script>

@@ -337,6 +337,11 @@ class App
                     $imageController->subirFotoPerfil();
                 }
                 break;
+            case 'verificarCedula':
+                if (isset($_SESSION['user_id'])) {
+                    $controller->verificarCedula();
+                }
+                break;
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión

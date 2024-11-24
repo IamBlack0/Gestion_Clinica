@@ -350,7 +350,43 @@ class UserController
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     }
+    public function verificarCedula()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            try {
+                $cedula = $_GET['cedula'] ?? null;
 
+                if (!$cedula) {
+                    throw new Exception('Cédula no proporcionada');
+                }
+
+                // Verificar si la cédula existe (excluyendo al usuario actual)
+                $query = "SELECT COUNT(*) as count 
+                     FROM informacion_paciente ip 
+                     WHERE ip.cedula = :cedula 
+                     AND ip.paciente_id != (
+                         SELECT id FROM pacientes WHERE usuario_id = :user_id
+                     )";
+
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':cedula', $cedula);
+                $stmt->bindParam(':user_id', $_SESSION['user_id']);
+                $stmt->execute();
+
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                echo json_encode([
+                    'exists' => $result['count'] > 0
+                ]);
+
+            } catch (Exception $e) {
+                echo json_encode([
+                    'error' => $e->getMessage()
+                ]);
+            }
+            exit();
+        }
+    }
 }
 
 
