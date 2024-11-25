@@ -152,25 +152,67 @@ class InventarioController
 
     public function agregarInsumo() 
     {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        header('Content-Type: application/json');
-        // Asignar valores de los campos del formulario a las propiedades del objeto insumo
-        $this->insumos->nombre_insumo = $_POST['nombre_insumo'];
-        $this->insumos->descripcion_insu = $_POST['descripcion_insu'];
-        $this->insumos->cantidad_insumo = $_POST['cantidad_insumo'];
-        $this->insumos->precio_insumo = $_POST['precio_insumo'];
-        $this->insumos->fechaRegistro = $_POST['fechaRegistro'];
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+            // Asignar valores de los campos del formulario a las propiedades del objeto insumo
+            $this->insumos->nombre_insumo = $_POST['nombre_insumo'];
+            $this->insumos->descripcion_insu = $_POST['descripcion_insu'];
+            $this->insumos->cantidad_insumo = $_POST['cantidad_insumo'];
+            $this->insumos->precio_insumo = $_POST['precio_insumo'];
+            $this->insumos->fechaRegistro = $_POST['fechaRegistro'];
 
-        // Intentar registrar el insumo
-        if ($this->insumos->registroInsumo()) {
-            echo json_encode(['success' => true, 'message' => 'Insumo agregado correctamente.']);
+            // Intentar registrar el insumo
+            if ($this->insumos->registroInsumo()) {
+                echo json_encode(['success' => true, 'message' => 'Insumo agregado correctamente.']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Error en el registro del insumo.']);
+            }
         } else {
-            echo json_encode(['success' => false, 'message' => 'Error en el registro del insumo.']);
+            // Manejar el caso donde no es un POST
+            require_once __DIR__ . '/../Views/agregarInsumo.php';
         }
-    } else {
-        // Manejar el caso donde no es un POST
-        require_once __DIR__ . '/../Views/agregarInsumo.php';
     }
-}
 
+    public function editarInsumosVista()
+    {
+        // Obtener la lista de insumos
+        $productos = $this->producto->obtenerTodosLosInsumos();
+        require_once __DIR__ . '/../Views/editarInsumo.php';
+    }
+
+    public function editarInsumos($id_insumo)
+    {
+        // Obtener el producto por ID
+        $id_insumo = $this->insumos->obtenerInsumosPorId($id_insumo);
+        require_once __DIR__ . '/../Views/editarInsumo.php'; // Vista de edición
+    }
+
+    public function actualizarInsumo()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                // Log de datos recibidos
+                error_log("Datos recibidos: " . print_r($_POST, true));
+
+                $producto_id = $_POST['id_insumo'];
+
+                $this->insumos->id_insumo = $producto_id;
+                $this->insumos->nombre_insumo = $_POST['nombre_insumo'];
+                $this->insumos->descripcion_insu = $_POST['descripcion_insu'];
+                $this->insumos->cantidad_insumo = $_POST['cantidad_insumo'];
+                $this->insumos->precio_insumo = $_POST['precio_insumo'];
+                $this->insumos->fechaRegistro = $_POST['FechaRegistro'];
+
+                if ($this->insumos->actualizarInsumo()) {
+                    echo json_encode(['success' => true, 'message' => 'Insumo actualizado correctamente']);
+                } else {
+                    throw new Exception('Error al actualizar el Insumo');
+                }
+            } catch (Exception $e) {
+                error_log("Error en actualizarInsumos: " . $e->getMessage());
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            }
+            exit();
+        }
+    }
 }

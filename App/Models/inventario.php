@@ -28,6 +28,7 @@ class Inventario
     public $cantidad_insumo;
     public $precio_insumo;
     public $fechaRegistro;
+    public $id_insumo;
 
 
     /**
@@ -279,4 +280,49 @@ class Inventario
             return false;
         }
     }    
+
+    public function obtenerInsumosPorId($id_insumo)
+    {
+        $query = "SELECT * FROM insumos WHERE id_insumo = :id_insumo";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_insumo', $id_insumo);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function actualizarInsumo()
+    {
+        try {
+            $this->conn->beginTransaction();
+
+            // Actualizar tabla insumos
+            $queryEditarInsumos = "UPDATE insumos 
+                SET nombre = :nombre_insumo, 
+                    descripcion = :descripcion_insu, 
+                    cantidad = :cantidad_insumo, 
+                    precio = :precio_insumo,
+                    fecha_registro = :fechaRegistro
+                WHERE id_insumo = :id_insumo";
+
+            $stmtEditarInsumos = $this->conn->prepare($queryEditarInsumos);
+            $stmtEditarInsumos->bindParam(':id_insumo', $this->id_insumo);
+            $stmtEditarInsumos->bindParam(':nombre_insumo', $this->nombre_insumo);
+            $stmtEditarInsumos->bindParam(':descripcion_insu', $this->descripcion_insu);
+            $stmtEditarInsumos->bindParam(':cantidad_insumo', $this->cantidad_insumo);
+            $stmtEditarInsumos->bindParam(':precio_insumo', $this->precio_insumo);
+            $stmtEditarInsumos->bindParam(':fechaRegistro', $this->fechaRegistro);
+
+            if (!$stmtEditarInsumos->execute()) {
+                throw new Exception("Error al actualizar Insumos");
+            }
+
+            $this->conn->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            error_log("Error en actualizarInusmos: " . $e->getMessage());
+            return false;
+        }
+    }
 }

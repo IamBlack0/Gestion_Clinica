@@ -188,6 +188,11 @@ $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
                         <div data-i18n="Perfect Scrollbar">Agregar Insumos</div>
                       </a>
                     </li>
+                    <li class="menu-item">
+                      <a href="./editarInsumo" class="menu-link">
+                        <div data-i18n="Perfect Scrollbar">Editar Insumos</div>
+                      </a>
+                    </li>
                   </ul>
                 </li>
                 <!-- Submenú para Medicamentos -->

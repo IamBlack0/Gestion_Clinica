@@ -144,6 +144,19 @@ class App
             case 'obtenerInsumos':
                 $controllerInv->obtenerInsumos();
                 break;
+            case 'editarInsumos':
+                // Verificar si el usuario está autenticado y es administrador antes de mostrar la lista de productos
+                if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
+                    $controllerInv->editarInsumosVista(); // Llamar al método para mostrar la lista de productos
+    
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+            case 'editarInsumo':
+                $controllerInv->actualizarInsumo();
+                break;
+            
             //CASO PARA AGENDAR CITA
             case 'agendarCita':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas
