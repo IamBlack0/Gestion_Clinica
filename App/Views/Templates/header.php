@@ -145,6 +145,12 @@ $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
               </a>
             </li>
             <li class="menu-item">
+              <a href="./verRecetas" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-capsule"></i>
+                <div data-i18n="Misc">Mis Recetas</div>
+              </a>
+            </li>
+            <li class="menu-item">
               <a href="./pagarCita" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-cube-alt"></i>
                 <div data-i18n="Misc">Pagar cita</div>

@@ -312,3 +312,27 @@ VALUES (
     'Montes',
     '2024-11-22'
 );
+
+-- TABLA PARA LAS RECETAS
+CREATE TABLE recetas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    historial_medico_id INT NOT NULL,
+    paciente_id INT NOT NULL,
+    medico_id INT NOT NULL,
+    tratamiento TEXT NOT NULL,
+    fecha_emision TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (historial_medico_id) REFERENCES historial_medico(id),
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+    FOREIGN KEY (medico_id) REFERENCES colaboradores(id)
+);
+
+CREATE TABLE firmas_medicos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    receta_id INT NOT NULL,
+    medico_id INT NOT NULL,
+    firma_imagen LONGBLOB NOT NULL, -- Para almacenar la imagen de la firma
+    fecha_firma TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (receta_id) REFERENCES recetas(id) ON DELETE CASCADE,
+    FOREIGN KEY (medico_id) REFERENCES colaboradores(id) ON DELETE CASCADE,
+    CONSTRAINT unique_receta_firma UNIQUE (receta_id) -- Una receta solo puede tener una firma
+);

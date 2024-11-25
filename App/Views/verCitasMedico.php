@@ -249,8 +249,7 @@ require $configPath;
 
                                 <div class="mb-3">
                                     <label for="tratamiento" class="form-label">Tratamiento</label>
-                                    <textarea class="form-control" id="tratamiento" name="tratamiento" rows="3"
-                                        required><?php echo htmlspecialchars($informacionPaciente['historial_medico']['tratamiento'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="tratamiento" name="tratamiento" rows="3"><?php echo htmlspecialchars($informacionPaciente['historial_medico']['tratamiento'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="mb-3">
@@ -261,9 +260,12 @@ require $configPath;
                                         required><?php echo htmlspecialchars($informacionPaciente['historial_medico']['enfermedades_preexistentes'] ?? ''); ?></textarea>
                                 </div>
                             </div>
-                            <div class="mt-4">
+                            <div class="d-flex mt-4 gap-2">
                                 <button type="button" class="btn btn-primary" onclick="validarYProcesarPago()">
                                     Procesar Pago
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="crearReceta()">
+                                    Crear receta
                                 </button>
                             </div>
                         </form>
@@ -296,6 +298,7 @@ require $configPath;
                             <option value="efectivo">Efectivo</option>
                             <option value="tarjeta">Tarjeta</option>
                         </select>
+                        <input type="hidden" name="cita_id" value="<?php echo $cita['id']; ?>">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Forma de Pago</label>
@@ -311,6 +314,32 @@ require $configPath;
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-primary">Confirmar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Receta -->
+<div class="modal fade" id="recetaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crear Receta Médica</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formReceta" action="./procesarReceta" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="paciente_id" value="<?php echo htmlspecialchars($informacionPaciente['paciente']['id'] ?? ''); ?>">
+                    <input type="hidden" name="medico_id" value="<?php echo htmlspecialchars($_SESSION['user_id'] ?? ''); ?>">
+                    <div class="mb-3">
+                        <label for="tratamiento" class="form-label">Tratamiento</label>
+                        <textarea class="form-control" id="tratamiento" name="tratamiento" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Receta</button>
                 </div>
             </form>
         </div>
@@ -355,7 +384,7 @@ require $configPath;
         modal.show();
     }
 
-    document.getElementById('pagoModal').addEventListener('show.bs.modal', function (event) {
+    document.getElementById('pagoModal').addEventListener('show.bs.modal', function(event) {
         const formPago = document.querySelector('#pagoModal form');
         const formPrincipal = document.getElementById('formInformacionPaciente');
         const numeroComprobanteInput = document.querySelector('input[name="numero_comprobante"]');
@@ -375,16 +404,16 @@ require $configPath;
         const historialCitaId = '<?php echo $citas[0]['historial_cita_id'] ?? ''; ?>';
         document.getElementById('historialCitaId').value = historialCitaId;
 
-        formPago.onsubmit = function (e) {
+        formPago.onsubmit = function(e) {
             e.preventDefault();
 
             // Primero guardar el historial médico
             const historialData = new FormData(formPrincipal);
 
             fetch('./procesarHistorialMedico', {
-                method: 'POST',
-                body: historialData
-            })
+                    method: 'POST',
+                    body: historialData
+                })
                 .then(response => response.json())
                 .then(historialResponse => {
                     if (historialResponse.success) {
@@ -420,7 +449,7 @@ require $configPath;
                         confirmacionModal.show();
 
                         // Al cerrar el modal de confirmación, redirigir
-                        document.querySelector('#confirmacionModal').addEventListener('hidden.bs.modal', function () {
+                        document.querySelector('#confirmacionModal').addEventListener('hidden.bs.modal', function() {
                             window.location.href = './verCitasMedico';
                         });
                     } else {
@@ -435,7 +464,7 @@ require $configPath;
         };
     });
 
-    document.getElementById('metodo_pago').addEventListener('change', function () {
+    document.getElementById('metodo_pago').addEventListener('change', function() {
         const formaPagoSelect = document.getElementById('forma_pago');
         formaPagoSelect.innerHTML = '<option value="">Seleccione forma de pago</option>';
         if (this.value === 'efectivo') {
@@ -457,7 +486,7 @@ require $configPath;
 
 
 <script>
-    document.getElementById('fecha').addEventListener('change', function () {
+    document.getElementById('fecha').addEventListener('change', function() {
         const fecha = this.value;
         const horarioSelect = document.getElementById('horario');
 
@@ -484,7 +513,7 @@ require $configPath;
             horarioSelect.disabled = true;
         }
     });
-    document.getElementById('fecha_nacimiento').addEventListener('change', function () {
+    document.getElementById('fecha_nacimiento').addEventListener('change', function() {
         const fechaNacimiento = new Date(this.value);
         const hoy = new Date();
         let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
@@ -498,12 +527,45 @@ require $configPath;
     });
 
     // Calcular edad inicial si hay una fecha de nacimiento
-    window.addEventListener('load', function () {
+    window.addEventListener('load', function() {
         const fechaNacimientoInput = document.getElementById('fecha_nacimiento');
         if (fechaNacimientoInput.value) {
             const evento = new Event('change');
             fechaNacimientoInput.dispatchEvent(evento);
         }
+    });
+
+    function crearReceta() {
+        // Mostrar el modal de receta
+        const modal = new bootstrap.Modal(document.getElementById('recetaModal'));
+        modal.show();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Manejar agregar medicamento
+        document.getElementById('formReceta').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('./procesarReceta', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('recetaModal'));
+                        modal.hide();
+                        alert('Receta guardada correctamente');
+                    } else {
+                        alert('Error al guardar la receta: ' + (data.message || 'Error desconocido'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al procesar la receta');
+                });
+        });
     });
 </script>
 

@@ -19,6 +19,8 @@ require_once __DIR__ . '/../App/Models/User.php';
 
 require_once __DIR__ . '/../App/Controllers/PaymentController.php';
 
+require_once __DIR__ . '/../App/Controllers/RecetasController.php';
+
 /**
  * Clase App para manejar las rutas de la aplicación.
  */
@@ -41,6 +43,8 @@ class App
         $passwordController = new PasswordController();
         // Instanciar el controlador de pagos
         $paymentController = new PaymentController();
+        // Instanciar el controlador de recetas
+        $recetasController = new RecetasController();
 
 
 
@@ -148,6 +152,18 @@ class App
                     header('Location: ./login');
                 }
                 break;
+            case 'verRecetas':
+                if (isset($_SESSION['user_id'])) {
+                    $recetasController->verRecetas();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+
+            case 'procesarReceta':
+                $recetasController->procesarReceta();
+                break;
+                
             case 'obtenerMedicosPorEspecialidad':
                 $especialidadId = $_GET['especialidad_id'];
                 $medicos = $citasController->obtenerMedicosPorEspecialidad($especialidadId);
@@ -329,6 +345,7 @@ class App
                     $paymentController->obtenerSiguienteComprobante();
                 }
                 break;
+            
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
