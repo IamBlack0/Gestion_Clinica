@@ -176,14 +176,14 @@ class InventarioController
     public function editarInsumosVista()
     {
         // Obtener la lista de insumos
-        $productos = $this->producto->obtenerTodosLosInsumos();
+        $insumos = $this->insumos->obtenerTodosLosInsumos();
         require_once __DIR__ . '/../Views/editarInsumo.php';
     }
 
     public function editarInsumos($id_insumo)
     {
         // Obtener el producto por ID
-        $id_insumo = $this->insumos->obtenerInsumosPorId($id_insumo);
+        $insumos = $this->insumos->obtenerInsumosPorId($id_insumo);
         require_once __DIR__ . '/../Views/editarInsumo.php'; // Vista de edición
     }
 
