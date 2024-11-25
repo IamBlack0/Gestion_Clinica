@@ -141,6 +141,9 @@ class App
             case 'agregarInsumo':
                 $controllerInv->agregarInsumo(); // Llamar al método para agregar un producto
                 break;
+            case 'obtenerInsumos':
+                $controllerInv->obtenerInsumos();
+                break;
             //CASO PARA AGENDAR CITA
             case 'agendarCita':
                 // Verificar si el usuario está autenticado antes de mostrar la vista de agendar citas

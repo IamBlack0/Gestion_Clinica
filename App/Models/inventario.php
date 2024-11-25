@@ -240,26 +240,43 @@ class Inventario
         }
     }
 
-    // Registros de insumos 
-    public function registroInsumo() {
-    // Insertar el insumo en la tabla 'insumos'
-    $queryInsumos = "INSERT INTO insumos (nombre, descripcion, cantidad, precio, fecha_registro)
-      VALUES (:nombre_insumo, :descripcion, :cantidad, :precio, :fecha_registro)";
-
-    $stmtInsumos = $this->conn->prepare($queryInsumos);
-
-    // Enlazar los parámetros
-    $stmtInsumos->bindParam(':nombre_insumo', $this->nombre_insumo);
-    $stmtInsumos->bindParam(':descripcion_insu', $this->descripcion_insu);
-    $stmtInsumos->bindParam(':cantidad_insumo', $this->cantidad_insumo);
-    $stmtInsumos->bindParam(':precio_insumo', $this->precio_insumo);
-    $stmtInsumos->bindParam(':fechaRegistro', $this->fechaRegistro);
-
-    // Ejecutar la consulta para insertar el insumo
-    if ($stmtInsumos->execute()) {        
-        return true; // Todo se ejecutó correctamente
-    } else {
-        return false; // Falló la inserción de insumo
+    public function obtenerTodosLosInsumos()
+    {
+        $query = "SELECT *
+                  FROM insumos"; 
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-}
+
+    public function registroInsumo() {
+        try {
+            // Consulta para insertar el insumo
+            $queryInsumos = "INSERT INTO insumos (nombre, descripcion, cantidad, precio, fecha_registro)
+                VALUES (:nombre_insumo, :descripcion_insu, :cantidad_insumo, :precio_insumo, :fechaRegistro)";
+    
+            $stmtInsumos = $this->conn->prepare($queryInsumos);
+    
+            // Enlazar los parámetros
+            $stmtInsumos->bindParam(':nombre_insumo', $this->nombre_insumo);
+            $stmtInsumos->bindParam(':descripcion_insu', $this->descripcion_insu);
+            $stmtInsumos->bindParam(':cantidad_insumo', $this->cantidad_insumo);
+            $stmtInsumos->bindParam(':precio_insumo', $this->precio_insumo);
+            $stmtInsumos->bindParam(':fechaRegistro', $this->fechaRegistro);
+    
+            // Ejecutar la consulta
+            if ($stmtInsumos->execute()) {
+                return true; // Todo se ejecutó correctamente
+            } else {
+                // Registra información del error
+                $errorInfo = $stmtInsumos->errorInfo();
+                error_log("Error al insertar insumo: " . implode(" | ", $errorInfo));
+                return false;
+            }
+        } catch (Exception $e) {
+            // Capturar excepciones y registrar el error
+            error_log("Excepción al insertar insumo: " . $e->getMessage());
+            return false;
+        }
+    }    
 }

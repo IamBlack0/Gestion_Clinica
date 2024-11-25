@@ -10,7 +10,7 @@ class InventarioController
 {
     private $db;
     private $producto;
-    private $insumo;
+    private $insumos;
 
     /**
      * Constructor que inicializa la conexión a la base de datos y los modelos de usuario, paciente y colaborador.
@@ -20,8 +20,9 @@ class InventarioController
         $database = new Database();
         $this->db = $database->getConnection();
         $this->producto = new Inventario($this->db);
+        $this->insumos = new Inventario($this->db);
     }
-
+    
     public function mostrarListaProductos()
     {
         // Obtener la lista de productos
@@ -143,18 +144,25 @@ class InventarioController
         }
     }
 
+    public function obtenerInsumos()
+    {
+        $insumos = $this->insumos->obtenerTodosLosInsumos();
+        require_once __DIR__ . '/../Views/agregarInsumo.php';
+    }
+
     public function agregarInsumo() 
     {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        header('Content-Type: application/json');
         // Asignar valores de los campos del formulario a las propiedades del objeto insumo
-        $this->insumo->nombre_insumo = $_POST['nombre_insumo'];
-        $this->insumo->descripcion_insu = $_POST['descripcion_insu'];
-        $this->insumo->cantidad_insumo = $_POST['cantidad_insumo'];
-        $this->insumo->precio_insumo = $_POST['precio_insumo'];
-        $this->insumo->fechaRegistro = $_POST['fechaRegistro'];
+        $this->insumos->nombre_insumo = $_POST['nombre_insumo'];
+        $this->insumos->descripcion_insu = $_POST['descripcion_insu'];
+        $this->insumos->cantidad_insumo = $_POST['cantidad_insumo'];
+        $this->insumos->precio_insumo = $_POST['precio_insumo'];
+        $this->insumos->fechaRegistro = $_POST['fechaRegistro'];
 
         // Intentar registrar el insumo
-        if ($this->insumo->registroInsumo()) {
+        if ($this->insumos->registroInsumo()) {
             echo json_encode(['success' => true, 'message' => 'Insumo agregado correctamente.']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Error en el registro del insumo.']);
