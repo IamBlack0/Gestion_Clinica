@@ -5,6 +5,7 @@ class Inventario
 {
     protected $conn;
     protected $tableProductos = 'productos';
+    protected $tableInsumos = 'insumos';
 
     public $nombre_producto;
     public $codigo_sku;
@@ -21,6 +22,13 @@ class Inventario
 
     public $fechaSalida;
     public $cantidadSalida;
+
+    public $nombre_insumo;
+    public $descripcion_insu;
+    public $cantidad_insumo;
+    public $precio_insumo;
+    public $fechaRegistro;
+    public $id_insumo;
 
 
     /**
@@ -230,6 +238,92 @@ class Inventario
         } catch (Exception $e) {
             $this->conn->rollBack();
             throw $e;
+        }
+    }
+
+    public function obtenerTodosLosInsumos()
+    {
+        $query = "SELECT *
+                  FROM insumos";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function registroInsumo()
+    {
+        try {
+            // Consulta para insertar el insumo
+            $queryInsumos = "INSERT INTO insumos (nombre, descripcion, cantidad, precio, fecha_registro)
+                VALUES (:nombre_insumo, :descripcion_insu, :cantidad_insumo, :precio_insumo, :fechaRegistro)";
+
+            $stmtInsumos = $this->conn->prepare($queryInsumos);
+
+            // Enlazar los parámetros
+            $stmtInsumos->bindParam(':nombre_insumo', $this->nombre_insumo);
+            $stmtInsumos->bindParam(':descripcion_insu', $this->descripcion_insu);
+            $stmtInsumos->bindParam(':cantidad_insumo', $this->cantidad_insumo);
+            $stmtInsumos->bindParam(':precio_insumo', $this->precio_insumo);
+            $stmtInsumos->bindParam(':fechaRegistro', $this->fechaRegistro);
+
+            // Ejecutar la consulta
+            if ($stmtInsumos->execute()) {
+                return true; // Todo se ejecutó correctamente
+            } else {
+                // Registra información del error
+                $errorInfo = $stmtInsumos->errorInfo();
+                error_log("Error al insertar insumo: " . implode(" | ", $errorInfo));
+                return false;
+            }
+        } catch (Exception $e) {
+            // Capturar excepciones y registrar el error
+            error_log("Excepción al insertar insumo: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function obtenerInsumosPorId($id_insumo)
+    {
+        $query = "SELECT * FROM insumos WHERE id_insumo = :id_insumo";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_insumo', $id_insumo);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function actualizarInsumo()
+    {
+        try {
+            $this->conn->beginTransaction();
+
+            // Actualizar tabla insumos
+            $queryEditarInsumos = "UPDATE insumos 
+                SET nombre = :nombre_insumo, 
+                    descripcion = :descripcion_insu, 
+                    cantidad = :cantidad_insumo, 
+                    precio = :precio_insumo,
+                    fecha_registro = :fechaRegistro
+                WHERE id_insumo = :id_insumo";
+
+            $stmtEditarInsumos = $this->conn->prepare($queryEditarInsumos);
+            $stmtEditarInsumos->bindParam(':id_insumo', $this->id_insumo);
+            $stmtEditarInsumos->bindParam(':nombre_insumo', $this->nombre_insumo);
+            $stmtEditarInsumos->bindParam(':descripcion_insu', $this->descripcion_insu);
+            $stmtEditarInsumos->bindParam(':cantidad_insumo', $this->cantidad_insumo);
+            $stmtEditarInsumos->bindParam(':precio_insumo', $this->precio_insumo);
+            $stmtEditarInsumos->bindParam(':fechaRegistro', $this->fechaRegistro);
+
+            if (!$stmtEditarInsumos->execute()) {
+                throw new Exception("Error al actualizar Insumos");
+            }
+
+            $this->conn->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            error_log("Error en actualizarInusmos: " . $e->getMessage());
+            return false;
         }
     }
 }

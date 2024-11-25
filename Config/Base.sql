@@ -312,3 +312,13 @@ VALUES (
     'Montes',
     '2024-11-22'
 );
+
+-- Nuevos cambios 
+CREATE TABLE insumos (
+    id_insumo INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    cantidad INT NOT NULL,
+    precio DECIMAL(10, 2),
+    fecha_registro DATE DEFAULT CURRENT_DATE
+);

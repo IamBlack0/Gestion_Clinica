@@ -366,8 +366,23 @@ class App
                     header('Location: ./login');
                 }
                 break;
-
-
+            case 'agregarInsumo':
+                $controllerInv->agregarInsumo(); // Llamar al método para agregar un producto
+                break;
+            case 'obtenerInsumos':
+                $controllerInv->obtenerInsumos();
+                break;
+            case 'editarInsumos':
+                // Verificar si el usuario está autenticado y es administrador
+                if (isset($_SESSION['user_id']) && $_SESSION['rol'] === 'administrador') {
+                    require_once __DIR__ . '/../App/Views/editarInsumo.php';
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+            case 'editarInsumo':
+                $controllerInv->actualizarInsumo();
+                break;
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
