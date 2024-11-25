@@ -345,7 +345,6 @@ class App
                     $paymentController->obtenerSiguienteComprobante();
                 }
                 break;
-            
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión
