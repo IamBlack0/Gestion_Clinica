@@ -249,7 +249,7 @@ require $configPath;
 
                                 <div class="mb-3">
                                     <label for="tratamiento" class="form-label">Tratamiento</label>
-                                    <textarea class="form-control" id="tratamiento" name="tratamiento" rows="3"><?php echo htmlspecialchars($informacionPaciente['historial_medico']['tratamiento'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="tratamientoPrincipal" name="tratamiento" rows="3"><?php echo htmlspecialchars($informacionPaciente['historial_medico']['tratamiento'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="mb-3">
@@ -332,10 +332,22 @@ require $configPath;
                 <div class="modal-body">
                     <input type="hidden" name="paciente_id" value="<?php echo htmlspecialchars($informacionPaciente['paciente']['id'] ?? ''); ?>">
                     <input type="hidden" name="medico_id" value="<?php echo htmlspecialchars($_SESSION['user_id'] ?? ''); ?>">
+                    <!--Nombre y apellido del medico-->
                     <div class="mb-3">
-                        <label for="tratamiento" class="form-label">Tratamiento</label>
-                        <textarea class="form-control" id="tratamiento" name="tratamiento" rows="3" required></textarea>
+                        <label for="medico" class="form-label">Médico</label>
+                        <input type="text" class="form-control" id="medico" name="medico"
+                            value="<?php echo htmlspecialchars($_SESSION['nombre'] . ' ' . $_SESSION['apellido']); ?>" readonly>
                     </div>
+                    <div class="mb-3">
+                        <label for="tratamientoModal" class="form-label">Tratamiento</label>
+                        <textarea class="form-control" id="tratamientoModal" name="tratamiento" rows="3" readonly></textarea>
+                    </div>
+                    <!--imagen de la firma segun el id del medico en la tabla firmas-->
+                    <div class="mb-3">
+                        <label for="firma" class="form-label">Firma</label><br>
+                        <img id="firmaMedico" alt="Firma del médico" class="img-fluid w-px-100 h-px-100">
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -542,6 +554,10 @@ require $configPath;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        const tratamientoPrincipal = document.getElementById('tratamientoPrincipal');
+        const tratamientoModal = document.getElementById('tratamientoModal');
+        const botonCrearReceta = document.querySelector('button[onclick="crearReceta()"]');
+        const botonProcesarPago = document.querySelector('button[onclick="validarYProcesarPago()"]');
         // Manejar agregar medicamento
         document.getElementById('formReceta').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -557,6 +573,7 @@ require $configPath;
                         const modal = bootstrap.Modal.getInstance(document.getElementById('recetaModal'));
                         modal.hide();
                         alert('Receta guardada correctamente');
+                        botonProcesarPago.disabled = false;
                     } else {
                         alert('Error al guardar la receta: ' + (data.message || 'Error desconocido'));
                     }
@@ -566,6 +583,36 @@ require $configPath;
                     alert('Error al procesar la receta');
                 });
         });
+
+        document.getElementById('recetaModal').addEventListener('show.bs.modal', function() {
+            tratamientoModal.value = tratamientoPrincipal.value;
+        });
+
+        tratamientoPrincipal.addEventListener('input', function() {
+            if (tratamientoPrincipal.value.trim() !== '') {
+                botonCrearReceta.disabled = false;
+                botonProcesarPago.disabled = true;
+            } else {
+                botonCrearReceta.disabled = true;
+                botonProcesarPago.disabled = false;
+            }
+        });
+
+        if (tratamientoPrincipal.value.trim() === '') {
+            botonCrearReceta.disabled = true;
+        }
+
+        const medicoId = <?php echo $_SESSION['user_id']; ?>;
+        fetch(`./obtenerFirma?medico_id=${medicoId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.firma) {
+                    document.getElementById('firmaMedico').src = data.firma;
+                } else {
+                    console.error('Firma no encontrada');
+                }
+            })
+            .catch(error => console.error('Error:', error));
     });
 </script>
 

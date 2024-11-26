@@ -21,6 +21,8 @@ require_once __DIR__ . '/../App/Controllers/PaymentController.php';
 
 require_once __DIR__ . '/../App/Controllers/RecetasController.php';
 
+require_once __DIR__ . '/../App/Controllers/FirmaController.php';
+
 /**
  * Clase App para manejar las rutas de la aplicación.
  */
@@ -45,6 +47,8 @@ class App
         $paymentController = new PaymentController();
         // Instanciar el controlador de recetas
         $recetasController = new RecetasController();
+        // Instanciar el controlador de firmas
+        $firmaController = new FirmaController();
 
 
 
@@ -163,7 +167,12 @@ class App
             case 'procesarReceta':
                 $recetasController->procesarReceta();
                 break;
-                
+
+            case 'obtenerFirma':
+                $medico_id = $_GET['medico_id'];
+                $firmaController->obtenerFirma($medico_id);
+                break;
+
             case 'obtenerMedicosPorEspecialidad':
                 $especialidadId = $_GET['especialidad_id'];
                 $medicos = $citasController->obtenerMedicosPorEspecialidad($especialidadId);

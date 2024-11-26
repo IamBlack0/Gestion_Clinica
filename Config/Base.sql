@@ -323,3 +323,19 @@ CREATE TABLE recetas (
     FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
     FOREIGN KEY (medico_id) REFERENCES colaboradores(id) ON DELETE CASCADE
 );
+
+-- TABLA PARA LAS FIRMAS DE LOS MEDICOS, RELACIONADA CON RECETAS
+CREATE TABLE firmas_recetas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    medico_id INT NOT NULL,
+    firma VARCHAR(255) NOT NULL,
+    FOREIGN KEY (medico_id) REFERENCES colaboradores(id) ON DELETE CASCADE
+);
+
+-- INSERT DE LAS URL DE LAS FIRMAS RELACIONADAS CON LA RECETA
+INSERT INTO firmas_recetas (medico_id, firma) VALUES
+(2, 'https://res.cloudinary.com/dvidj5ru1/image/upload/v1732590361/minksvllwutktnwcxelm.png'),
+(3, 'https://res.cloudinary.com/dvidj5ru1/image/upload/v1732590361/minksvllwutktnwcxelm.png'),
+(4, 'https://res.cloudinary.com/dvidj5ru1/image/upload/v1732590360/hzlviskevnegyqsp2hor.png'),
+(5, 'https://res.cloudinary.com/dvidj5ru1/image/upload/v1732590361/d6y6gwk2k86uuvmuca9v.png'),
+(6, 'https://res.cloudinary.com/dvidj5ru1/image/upload/v1732590138/zyrvg6tgwosurqqfzefj.png');

@@ -32,9 +32,11 @@ class RecetasController
                 r.fecha_emision,
                 r.tratamiento,
                 c.nombre as medico_nombre,
-                c.apellido as medico_apellido
+                c.apellido as medico_apellido,
+                f.firma AS medico_firma
                 FROM recetas r
                 INNER JOIN colaboradores c ON r.medico_id = c.id
+                LEFT JOIN firmas_recetas f ON r.medico_id = f.medico_id
                 WHERE r.paciente_id = :paciente_id
                 ORDER BY r.fecha_emision DESC";
 
