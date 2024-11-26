@@ -406,6 +406,29 @@ class App
             case 'editarInsumo':
                 $controllerInv->actualizarInsumo();
                 break;
+
+            case 'obtenerInsumosPagos':  // Cambio de nombre
+                if (isset($_SESSION['user_id'])) {
+                    $paymentController->obtenerInsumos();
+                } else {
+                    header('Location: ./login');
+                }
+                break;
+            case 'actualizarStockInsumos':
+                if (isset($_SESSION['user_id'])) {
+                    $data = json_decode(file_get_contents('php://input'), true);
+                    try {
+                        $paymentController->actualizarStockInsumos($data['insumos']);
+                        echo json_encode(['success' => true]);
+                    } catch (Exception $e) {
+                        http_response_code(500);
+                        echo json_encode([
+                            'success' => false,
+                            'message' => $e->getMessage()
+                        ]);
+                    }
+                }
+                break;
             //CASO PARA CERRAR SESION
             case 'logout':
                 $controller->logout(); // Cargar el método de cierre de sesión

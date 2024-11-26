@@ -31,7 +31,9 @@ require $headerPath;
                                 </td>
                                 <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
                                 <td><?php echo htmlspecialchars(date('h:i A', strtotime($cita['horario']))); ?></td>
-                                <td>$50.00</td>
+                                <td>
+                                    <div><strong>$<?php echo number_format($cita['monto_total'], 2); ?></strong></div>
+                                </td>
                                 <td>
                                     <?php if ($cita['metodo_pago'] === 'efectivo'): ?>
                                         <button type="button" class="btn btn-warning btn-sm">
@@ -39,7 +41,8 @@ require $headerPath;
                                         </button>
                                     <?php else: ?>
                                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#pagoModal" data-cita-id="<?php echo $cita['id']; ?>">
+                                            data-bs-target="#pagoModal" data-cita-id="<?php echo $cita['id']; ?>"
+                                            data-monto-total="<?php echo $cita['monto_total']; ?>">
                                             Pagar con Tarjeta
                                         </button>
                                     <?php endif; ?>
@@ -161,23 +164,22 @@ require $headerPath;
         this.value = this.value.replace(/\D/g, '');
     });
     document.getElementById('pagoModal').addEventListener('show.bs.modal', function (event) {
-        // Obtener el botón que abrió el modal
-        const button = event.relatedTarget;
-        // Obtener el id de la cita del atributo data
-        const citaId = button.getAttribute('data-cita-id');
-        // Guardar el id en el input hidden
-        document.getElementById('citaIdInput').value = citaId;
+    const button = event.relatedTarget;
+    const citaId = button.getAttribute('data-cita-id');
+    const montoTotal = button.getAttribute('data-monto-total');
+    
+    document.getElementById('citaIdInput').value = citaId;
+    document.querySelector('input[name="monto_total"]').value = montoTotal;
 
-        // Obtener el siguiente número de comprobante
-        fetch('./obtenerSiguienteComprobante')
-            .then(response => response.json())
-            .then(data => {
-                if (data.comprobante) {
-                    document.querySelector('input[name="numero_comprobante"]').value = data.comprobante;
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    });
+    fetch('./obtenerSiguienteComprobante')
+        .then(response => response.json())
+        .then(data => {
+            if (data.comprobante) {
+                document.querySelector('input[name="numero_comprobante"]').value = data.comprobante;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+});
 </script>
 
 <?php require_once __DIR__ . '/Templates/footer.php'; ?>

@@ -268,6 +268,9 @@ require $configPath;
                                 <button type="button" class="btn btn-primary" onclick="crearReceta()">
                                     Crear receta
                                 </button>
+                                <button type="button" class="btn btn-primary me-2" onclick="mostrarModalInsumos()">
+                                    Agregar Insumos
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -291,6 +294,14 @@ require $configPath;
                     <div class="mb-3">
                         <label class="form-label">Monto de Consulta</label>
                         <input type="number" class="form-control" name="monto_consulta" value="50.00" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Monto de Insumos</label>
+                        <input type="number" class="form-control" name="monto_insumos" value="0.00" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Monto Total</label>
+                        <input type="number" class="form-control" name="monto_total" value="50.00" readonly>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Método de Pago</label>
@@ -359,6 +370,61 @@ require $configPath;
                     <button type="submit" class="btn btn-primary">Guardar Receta</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal de Insumos -->
+<div class="modal fade" id="insumosModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Insumos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col">
+                        <select class="form-select" id="selectInsumo">
+                            <option value="">Seleccionar insumo...</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control" id="cantidadInsumo" placeholder="Cantidad" min="1">
+                    </div>
+                    <div class="col">
+                        <button type="button" class="btn btn-primary" onclick="agregarInsumo()">Agregar</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table" id="tablaInsumos">
+                        <thead>
+                            <tr>
+                                <th>Insumo</th>
+                                <th>Cantidad</th>
+                                <th>Precio Unitario</th>
+                                <th>Subtotal</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total Insumos:</strong></td>
+                                <td><span id="totalInsumos">$0.00</span></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmarInsumos()">Confirmar</button>
+            </div>
         </div>
     </div>
 </div>
@@ -621,7 +687,134 @@ require $configPath;
     });
 </script>
 
+<script>
+    let insumosSeleccionados = [];
+    let totalInsumos = 0;
 
+    function mostrarModalInsumos() {
+        // Cargar insumos disponibles
+        fetch('./obtenerInsumosPagos')  // Actualizar la URL
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Insumos recibidos:", data); // Debug
+                const select = document.getElementById('selectInsumo');
+                select.innerHTML = '<option value="">Seleccionar insumo...</option>';
+
+                if (Array.isArray(data)) {
+                    data.forEach(insumo => {
+                        if (insumo.cantidad > 0) {
+                            select.innerHTML += `
+                            <option value="${insumo.id_insumo}" 
+                                    data-precio="${insumo.precio}"
+                                    data-stock="${insumo.cantidad}">
+                                ${insumo.nombre} (Stock: ${insumo.cantidad})
+                            </option>`;
+                        }
+                    });
+
+                    if (select.options.length <= 1) {
+                        select.innerHTML += '<option disabled>No hay insumos disponibles</option>';
+                    }
+                } else {
+                    throw new Error('Los datos recibidos no son un array');
+                }
+
+                // Mostrar el modal después de cargar los datos
+                const modal = new bootstrap.Modal(document.getElementById('insumosModal'));
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error al cargar insumos:', error);
+                alert('Error al cargar la lista de insumos: ' + error.message);
+            });
+    }
+
+    function agregarInsumo() {
+        const select = document.getElementById('selectInsumo');
+        const cantidad = parseInt(document.getElementById('cantidadInsumo').value);
+        const option = select.options[select.selectedIndex];
+
+        if (!select.value || !cantidad) {
+            alert('Por favor seleccione un insumo y especifique la cantidad');
+            return;
+        }
+
+        const stock = parseInt(option.dataset.stock);
+        if (cantidad > stock) {
+            alert('La cantidad solicitada supera el stock disponible');
+            return;
+        }
+
+        const insumo = {
+            id: select.value,
+            nombre: option.text.split(' - ')[0],
+            cantidad: cantidad,
+            precio: parseFloat(option.dataset.precio),
+            subtotal: cantidad * parseFloat(option.dataset.precio)
+        };
+
+        insumosSeleccionados.push(insumo);
+        actualizarTablaInsumos();
+    }
+
+    function actualizarTablaInsumos() {
+        const tbody = document.querySelector('#tablaInsumos tbody');
+        tbody.innerHTML = '';
+        totalInsumos = 0;
+
+        insumosSeleccionados.forEach((insumo, index) => {
+            tbody.innerHTML += `
+            <tr>
+                <td>${insumo.nombre}</td>
+                <td>${insumo.cantidad}</td>
+                <td>$${insumo.precio.toFixed(2)}</td>
+                <td>$${insumo.subtotal.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="eliminarInsumo(${index})">
+                        Eliminar
+                    </button>
+                </td>
+            </tr>`;
+            totalInsumos += insumo.subtotal;
+        });
+
+        document.getElementById('totalInsumos').textContent = `$${totalInsumos.toFixed(2)}`;
+    }
+
+    function eliminarInsumo(index) {
+        insumosSeleccionados.splice(index, 1);
+        actualizarTablaInsumos();
+    }
+
+    function confirmarInsumos() {
+    // Validar que haya insumos seleccionados
+    if (insumosSeleccionados.length === 0) {
+        alert('No hay insumos seleccionados');
+        return;
+    }
+
+    // Solo actualizar los montos en el formulario sin actualizar el stock todavía
+    const montoConsulta = parseFloat(document.querySelector('[name="monto_consulta"]').value);
+    const nuevoTotal = montoConsulta + totalInsumos;
+    document.querySelector('[name="monto_insumos"]').value = totalInsumos.toFixed(2);
+    document.querySelector('[name="monto_total"]').value = nuevoTotal.toFixed(2);
+
+    // Guardar los insumos seleccionados en un input hidden para usarlos después
+    const inputInsumos = document.createElement('input');
+    inputInsumos.type = 'hidden';
+    inputInsumos.name = 'insumos_seleccionados';
+    inputInsumos.value = JSON.stringify(insumosSeleccionados);
+    document.querySelector('#pagoModal form').appendChild(inputInsumos);
+
+    // Cerrar el modal de insumos
+    bootstrap.Modal.getInstance(document.getElementById('insumosModal')).hide();
+}
+</script>
 
 <?php
 // Verificar rutas

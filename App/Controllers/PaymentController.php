@@ -46,7 +46,7 @@ class PaymentController
 
                 // Procesar el pago
                 $montoConsulta = 50.00;
-                $montoInsumos = 0.00;
+                $montoInsumos = floatval($_POST['monto_insumos'] ?? 0);
                 $metodoPago = $_POST['metodo_pago'];
                 $formaPago = $_POST['forma_pago'];
                 $numeroComprobante = $_POST['numero_comprobante'] ?? null;
@@ -70,7 +70,7 @@ class PaymentController
                 $stmtPago = $this->db->prepare($queryPago);
                 $stmtPago->bindParam(':historial_cita_id', $historialCitaId);
                 $stmtPago->bindParam(':monto_consulta', $montoConsulta);
-                $stmtPago->bindParam(':monto_insumos', $montoInsumos);
+                $stmtPago->bindParam(':monto_insumos', $montoInsumos); // Usar el monto de insumos del formulario
                 $stmtPago->bindParam(':metodo_pago', $metodoPago);
                 $stmtPago->bindParam(':forma_pago', $formaPago);
                 $stmtPago->bindParam(':numero_comprobante', $numeroComprobante);
@@ -92,6 +92,28 @@ class PaymentController
                 if (!$stmtUpdate->execute()) {
                     throw new Exception("Error al actualizar el estado de la cita");
                 }
+
+                // Actualizar el stock de insumos solo si hay insumos seleccionados
+                if (isset($_POST['insumos_seleccionados'])) {
+                    $insumos = json_decode($_POST['insumos_seleccionados'], true);
+                    if ($insumos) {
+                        foreach ($insumos as $insumo) {
+                            $query = "UPDATE insumos 
+                                 SET cantidad = cantidad - :cantidad_usada 
+                                 WHERE id_insumo = :insumo_id 
+                                 AND cantidad >= :cantidad_usada";
+
+                            $stmt = $this->db->prepare($query);
+                            $stmt->bindParam(':cantidad_usada', $insumo['cantidad'], PDO::PARAM_INT);
+                            $stmt->bindParam(':insumo_id', $insumo['id'], PDO::PARAM_INT);
+
+                            if (!$stmt->execute()) {
+                                throw new Exception("Error al actualizar el stock del insumo " . $insumo['nombre']);
+                            }
+                        }
+                    }
+                }
+
 
                 $this->db->commit();
                 header('Content-Type: application/json');
@@ -142,7 +164,6 @@ class PaymentController
                 throw new Exception("Usuario no autenticado");
             }
 
-            // Obtener ID del paciente
             $queryPaciente = "SELECT id FROM pacientes WHERE usuario_id = :user_id";
             $stmtPaciente = $this->db->prepare($queryPaciente);
             $stmtPaciente->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
@@ -153,7 +174,7 @@ class PaymentController
                 throw new Exception("No se encontró el paciente");
             }
 
-            // Modificar la consulta para mostrar citas completadas con pago pendiente
+            // Modificar la consulta para incluir los montos
             $query = "SELECT DISTINCT 
             c.id, 
             col.nombre as medico_nombre, 
@@ -161,7 +182,10 @@ class PaymentController
             c.fecha_cita,
             c.horario,
             hc.estado_pago,
-            p.metodo_pago
+            p.metodo_pago,
+            p.monto_consulta,
+            p.monto_insumos,
+            p.monto_total
         FROM citas c
         INNER JOIN historial_citas hc ON c.id = hc.cita_id
         INNER JOIN colaboradores col ON c.medico_id = col.id
@@ -171,16 +195,10 @@ class PaymentController
         AND hc.estado_pago = 'pendiente'
         ORDER BY c.fecha_cita ASC, c.horario ASC";
 
-            // Agregar logs para depuración
-            error_log("Ejecutando consulta para paciente_id: " . $paciente['id']);
-
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':paciente_id', $paciente['id'], PDO::PARAM_INT);
             $stmt->execute();
             $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            error_log("Citas encontradas: " . count($citas));
-            error_log("Datos de citas: " . print_r($citas, true));
 
             require_once __DIR__ . '/../Views/procesarPago.php';
 
@@ -248,4 +266,67 @@ class PaymentController
             }
         }
     }
+
+    public function obtenerInsumos()
+    {
+        try {
+            header('Content-Type: application/json'); // Agregar esto al inicio
+
+            // Query para obtener los insumos
+            $query = "SELECT 
+                id_insumo,
+                nombre,
+                descripcion,
+                cantidad,
+                precio,
+                fecha_registro
+             FROM insumos 
+             WHERE cantidad > 0";
+
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            $insumos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Log para depuración
+            error_log("Insumos encontrados: " . count($insumos));
+            error_log("Datos de insumos: " . print_r($insumos, true));
+
+            echo json_encode($insumos);
+            exit(); // Agregar esto para evitar output adicional
+
+        } catch (Exception $e) {
+            error_log("Error en obtenerInsumos: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error al obtener insumos: ' . $e->getMessage()
+            ]);
+            exit(); // Agregar esto para evitar output adicional
+        }
+    }
+
+    public function actualizarStockInsumos($insumos)
+    {
+        try {
+            foreach ($insumos as $insumo) {
+                $query = "UPDATE insumos 
+                     SET cantidad = cantidad - :cantidad_usada 
+                     WHERE id_insumo = :insumo_id 
+                     AND cantidad >= :cantidad_usada";
+
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':cantidad_usada', $insumo['cantidad'], PDO::PARAM_INT);
+                $stmt->bindParam(':insumo_id', $insumo['id'], PDO::PARAM_INT);
+
+                if (!$stmt->execute()) {
+                    throw new Exception("Error al actualizar el stock del insumo " . $insumo['nombre']);
+                }
+            }
+            return true;
+        } catch (Exception $e) {
+            error_log("Error actualizando stock: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
 }
