@@ -9,14 +9,6 @@ CREATE TABLE roles (
     nombre VARCHAR(100) NOT NULL UNIQUE
 );
 
--- Insertar datos en la tabla roles
-INSERT INTO roles (nombre) VALUES
-('paciente'),
-('medico'),
-('secretaria'),
-('gestion_inventarios'),
-('administrador');
-
 -- Crear tabla usuarios
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,31 +25,11 @@ CREATE TABLE provincias (
     nombre VARCHAR(100) NOT NULL UNIQUE
 );
 
--- Insertar las 10 provincias
-INSERT INTO provincias (nombre) VALUES
-('Bocas del Toro'),
-('Coclé'),
-('Colón'),
-('Chiriquí'),
-('Darién'),
-('Herrera'),
-('Los Santos'),
-('Panamá'),
-('Panamá Oeste'),
-('Veraguas');
-
 -- Crear tabla de nacionalidades
 CREATE TABLE nacionalidades (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE
 );
-
--- Insertar las nacionalidades
-INSERT INTO nacionalidades (nombre) VALUES
-('Panamá'),
-('Colombia'),
-('Costa Rica'),
-('Venezuela');
 
 -- Crear tabla pacientes
 CREATE TABLE pacientes (
@@ -94,14 +66,6 @@ CREATE TABLE especialidades (
     nombre VARCHAR(100) NOT NULL UNIQUE
 );
 
--- Insertar especialidades importantes
-INSERT INTO especialidades (nombre) VALUES
-('Medicina General'),
-('Pediatría'),
-('Cardiología'),
-('Cirugía General'),
-('Neurología');
-
 -- Crear tabla colaboradores
 CREATE TABLE colaboradores (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -114,22 +78,6 @@ CREATE TABLE colaboradores (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE CASCADE,
     FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE SET NULL
-);
-
-
-
--- Insertar un usuario con rol administrativo en la tabla usuarios (la contraseña es: admin1)
-INSERT INTO usuarios (email, contraseña, rol_id)
-VALUES ('admin1@clinica.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'administrador'));
-
--- Insertar el registro del colaborador administrativo en la tabla colaboradores
-INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, fecha_contratacion)
-VALUES (
-    (SELECT id FROM usuarios WHERE email = 'admin1@clinica.com'),
-    (SELECT id FROM roles WHERE nombre = 'administrador'),
-    'John', -- Nombre del administrativo
-    'Doe', -- Apellido del administrativo
-    '2024-10-24' -- Fecha de contratación
 );
 
 CREATE TABLE categorias (
@@ -177,6 +125,155 @@ CREATE TABLE productos_proveedores (
     CONSTRAINT fk_proveedor FOREIGN KEY (proveedor_id) REFERENCES proveedores(proveedor_id)
 );
 
+-- TABLA PARA AGENDAR CITAS
+CREATE TABLE citas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NOT NULL,
+    especialidad_id INT NOT NULL,
+    medico_id INT NOT NULL,
+    horario TIME NOT NULL,
+    razon TEXT NOT NULL,
+    fecha_cita DATE NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+    FOREIGN KEY (especialidad_id) REFERENCES especialidades(id),
+    FOREIGN KEY (medico_id) REFERENCES colaboradores(id)
+);
+
+-- TABLA PARA EL HISTORIAL DE CITAS
+CREATE TABLE historial_citas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NOT NULL,
+    medico_id INT NOT NULL,
+    cita_id INT,
+    fecha_cita DATE NOT NULL,
+    estado_pago ENUM('pendiente', 'pagado') NOT NULL DEFAULT 'pendiente',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado_cita ENUM('aceptada', 'completada', 'pendiente') DEFAULT 'pendiente' NOT NULL,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+    FOREIGN KEY (medico_id) REFERENCES colaboradores(id),
+    FOREIGN KEY (cita_id) REFERENCES citas(id)
+);
+
+-- TABLA DE PAGOS
+CREATE TABLE pagos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    historial_cita_id INT NOT NULL,
+    monto_consulta DECIMAL(10, 2) NOT NULL, -- Costo base de la consulta
+    monto_insumos DECIMAL(10, 2) DEFAULT 0, -- Costo total de los insumos
+    monto_total DECIMAL(10, 2) AS (monto_consulta + monto_insumos) STORED, -- Costo total
+    fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    metodo_pago ENUM('tarjeta', 'efectivo') NOT NULL,
+    forma_pago ENUM('contado', 'crédito', 'débito') NOT NULL,
+    numero_comprobante VARCHAR(50),
+    FOREIGN KEY (historial_cita_id) REFERENCES historial_citas(id) ON DELETE CASCADE
+);
+
+
+
+CREATE TABLE historial_medico (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NOT NULL,
+    peso DECIMAL(5, 2),
+    altura DECIMAL(4, 2),
+    presion_arterial VARCHAR(20),
+    frecuencia_cardiaca INT,
+    temperatura DECIMAL(4, 1),
+    alergias TEXT,
+    medicamentos TEXT,
+    cirugias TEXT,
+    habitos TEXT,
+    antecedentes_familiares TEXT,
+    motivo_consulta TEXT,   -- EDITAR
+    diagnostico TEXT,       -- EDITAR
+    tratamiento TEXT,       -- EDITAR
+    enfermedades_preexistentes TEXT,   -- EDITAR
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- EDITAR
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
+);
+
+
+-- Nuevos cambios 
+CREATE TABLE insumos (
+    id_insumo INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    cantidad INT NOT NULL,
+    precio DECIMAL(10, 2),
+    fecha_registro DATE DEFAULT CURRENT_DATE
+);
+
+-- TABLA PARA LAS RECETAS
+CREATE TABLE recetas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NOT NULL,
+    medico_id INT NOT NULL,
+    tratamiento TEXT NOT NULL,
+    fecha_emision TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
+    FOREIGN KEY (medico_id) REFERENCES colaboradores(id) ON DELETE CASCADE
+);
+
+-- TABLA PARA LAS FIRMAS DE LOS MEDICOS, RELACIONADA CON RECETAS
+CREATE TABLE firmas_recetas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    medico_id INT NOT NULL,
+    firma VARCHAR(255) NOT NULL,
+    FOREIGN KEY (medico_id) REFERENCES colaboradores(id) ON DELETE CASCADE
+);
+
+-- TODOS LOS INSERT
+-- Insertar datos en la tabla roles
+INSERT INTO roles (nombre) VALUES
+('paciente'),
+('medico'),
+('secretaria'),
+('administrador');
+
+-- Insertar las 10 provincias
+INSERT INTO provincias (nombre) VALUES
+('Bocas del Toro'),
+('Coclé'),
+('Colón'),
+('Chiriquí'),
+('Darién'),
+('Herrera'),
+('Los Santos'),
+('Panamá'),
+('Panamá Oeste'),
+('Veraguas');
+
+-- Insertar las 5 nacionalidades
+INSERT INTO nacionalidades (nombre) VALUES
+('Panameña'),
+('Costarricense'),
+('Colombiana'),
+('Venezolana'),
+('Nicaragüense');
+
+-- Insertar especialidades importantes
+INSERT INTO especialidades (nombre) VALUES
+('Medicina General'),
+('Pediatría'),
+('Cardiología'),
+('Cirugía General'),
+('Neurología');
+
+-- Insertar un usuario con rol administrativo en la tabla usuarios (la contraseña es: admin1)
+INSERT INTO usuarios (email, contraseña, rol_id)
+VALUES ('admin1@clinica.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'administrador'));
+
+-- Insertar el registro del colaborador administrativo en la tabla colaboradores
+INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, fecha_contratacion)
+VALUES (
+    (SELECT id FROM usuarios WHERE email = 'admin1@clinica.com'),
+    (SELECT id FROM roles WHERE nombre = 'administrador'),
+    'John', -- Nombre del administrativo
+    'Doe', -- Apellido del administrativo
+    '2024-10-24' -- Fecha de contratación
+);
+
+
 INSERT INTO categorias (nombre) VALUES ('Analgésicos');
 INSERT INTO categorias (nombre) VALUES ('Antibióticos');
 
@@ -205,60 +302,6 @@ VALUES (1, '2024-10-20', 'entrada', 100);
 INSERT INTO movimientos_inventario (producto_id, fecha_movimiento, tipo_movimiento, cantidad)
 VALUES (2, '2024-10-21', 'entrada', 50);
 
-
-
--- TABLA PARA AGENDAR CITAS
-CREATE TABLE citas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    paciente_id INT NOT NULL,
-    especialidad_id INT NOT NULL,
-    medico_id INT NOT NULL,
-    horario TIME NOT NULL,
-    razon TEXT NOT NULL,
-    fecha_cita DATE NOT NULL,
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
-    FOREIGN KEY (especialidad_id) REFERENCES especialidades(id),
-    FOREIGN KEY (medico_id) REFERENCES colaboradores(id)
-);
-
--- TABLA PARA EL HISTORIAL DE CITAS
-CREATE TABLE historial_citas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    paciente_id INT NOT NULL,
-    medico_id INT NOT NULL,
-    fecha_cita DATE NOT NULL,
-    estado_pago ENUM('pendiente', 'pagado') NOT NULL DEFAULT 'pendiente',
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    estado_cita ENUM('aceptada', 'completada', 'pendiente') DEFAULT 'pendiente' NOT NULL,
-    FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
-    FOREIGN KEY (medico_id) REFERENCES colaboradores(id)
-);
-
-
-
-ALTER TABLE historial_citas 
-ADD COLUMN cita_id INT,
-ADD FOREIGN KEY (cita_id) REFERENCES citas(id);
-
-
-
-
--- TABLA DE PAGOS
-CREATE TABLE pagos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    historial_cita_id INT NOT NULL,
-    monto_consulta DECIMAL(10, 2) NOT NULL, -- Costo base de la consulta
-    monto_insumos DECIMAL(10, 2) DEFAULT 0, -- Costo total de los insumos
-    monto_total DECIMAL(10, 2) AS (monto_consulta + monto_insumos) STORED, -- Costo total
-    fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    metodo_pago ENUM('tarjeta', 'efectivo') NOT NULL,
-    forma_pago ENUM('contado', 'crédito', 'débito') NOT NULL,
-    numero_comprobante VARCHAR(50),
-    FOREIGN KEY (historial_cita_id) REFERENCES historial_citas(id) ON DELETE CASCADE
-);
-
-
 -- Insertar usuarios para médicos
 INSERT INTO usuarios (email, contraseña, rol_id) VALUES
 ('medico1@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico')),
@@ -267,7 +310,6 @@ INSERT INTO usuarios (email, contraseña, rol_id) VALUES
 ('medico4@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico')),
 ('medico5@clinic.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', (SELECT id FROM roles WHERE nombre = 'medico'));
 
-
 -- Insertar colaboradores con rol de médico y especialidad específica
 INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, especialidad_id, fecha_contratacion) VALUES
 ((SELECT id FROM usuarios WHERE email = 'medico1@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Goku', 'Ramírez', (SELECT id FROM especialidades WHERE nombre = 'Medicina General'), '2024-10-29'),
@@ -275,73 +317,6 @@ INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, especialidad_id
 ((SELECT id FROM usuarios WHERE email = 'medico3@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Laura', 'González', (SELECT id FROM especialidades WHERE nombre = 'Cardiología'), '2024-10-29'),
 ((SELECT id FROM usuarios WHERE email = 'medico4@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Miguel', 'Herrera', (SELECT id FROM especialidades WHERE nombre = 'Cirugía General'), '2024-10-29'),
 ((SELECT id FROM usuarios WHERE email = 'medico5@clinic.com'), (SELECT id FROM roles WHERE nombre = 'medico'), 'Ana', 'Martínez', (SELECT id FROM especialidades WHERE nombre = 'Neurología'), '2024-10-29');
-
-CREATE TABLE historial_medico (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    paciente_id INT NOT NULL,
-    peso DECIMAL(5, 2),
-    altura DECIMAL(4, 2),
-    presion_arterial VARCHAR(20),
-    frecuencia_cardiaca INT,
-    temperatura DECIMAL(4, 1),
-    alergias TEXT,
-    medicamentos TEXT,
-    cirugias TEXT,
-    habitos TEXT,
-    antecedentes_familiares TEXT,
-    motivo_consulta TEXT,   -- EDITAR
-    diagnostico TEXT,       -- EDITAR
-    tratamiento TEXT,       -- EDITAR
-    enfermedades_preexistentes TEXT,   -- EDITAR
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- EDITAR
-    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
-);
-
-
--- Corregir el rol en la inserción del usuario
-INSERT INTO usuarios (email, contraseña, rol_id)
-VALUES ('secretaria1@clinica.com', '$2y$10$KBY96OpPNp7kU6rmyN2qwOuYUgjKTZDkAnlbFY4LJQVmAeTP.kBhe', 
-    (SELECT id FROM roles WHERE nombre = 'secretaria'));
-
--- Corregir el rol en la inserción del colaborador
-INSERT INTO colaboradores (usuario_id, rol_id, nombre, apellido, fecha_contratacion)
-VALUES (
-    (SELECT id FROM usuarios WHERE email = 'secretaria1@clinica.com'),
-    (SELECT id FROM roles WHERE nombre = 'secretaria'),
-    'Juana',
-    'Montes',
-    '2024-11-22'
-);
-
--- Nuevos cambios 
-CREATE TABLE insumos (
-    id_insumo INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT,
-    cantidad INT NOT NULL,
-    precio DECIMAL(10, 2),
-    fecha_registro DATE DEFAULT CURRENT_DATE
-);
-
-
--- TABLA PARA LAS RECETAS
-CREATE TABLE recetas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    paciente_id INT NOT NULL,
-    medico_id INT NOT NULL,
-    tratamiento TEXT NOT NULL,
-    fecha_emision TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
-    FOREIGN KEY (medico_id) REFERENCES colaboradores(id) ON DELETE CASCADE
-);
-
--- TABLA PARA LAS FIRMAS DE LOS MEDICOS, RELACIONADA CON RECETAS
-CREATE TABLE firmas_recetas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    medico_id INT NOT NULL,
-    firma VARCHAR(255) NOT NULL,
-    FOREIGN KEY (medico_id) REFERENCES colaboradores(id) ON DELETE CASCADE
-);
 
 -- INSERT DE LAS URL DE LAS FIRMAS RELACIONADAS CON LA RECETA
 INSERT INTO firmas_recetas (medico_id, firma) VALUES
