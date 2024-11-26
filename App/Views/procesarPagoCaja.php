@@ -21,13 +21,16 @@ $query = "SELECT DISTINCT
     col.apellido as medico_apellido,
     c.fecha_cita,
     c.horario,
-    hc.estado_pago
+    hc.estado_pago,
+    COALESCE(SUM(50 + COALESCE(pag.monto_insumos, 0)), 50) as monto_total
 FROM citas c
 INNER JOIN historial_citas hc ON c.id = hc.cita_id
 INNER JOIN colaboradores col ON c.medico_id = col.id
 INNER JOIN pacientes p ON c.paciente_id = p.id
+LEFT JOIN pagos pag ON hc.id = pag.historial_cita_id
 WHERE hc.estado_cita = 'completada'
 AND hc.estado_pago = 'pendiente'
+GROUP BY c.id, p.nombre, p.apellido, col.nombre, col.apellido, c.fecha_cita, c.horario, hc.estado_pago
 ORDER BY c.fecha_cita ASC, c.horario ASC";
 
 $stmt = $db->prepare($query);
@@ -56,14 +59,16 @@ $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <tbody>
                         <?php foreach ($citas as $cita): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?></td>
-                                <td><?php echo htmlspecialchars($cita['medico_nombre'] . ' ' . $cita['medico_apellido']); ?></td>
+                                <td><?php echo htmlspecialchars($cita['paciente_nombre'] . ' ' . $cita['paciente_apellido']); ?>
+                                </td>
+                                <td><?php echo htmlspecialchars($cita['medico_nombre'] . ' ' . $cita['medico_apellido']); ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
                                 <td><?php echo htmlspecialchars(date('h:i A', strtotime($cita['horario']))); ?></td>
-                                <td>$50.00</td>
+                                <td>$<?php echo number_format($cita['monto_total'], 2); ?></td>
                                 <td>
-                                    <button type="button" class="btn btn-success btn-sm" 
-                                            onclick="procesarPago(<?php echo $cita['id']; ?>)">
+                                    <button type="button" class="btn btn-success btn-sm"
+                                        onclick="procesarPago(<?php echo $cita['id']; ?>, <?php echo $cita['monto_total']; ?>)">
                                         Registrar Pago
                                     </button>
                                 </td>
@@ -81,10 +86,11 @@ $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 
 <script>
-function procesarPago(citaId) {
-    if (confirm('¿Confirmar el pago de esta cita?')) {
+    function procesarPago(citaId, montoTotal) {
+    if (confirm(`¿Confirmar el pago de $${montoTotal.toFixed(2)}?`)) {
         const formData = new FormData();
         formData.append('cita_id', citaId);
+        formData.append('monto_total', montoTotal);
 
         fetch('./actualizarEstadoPago', {
             method: 'POST',

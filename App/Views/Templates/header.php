@@ -207,13 +207,13 @@ if ($rol === 'paciente') {
             <li class="menu-item">
               <a href="./actualizarInformacionUsuarios" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-collection"></i>
-                <div data-i18n="Basic">Editar Usuarios</div>
+                <div data-i18n="Basic">Agregar Usuarios</div>
               </a>
             </li>
             <li class="menu-item">
               <a href="./obtenerMovimientos" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-box"></i>
-                <div data-i18n="User interface">Reportes</div>
+                <div data-i18n="User interface">Movimientos de medicamentos</div>
               </a>
             </li>
             <!-- Extended components -->
