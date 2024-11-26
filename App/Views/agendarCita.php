@@ -106,7 +106,12 @@ document.getElementById('fecha_cita').addEventListener('change', function() {
     const horarioSelect = document.getElementById('horario');
     const razonTextarea = document.getElementById('razon');
     const submitButton = document.querySelector('button[type="submit"]');
-    const today = new Date().toISOString().split('T')[0];
+    
+    // Formatear la fecha actual para comparar solo fechas sin tiempo
+    const today = new Date();
+    const formattedToday = today.getFullYear() + '-' + 
+                          String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(today.getDate()).padStart(2, '0');
 
     // Resetear campos dependientes
     medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
@@ -119,7 +124,7 @@ document.getElementById('fecha_cita').addEventListener('change', function() {
     razonTextarea.disabled = true;
     submitButton.disabled = true;
 
-    if (fecha && fecha >= today) {
+    if (fecha && fecha >= formattedToday) {
         especialidadSelect.disabled = false;
         // Si ya hay una especialidad seleccionada, cargar médicos
         if (especialidadSelect.value) {
