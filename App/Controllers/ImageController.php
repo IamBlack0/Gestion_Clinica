@@ -2,9 +2,9 @@
 class ImageController
 {
     private $db;
-    private $cloudName = 'dvidj5ru1';
-    private $apiKey = '174781173157813';
-    private $apiSecret = 'Be4cb-lP-6eXl2t3PPUEy3LtYcA';
+    private $cloudName = 'TU_NOMBRE_DE_CLOUDINARY';
+    private $apiKey = 'TU_API_KEY';
+    private $apiSecret = 'TU_API_SECRET';
 
     public function __construct()
     {
